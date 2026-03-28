@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enniscorthy Tidy Towns 2025 — MapTour Demo</title>
+  <meta name="description" content="A self-guided tour of Enniscorthy Tidy Towns 2025 community projects, powered by MapTour.">
+
+  <!-- MapTour styles -->
+  <link rel="stylesheet" href="maptour.css">
+
+  <style>
+    /* Full-page demo host styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #maptour {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="maptour"></div>
+
+  <!-- MapTour JS bundle -->
+  <script src="maptour.js"></script>
+  <script>
+    MapTour.init({
+      container: '#maptour',
+      tourUrl: './tour.yaml',
+    });
+  </script>
+</body>
+</html>

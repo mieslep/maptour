@@ -1,0 +1,95 @@
+# MapTour Constitution
+
+## Statement of Purpose
+
+MapTour is an open-source, embeddable map tour player for static websites. Given a simple YAML tour file and a folder of linked media, it renders a full-page, mobile-first guided tour experience: a Leaflet map showing numbered stops and route legs, a stop card with rich media content, GPS-based "where am I" positioning, and native-app navigation deep-links. It is designed to be dropped into any static site — including GitHub Pages — with no backend and no build pipeline required.
+
+## USP / Attractor
+
+MapTour is the only embeddable tour player that is simultaneously:
+- **Zero-backend** — pure static HTML/JS/CSS, deployable on GitHub Pages
+- **Authoring-friendly** — a single YAML file per tour; no CMS, no database
+- **Fully themeable** — ships with sensible defaults, all colours and styles overridable via CSS custom properties
+- **Navigation-aware** — each leg knows its mode (walk/drive) and deep-links to the user's preferred native nav app
+
+## User Personas
+
+### Tour Author
+A non-developer community volunteer (e.g. Tidy Towns committee member) who defines a tour by writing a YAML file and uploading media to Google Drive or YouTube. They are comfortable with structured text but not with build tools or deployment pipelines. Their job-to-be-done: create a compelling, accurate guided tour that showcases their community's work.
+
+### Site Integrator
+A developer or technically capable volunteer who embeds MapTour into an existing static site. They need clear integration docs, CSS variable hooks to match site branding, and confidence that adding MapTour won't break the host site.
+
+### Tour Visitor
+A person — typically on a mobile device — who arrives at a stop, opens the tour page, and wants to know: where am I relative to the stops, what is there to see here, and how do I get to the next stop. They may start mid-tour, skip stops, and may lose connectivity briefly.
+
+## Behavioural Expectations Per Persona
+
+**Tour Author:** can publish a working tour by editing one YAML file and committing to GitHub. No npm, no build step, no server.
+
+**Site Integrator:** can embed MapTour with a single `<script>` tag and one `<div>`. CSS vars are the only theming interface needed.
+
+**Tour Visitor:** the map loads within 3 seconds on a mid-range mobile on 4G. Stop content is readable without zooming. GPS position updates live. Visited stops are remembered across page refreshes (localStorage). Navigation deep-link opens the right app on first tap.
+
+## Adoption Concerns Per Persona
+
+**Tour Author:** "I don't know how to write YAML." → Mitigation: provide a well-commented example tour file and validation errors that name the offending field.
+
+**Site Integrator:** "Will this conflict with our existing styles/scripts?" → Mitigation: all MapTour styles are scoped under `.maptour-*` classes; no global CSS resets; Leaflet is bundled, not assumed global.
+
+**Tour Visitor:** "It won't work on my old phone." → Mitigation: progressive enhancement — the map and stop cards work without GPS; GPS is enhancement only.
+
+## PLG: Aha Moment Per Persona
+
+**Tour Author:** aha moment = first preview of their tour in a browser, seeing their stops on the map and their photos rendering in the card.
+→ Telemetry: not applicable (static site, no server). Encourage authors to share a preview link with the community.
+
+**Site Integrator:** aha moment = successfully embedding MapTour and seeing it match site colours after setting two CSS vars.
+→ Telemetry: none (static). Measure via GitHub stars and issue quality.
+
+**Tour Visitor:** aha moment = GPS dot appears on the map and the correct stop card opens automatically.
+→ Telemetry: none server-side. Client-side event logging (console/debug mode) available for testing.
+
+## Quality Standards
+
+### I. Static-First (NON-NEGOTIABLE)
+MapTour must work as a static asset bundle. No Node.js server, no API, no build step required by the end-user. The distributable is a single JS file + one CSS file. A tour is a YAML file + a directory of linked media URLs.
+
+### II. Responsive, Mobile-First
+UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44×44px. On small screens the map takes the upper ~50% of viewport with the stop card scrolling below. On wider screens the layout may place the map and stop card side-by-side. No hover-only interactions.
+
+### III. Embeddability
+All CSS is namespaced under `.maptour-`. No modifications to `body`, `html`, or global element styles. Leaflet is bundled within the MapTour JS bundle. A host page with its own Leaflet must not conflict.
+
+### IV. Theming via CSS Custom Properties
+All colours, fonts, and spacing exposed as `--maptour-*` CSS custom properties with documented defaults. No inline styles that override custom properties.
+
+### V. Accessibility
+WCAG 2.1 AA as a target. Stop cards must be keyboard-navigable. Map controls must have aria-labels. Media embeds must have captions or descriptions where possible.
+
+### VI. Offline Resilience
+Core tour data (YAML) and the player JS/CSS are served as static files — they cache naturally. GPS and external media (YouTube, Drive) require connectivity. The player must not crash if GPS is unavailable or if a media URL fails to load.
+
+### VII. Testing
+- Unit tests for YAML parsing, stop sequencing, leg rendering logic
+- Integration tests for the full render pipeline against a sample tour
+- Playwright E2E tests for the visitor flow on a local static server
+- No test mocks for the YAML parser — use real fixture files
+
+### VIII. Open Source
+MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency immediately.
+
+## Development Workflow
+
+- Spec-first: every feature starts with a speckit feature spec, approved before implementation begins
+- PRs require passing tests and lint before merge
+- Changelog maintained; semver versioning (MAJOR.MINOR.PATCH)
+- Releases via GitHub Releases only — no npm publish initially
+- Each release attaches the built `dist/` files so sites can link directly to a versioned release URL
+- The `dist/` folder is committed to the repo to power the repo's own demo/docs page on GitHub Pages
+
+## Governance
+
+This constitution governs all MapTour development. Amendments require a spec change approved by Phil before implementation. All architectural decisions must trace to a requirement in the spec or an explicit constitution principle.
+
+**Version**: 1.0.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-28

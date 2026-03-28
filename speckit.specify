@@ -1,0 +1,143 @@
+# MapTour — Product Specification
+
+**Created**: 2026-03-28
+**Status**: Draft
+
+---
+
+## Product Purpose and Scope
+
+MapTour is a standalone, embeddable JavaScript library that renders a guided map tour from a YAML data file. It is designed to be included in static websites (GitHub Pages, Netlify, etc.) with no server-side component.
+
+A **tour** is a named, ordered collection of **stops**. Each stop has GPS coordinates, a title, rich media content (text, images, video, audio), and an optional leg descriptor indicating how to travel to the next stop (walking or driving). The player shows the user where they are on a map, lets them navigate between stops, and provides a native navigation deep-link to reach each stop from their current location.
+
+The primary use case is community organisations (e.g. Tidy Towns committees) creating annual guided tours of local projects and points of interest, to be experienced by visitors on mobile devices.
+
+---
+
+## Personas
+
+### Tour Author
+Creates and maintains the YAML tour file and assembles media URLs. Comfortable with structured text; not a developer. Needs: simple file format, clear validation errors, an example to copy from.
+
+### Site Integrator
+Embeds MapTour in an existing static site. Needs: a single script tag, CSS variable hooks, no conflicts with host site styles or scripts.
+
+### Tour Visitor
+Experiences the tour on a mobile device, possibly in the field. May start partway through, skip stops, lose signal. Needs: fast initial load, live GPS position, breadcrumb progress, one-tap navigation to any stop.
+
+---
+
+## MVP Boundary
+
+### In scope (v1.0)
+
+**Tour player:**
+- Full-page responsive layout: Leaflet map (top) + stop card (bottom), side-by-side on wide screens
+- Numbered pins for all stops on the map
+- Route polylines between stops, styled by leg mode (walk vs drive)
+- Live GPS dot showing user's current position
+- Stop card: title, sequence number, content blocks (text, single image, gallery, YouTube embed, audio)
+- Prev/Next navigation between stops
+- Breadcrumb: visited stops marked on map and in stop list; state persisted in localStorage
+- "Take me there" button: prompts once for preferred nav app (Google Maps, Apple Maps, Waze), remembers choice, deep-links with stop coordinates and leg mode
+
+**Tour data format:**
+- YAML file defining tour metadata and ordered stop array
+- Each stop: id, title, coords, content blocks array, optional leg_to_next (mode, optional note)
+- External media only (YouTube URLs, image URLs, audio URLs) — no bundled media
+- JSON Schema provided for validation; clear error messages for malformed files
+
+**Integration:**
+- Distributed as a single JS bundle + one CSS file
+- Initialised with `MapTour.init({ container, tourUrl })` — one div, one script tag
+- All styles namespaced `.maptour-*`; all colours/spacing as `--maptour-*` CSS custom properties
+- Leaflet bundled within the JS bundle
+
+**Demo & docs:**
+- A demo tour (using a sample Irish town) hosted on the repo's GitHub Pages site
+- Integration guide (README) covering the script tag, CSS vars, and YAML format
+- Annotated example YAML file
+
+**Release:**
+- GitHub Releases, semver, `dist/` files attached and committed
+
+### Explicitly out of scope for v1.0
+
+- Authoring UI / CMS — YAML only
+- Routing calculation (turn-by-turn directions) — native nav app handles this
+- Offline / service worker caching
+- Multiple simultaneous tours on one page
+- User accounts or server-side tour storage
+- npm package publication
+- Analytics or telemetry
+- Audio/video hosting — external URLs only
+
+---
+
+## Release Milestones
+
+### Alpha (v0.1) — Core player, no GPS
+- Map renders with numbered pins and route legs
+- Stop card with all content block types
+- Prev/Next navigation
+- Static demo tour
+
+### Beta (v0.2) — Full visitor experience
+- Live GPS dot
+- "Take me there" nav deep-link with app preference memory
+- Breadcrumb (visited stops in localStorage)
+- Responsive layout (mobile + desktop)
+
+### v1.0 — Production ready
+- WCAG 2.1 AA pass
+- JSON Schema + validation errors
+- Full test suite (unit + E2E)
+- Demo site on GitHub Pages
+- Integration guide and example YAML
+
+---
+
+## Key Failure Modes and Non-Functional Requirements
+
+| Concern | Requirement |
+|---|---|
+| GPS unavailable | Player must load and function fully; GPS dot simply absent |
+| Media URL fails (image/video/audio) | Graceful fallback — show placeholder, do not crash |
+| YAML parse error | Surface a clear, human-readable error in the container div |
+| No localStorage (private browsing) | Breadcrumb feature degrades silently; no crash |
+| Leaflet tile server offline | Map tiles fail to load; pins/overlays still render on blank background |
+| Large tour (50+ stops) | Map and card must remain responsive; no perceptible lag on pin render |
+
+**Performance:** Initial load (player JS + CSS + tour YAML + map tiles) under 3 seconds on 4G, mid-range mobile.
+
+**Bundle size target:** JS bundle under 200 KB gzipped (Leaflet ~40 KB, remainder player logic).
+
+---
+
+## Acceptance Criteria by Milestone
+
+### Alpha
+- Given a valid YAML tour file, the map renders all stops as numbered pins in under 3 seconds on localhost
+- Stop card displays all content block types (text, image, gallery, YouTube, audio) correctly
+- Prev/Next moves through stops in sequence; map re-centres on the active stop
+
+### Beta
+- GPS dot appears within 5 seconds of page load on a device with location permission granted
+- "Take me there" button opens the correct nav app on Android and iOS with the correct coordinates
+- Visited stops are persisted and shown correctly after page refresh
+
+### v1.0
+- Automated Playwright E2E suite passes against the demo tour on a local static server
+- All CSS variables documented; integrator can retheme by overriding five vars
+- WCAG 2.1 AA audit passes (axe-core, zero critical violations)
+
+---
+
+## Assumptions
+
+- Tour media is hosted externally (YouTube, Google Drive, etc.) and publicly accessible
+- Visitors have a modern browser (Chrome/Firefox/Safari, released within 3 years)
+- GPS permission is granted by the visitor — the player does not handle the permission prompt beyond the browser's native one
+- Each tour is a single YAML file; tours are not dynamically fetched from a database
+- The host site is responsible for loading MapTour; MapTour does not auto-initialise

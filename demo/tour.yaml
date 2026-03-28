@@ -1,0 +1,224 @@
+# Enniscorthy Tidy Towns 2025 — Guided Tour
+# A self-guided walking tour of this year's community projects
+# Coordinates are centred on Enniscorthy, Co. Wexford, Ireland (52.5022°N, 6.5581°W)
+
+tour:
+  id: enniscorthy-tidy-towns-2025
+  title: Enniscorthy Tidy Towns 2025
+  description: >
+    Discover the community projects that earned Enniscorthy its 2025 Tidy Towns commendation.
+    This self-guided tour takes you from the castle grounds to the River Slaney,
+    through our heritage trail and community gardens. Allow about 90 minutes on foot.
+
+stops:
+  - id: 1
+    title: Enniscorthy Castle Grounds
+    coords: [52.50185, -6.55820]
+    content:
+      - type: text
+        body: |
+          ## Castle Grounds Restoration
+
+          The Norman castle at the heart of Enniscorthy has stood for over 800 years,
+          and this year our volunteers gave its grounds a complete overhaul.
+
+          Working with Wexford County Council, we cleared decades of ivy from the
+          perimeter walls, re-laid the cobbled pathways, and planted native wildflower
+          meadow patches along the south-facing bank.
+
+          **What was done this year:**
+          - 120 metres of perimeter stonework cleaned and repointed
+          - Native wildflower seed mix sown across 200 m²
+          - New heritage interpretation signage installed at four points
+          - Drainage channel cleared to prevent winter flooding
+      - type: image
+        url: https://placehold.co/800x500/2563eb/ffffff?text=Castle+Grounds
+        caption: The restored south grounds in early summer bloom
+      - type: gallery
+        images:
+          - url: https://placehold.co/800x500/16a34a/ffffff?text=Wildflower+Meadow
+            caption: Native wildflower meadow in bloom, June 2025
+          - url: https://placehold.co/800x500/7c3aed/ffffff?text=Cobbled+Pathway
+            caption: Re-laid cobbled pathway to the main entrance
+          - url: https://placehold.co/800x500/dc2626/ffffff?text=Heritage+Sign
+            caption: New heritage interpretation signage
+    leg_to_next:
+      mode: walk
+      note: "Walk down Castle Hill to the river, ~6 min"
+
+  - id: 2
+    title: River Slaney Cleanup & Wildflower Bank
+    coords: [52.50290, -6.55650]
+    content:
+      - type: text
+        body: |
+          ## River Slaney Riverside Restoration
+
+          The River Slaney towpath has been transformed this year by a dedicated team
+          of volunteers who gave up twelve Saturday mornings to clear litter,
+          remove invasive Japanese knotweed, and establish a native wildflower bank
+          along a 400-metre stretch.
+
+          The project was supported by the National Parks and Wildlife Service,
+          who provided native plant plug stock and technical advice on
+          knotweed removal.
+
+          > *"The river bank looks better now than it has in thirty years."*
+          > — Cllr. Mary O'Brien, Enniscorthy Area
+
+          **Project highlights:**
+          - 400 m of riverbank cleared of invasive species
+          - 800 native plug plants installed (cowslip, meadowsweet, purple loosestrife)
+          - 3 access points improved with gravel and timber edging
+          - Litter bags collected: 47
+      - type: image
+        url: https://placehold.co/800x500/16a34a/ffffff?text=River+Slaney+Bank
+        caption: The newly planted riverside wildflower bank, April 2025
+    leg_to_next:
+      mode: walk
+      note: "Follow the riverside path north, ~8 min"
+
+  - id: 3
+    title: Abbey Square Heritage Planting
+    coords: [52.50390, -6.55750]
+    content:
+      - type: text
+        body: |
+          ## Abbey Square — A Living Heritage Garden
+
+          Abbey Square has been the commercial heart of Enniscorthy since medieval times.
+          This year we partnered with local businesses to transform the central planting
+          beds into a heritage garden celebrating Wexford's botanical history.
+
+          Each of the twelve raised beds is planted with species that would have been
+          grown in a medieval herb garden: lavender, rosemary, thyme, woad, and
+          marigold — with interpretation plaques explaining their historical uses.
+
+          The project took five months from design to planting, with local schoolchildren
+          helping to sow seeds as part of the Tidy Towns education programme.
+      - type: gallery
+        images:
+          - url: https://placehold.co/800x500/f59e0b/ffffff?text=Heritage+Garden+Beds
+            caption: The twelve raised herb garden beds in Abbey Square
+          - url: https://placehold.co/800x500/ec4899/ffffff?text=School+Planting+Day
+            caption: St Senan's NS pupils planting lavender, March 2025
+          - url: https://placehold.co/800x500/0891b2/ffffff?text=Interpretation+Plaques
+            caption: Heritage interpretation plaques on each bed
+      - type: image
+        url: https://placehold.co/800x500/d97706/ffffff?text=Abbey+Square+Overview
+        caption: Abbey Square looking south, July 2025
+    leg_to_next:
+      mode: walk
+      note: "Head along Main Street to Templeshannon, ~10 min"
+
+  - id: 4
+    title: Templeshannon Community Garden
+    coords: [52.50520, -6.55900]
+    content:
+      - type: text
+        body: |
+          ## Templeshannon Community Garden
+
+          Opened in 2023 on a formerly derelict site on the Templeshannon side of
+          the river, the community garden is now in its third growing season —
+          and this year it really hit its stride.
+
+          The garden has 24 raised beds allocated to local families, a polytunnel
+          for year-round growing, a composting area, and a children's sensory garden
+          complete with a bug hotel and a log-pile habitat.
+
+          **2025 additions:**
+          - 6 new raised beds for the waiting list
+          - Solar-powered water pump reducing mains usage by 80%
+          - Orchard section planted with 12 Irish heritage apple varieties
+          - Weekly skills sessions: composting, seed saving, crop rotation
+
+          The garden is open to the public every weekend, 10am–5pm.
+      - type: image
+        url: https://placehold.co/800x500/16a34a/ffffff?text=Community+Garden
+        caption: The Templeshannon Community Garden in full summer production
+      - type: gallery
+        images:
+          - url: https://placehold.co/800x500/84cc16/ffffff?text=Raised+Beds
+            caption: The 24 raised beds, each tended by a local family
+          - url: https://placehold.co/800x500/65a30d/ffffff?text=Polytunnel
+            caption: The polytunnel extends the growing season year-round
+          - url: https://placehold.co/800x500/166534/ffffff?text=Bug+Hotel
+            caption: The bug hotel in the children's sensory garden
+    leg_to_next:
+      mode: drive
+      note: "Drive across the bridge and up to Vinegar Hill, ~5 min"
+
+  - id: 5
+    title: Vinegar Hill Tree Planting Scheme
+    coords: [52.50180, -6.54900]
+    content:
+      - type: text
+        body: |
+          ## Vinegar Hill — 1798 Memorial Grove
+
+          Vinegar Hill is one of Ireland's most significant historic sites —
+          the location of the final stand of the 1798 United Irishmen rebellion.
+          The windmill tower at the summit is a national monument.
+
+          This year, as part of the national Tidy Towns tree planting initiative,
+          Enniscorthy Tidy Towns planted 40 native trees on the lower slopes:
+          hawthorn, blackthorn, rowan, and wild cherry — species that would have
+          been common on Wexford hillsides two centuries ago.
+
+          The planting was carried out with guidance from Coillte and the Tree
+          Council of Ireland, with each tree individually staked and guarded.
+          Survival rate after year one: 95%.
+
+          > *"These trees will still be standing when the next generation walks this hill."*
+          > — John Furlong, Enniscorthy Tidy Towns Chair
+      - type: image
+        url: https://placehold.co/800x500/15803d/ffffff?text=Vinegar+Hill+Grove
+        caption: Native tree planting on the lower slopes of Vinegar Hill
+      - type: gallery
+        images:
+          - url: https://placehold.co/800x500/166534/ffffff?text=Tree+Planting+Day
+            caption: Volunteers at the community planting day, February 2025
+          - url: https://placehold.co/800x500/14532d/ffffff?text=Hawthorn+Saplings
+            caption: Young hawthorn saplings in their first spring growth
+    leg_to_next:
+      mode: drive
+      note: "Return down to town and head for the station, ~7 min"
+
+  - id: 6
+    title: Enniscorthy Railway Station — Gateway Project
+    coords: [52.50650, -6.56200]
+    content:
+      - type: text
+        body: |
+          ## Railway Station Gateway Project
+
+          The railway station is the first thing many visitors see of Enniscorthy —
+          and this year it received the most visible transformation of any Tidy Towns
+          project in recent memory.
+
+          Working with Irish Rail and the local Lions Club, we completely replanted
+          the station forecourt and approach road with a colourful mix of seasonal
+          bedding and hardy perennials. The result? Three hundred hanging baskets
+          and a floral arch over the main entrance that became a social media
+          sensation in June.
+
+          **Project facts:**
+          - 300 hanging baskets maintained throughout the season
+          - Forecourt planters replanted twice (spring and autumn)
+          - Floral arch: 8 metres wide, trained over 6 months
+          - Litter management: daily morning sweep by station volunteers
+
+          The station won the Irish Rail "Best Dressed Station" award 2025 for
+          the midlands and southeast region.
+      - type: image
+        url: https://placehold.co/800x500/2563eb/ffffff?text=Station+Floral+Arch
+        caption: The floral arch over Enniscorthy railway station entrance, June 2025
+      - type: gallery
+        images:
+          - url: https://placehold.co/800x500/7c3aed/ffffff?text=Hanging+Baskets
+            caption: 300 hanging baskets maintained by station volunteers
+          - url: https://placehold.co/800x500/db2777/ffffff?text=Forecourt+Planters
+            caption: The station forecourt spring planting in full flower
+          - url: https://placehold.co/800x500/0369a1/ffffff?text=Best+Station+Award
+            caption: Enniscorthy accepts the Irish Rail Best Dressed Station award

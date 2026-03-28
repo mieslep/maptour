@@ -1,0 +1,250 @@
+# MapTour — System Architecture
+
+**Date**: 2026-03-28
+**Status**: Draft
+**Spec**: speckit.specify
+
+---
+
+## Summary
+
+MapTour is a client-side JavaScript library distributed as a single bundle. It reads a YAML tour file, renders a Leaflet map and stop card UI, tracks GPS position, and provides navigation deep-links. There is no server component. All state is in-browser (DOM + localStorage).
+
+---
+
+## Technical Context
+
+**Language**: JavaScript (ES2022), TypeScript for source
+**Build tool**: Vite — produces a single IIFE bundle (`maptour.js`) and one stylesheet (`maptour.css`)
+**Primary dependencies**:
+- `leaflet` ~1.9 — map rendering
+- `js-yaml` — YAML parsing
+- `vitest` — unit tests
+- `playwright` — E2E tests
+- `axe-core` — WCAG audit in CI
+
+**Storage**: localStorage only (visited stops, nav app preference)
+**Testing**: Vitest (unit), Playwright (E2E against a local static server)
+**Target platform**: Modern browsers (Chrome/Firefox/Safari, ≤3 years old), desktop and mobile
+**Project type**: Embeddable JS library
+**Performance goals**: Initial load <3 s on 4G mobile; bundle <200 KB gzipped
+**Constraints**: No server, no build step for end-user, no global CSS side-effects
+**Scale/scope**: Single-page player, tours of 5–100 stops
+
+---
+
+## System Context
+
+```
+┌─────────────────────────────────────────────┐
+│  Host static site (e.g. GitHub Pages / ETT) │
+│                                             │
+│  <div id="maptour"></div>                   │
+│  <script src="maptour.js"></script>         │
+│  MapTour.init({ container, tourUrl })        │
+└────────────────────┬────────────────────────┘
+                     │ fetches
+          ┌──────────▼──────────┐
+          │   tour.yaml (static) │
+          └──────────┬──────────┘
+                     │ parsed
+          ┌──────────▼──────────────────┐
+          │  MapTour player (in-browser) │
+          │  ┌───────────────────────┐  │
+          │  │  Map (Leaflet)        │  │
+          │  ├───────────────────────┤  │
+          │  │  Stop Card (DOM)      │  │
+          │  ├───────────────────────┤  │
+          │  │  GPS (Geolocation API)│  │
+          │  ├───────────────────────┤  │
+          │  │  State (localStorage) │  │
+          │  └───────────────────────┘  │
+          └─────────────────────────────┘
+                     │ embeds
+     ┌───────────────┼────────────────────┐
+     │               │                    │
+ YouTube          img/audio URLs      Nav app deep-link
+ (iframe)         (external CDN)      (geo: URI / app scheme)
+```
+
+---
+
+## Module Decomposition
+
+```
+src/
+├── index.ts              ← public API: MapTour.init()
+├── loader.ts             ← fetch + parse tour YAML, validate schema
+├── schema.ts             ← JSON Schema definition + validation (ajv or manual)
+├── map/
+│   ├── MapView.ts        ← Leaflet map init, pin rendering, route polylines, GPS dot
+│   └── layers.ts         ← pin icon factory, leg style lookup (walk vs drive)
+├── card/
+│   ├── StopCard.ts       ← stop card DOM controller
+│   ├── blocks/
+│   │   ├── TextBlock.ts
+│   │   ├── ImageBlock.ts
+│   │   ├── GalleryBlock.ts
+│   │   ├── VideoBlock.ts  ← YouTube iframe embed
+│   │   └── AudioBlock.ts
+│   └── NavButton.ts      ← "Take me there" button, app preference, deep-link
+├── navigation/
+│   ├── NavController.ts  ← Prev/Next, active stop state, map re-centre
+│   └── NavAppPreference.ts ← localStorage-backed app choice (Maps/Waze/Google)
+├── breadcrumb/
+│   └── Breadcrumb.ts     ← visited set in localStorage, pin decoration
+├── gps/
+│   └── GpsTracker.ts     ← Geolocation API wrapper, broadcasts position events
+└── errors/
+    └── ErrorDisplay.ts   ← renders human-readable errors into the container div
+```
+
+---
+
+## Tour YAML Data Model
+
+```yaml
+# tour.yaml
+tour:
+  id: ett-2025
+  title: Enniscorthy Tidy Towns 2025
+  description: A guided tour of this year's projects.
+
+stops:
+  - id: 1
+    title: Town Square Planting
+    coords: [52.5022, -6.5581]
+    content:
+      - type: text
+        body: "Markdown paragraph..."
+      - type: image
+        url: https://drive.google.com/.../photo.jpg
+        caption: Before and after
+      - type: gallery
+        images:
+          - url: https://...
+            caption: Caption
+      - type: video
+        url: https://youtube.com/watch?v=...
+      - type: audio
+        url: https://...
+        label: Commentary by John Smith
+    leg_to_next:
+      mode: walk          # walk | drive
+      note: "Follow river path, ~8 min"
+
+  - id: 2
+    title: River Cleanup Site
+    coords: [52.5041, -6.5563]
+    content:
+      - type: text
+        body: "..."
+```
+
+**Validation rules:**
+- `tour.id`, `tour.title` required
+- Each stop requires `id` (unique integer), `title`, `coords` (2-element array of numbers)
+- `content` array may be empty but must be present
+- `type` in each block must be one of: `text`, `image`, `gallery`, `video`, `audio`
+- `leg_to_next.mode` must be `walk` or `drive`
+- Unknown keys are warned, not errored
+
+---
+
+## Integration Contract (Public API)
+
+```html
+<link rel="stylesheet" href="maptour.css">
+<div id="maptour"></div>
+<script src="maptour.js"></script>
+<script>
+  MapTour.init({
+    container: '#maptour',   // CSS selector or Element
+    tourUrl: './tour.yaml',  // relative or absolute URL
+    // optional:
+    startStop: 1,            // open on this stop id
+  });
+</script>
+```
+
+**CSS custom properties (with defaults):**
+```css
+:root {
+  --maptour-primary: #2563eb;
+  --maptour-surface: #ffffff;
+  --maptour-text: #111827;
+  --maptour-accent: #16a34a;
+  --maptour-font: system-ui, sans-serif;
+  --maptour-radius: 8px;
+}
+```
+
+---
+
+## Non-Functional Architecture
+
+| Concern | Approach |
+|---|---|
+| GPS unavailable | GpsTracker broadcasts null; MapView renders no dot; no crash |
+| Media URL fails | Each block has an `onError` handler; shows placeholder text |
+| YAML parse error | ErrorDisplay renders message into container div |
+| localStorage unavailable | Breadcrumb + NavAppPreference degrade to in-memory only |
+| Leaflet tile server down | Tiles blank; pins/polylines still visible (Leaflet behaviour) |
+| Large tour | Pins rendered in one batch on load; no lazy loading needed at ≤100 stops |
+
+---
+
+## Repository Structure
+
+```
+maptour/
+├── src/                  ← TypeScript source (as above)
+├── styles/
+│   └── maptour.css       ← source stylesheet
+├── dist/                 ← built by CI (not committed); attached to GitHub Releases
+│   ├── maptour.js        ← artefact only
+│   └── maptour.css
+├── demo/
+│   ├── index.html        ← GitHub Pages demo page
+│   └── tour.yaml         ← sample tour (Irish town)
+├── tests/
+│   ├── unit/             ← Vitest unit tests
+│   └── e2e/              ← Playwright E2E tests
+├── speckit.constitution
+├── speckit.specify
+├── speckit.plan          ← this file
+├── backlog.md
+├── .github/
+│   └── workflows/
+│       ├── ci.yml        ← lint, test, bundle size check on every PR
+│       └── release.yml   ← on tag push: build dist/, attach to GH Release, deploy demo to GH Pages
+├── CHANGELOG.md
+├── package.json
+└── README.md
+```
+
+---
+
+## Tech Stack Decisions
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Language | TypeScript | Type safety for data model parsing; compiles to plain JS |
+| Build | Vite | Produces IIFE bundle natively; fast; no config ceremony |
+| Map | Leaflet | OSM-based, no API key, MIT licence, small footprint |
+| YAML parser | `js-yaml` | Battle-tested, MIT, handles YAML 1.2 |
+| Unit tests | Vitest | Native TS, fast, compatible with Vite setup |
+| E2E tests | Playwright | Cross-browser, headless, works against a local static server |
+| CSS | Plain CSS with custom properties | No build dependency for theming; integrators override vars |
+
+---
+
+## Risks and Mitigations
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Google Drive link expiry or access change | Medium | High | Document this limitation clearly; recommend public share links |
+| YouTube iframe blocked by host CSP | Low | Medium | Document CSP requirement in integration guide |
+| Geolocation permission denied on iOS Safari | Medium | Low | GPS is enhancement only; graceful degradation |
+| Bundle size creep beyond 200 KB | Low | Medium | Track with CI size budget check |
+| Tour author publishes invalid YAML | High | Medium | Clear error display + JSON Schema + example file |
