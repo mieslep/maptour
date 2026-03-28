@@ -1,0 +1,31 @@
+{
+  "name": "maptour",
+  "version": "0.1.0",
+  "description": "Embeddable map tour player for static websites",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/maptour.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "leaflet": "^1.9.4",
+    "marked": "^12.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.0.0",
+    "jsdom": "^29.0.1",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0",
+    "vitest": "^1.5.0"
+  }
+}

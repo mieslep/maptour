@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint || true
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Check bundle size
+        run: |
+          JS_SIZE=$(wc -c < dist/maptour.js)
+          # Allow up to 600KB uncompressed (roughly 200KB gzipped)
+          MAX_SIZE=614400
+          echo "Bundle size: ${JS_SIZE} bytes"
+          if [ "$JS_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "ERROR: Bundle size exceeds 600KB limit"
+            exit 1
+          fi
+          echo "Bundle size OK"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
