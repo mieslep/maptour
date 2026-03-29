@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import type { Tour, Stop } from '../types';
 import { createPinIcon, getLegStyle } from './layers';
 
@@ -32,6 +33,14 @@ export class MapView {
     this.renderPins();
     this.renderPolylines();
     this.fitBounds();
+
+    // Allow the browser to settle layout before recalculating map size.
+    // Without this, Leaflet reads a zero or stale container size and
+    // renders tiles in misaligned strips that overflow the map pane.
+    requestAnimationFrame(() => {
+      this.map.invalidateSize();
+      this.fitBounds();
+    });
   }
 
   private renderPins(): void {

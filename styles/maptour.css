@@ -37,6 +37,7 @@
   min-height: 250px;
   flex-shrink: 0;
   position: relative;
+  overflow: hidden;
 }
 
 .maptour-content-pane {
