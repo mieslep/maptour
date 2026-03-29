@@ -52,41 +52,46 @@ export class StopCard {
 
   render(stop: Stop, stopNumber: number, totalStops: number, nextStop?: Stop): void {
     this.container.innerHTML = '';
+    this.container.scrollTop = 0;
     this.container.setAttribute('role', 'region');
     this.container.setAttribute('aria-label', `Stop ${stopNumber}: ${stop.title}`);
 
-    // "Getting here" row — directions to THIS stop (if provided)
-    if (stop.getting_here) {
-      const gettingHere = document.createElement('div');
-      gettingHere.className = 'maptour-card__getting-here';
+    // Stop header — always present: title + pin nav + optional getting_here note
+    const header = document.createElement('div');
+    header.className = 'maptour-card__header';
 
-      const noteEl = document.createElement('div');
-      noteEl.className = 'maptour-card__getting-here-note';
-      const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
-      noteEl.textContent = `${icon} ${stop.getting_here.note ?? ''}`.trim();
-      gettingHere.appendChild(noteEl);
+    const headerText = document.createElement('div');
+    headerText.className = 'maptour-card__header-text';
 
-      // Pin nav button — directions to this stop
-      const pinContainer = document.createElement('div');
-      pinContainer.className = 'maptour-card__nav-icon';
-      gettingHere.appendChild(pinContainer);
-      new NavButton(
-        pinContainer,
-        stop,
-        this.navPreference,
-        undefined,
-        this.tourNavMode,
-        'pin',
-      );
-
-      this.container.appendChild(gettingHere);
-    }
-
-    // Title
     const title = document.createElement('h2');
     title.className = 'maptour-card__title';
     title.textContent = stop.title;
-    this.container.appendChild(title);
+    headerText.appendChild(title);
+
+    if (stop.getting_here?.note) {
+      const note = document.createElement('div');
+      note.className = 'maptour-card__getting-here-note';
+      const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
+      note.textContent = `${icon} ${stop.getting_here.note}`;
+      headerText.appendChild(note);
+    }
+
+    header.appendChild(headerText);
+
+    // Pin nav button — always shown, directions to this stop
+    const pinContainer = document.createElement('div');
+    pinContainer.className = 'maptour-card__nav-icon';
+    header.appendChild(pinContainer);
+    new NavButton(
+      pinContainer,
+      stop,
+      this.navPreference,
+      undefined,
+      this.tourNavMode,
+      'pin',
+    );
+
+    this.container.appendChild(header);
 
     // Content blocks
     const content = document.createElement('div');
