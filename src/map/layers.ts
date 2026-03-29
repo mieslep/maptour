@@ -5,14 +5,16 @@ export interface PinOptions {
   number: number;
   active?: boolean;
   visited?: boolean;
+  pulsing?: boolean;
 }
 
 export function createPinIcon(options: PinOptions): L.DivIcon {
-  const { number, active = false, visited = false } = options;
+  const { number, active = false, visited = false, pulsing = false } = options;
 
   let classes = 'maptour-pin';
-  if (active) classes += ' maptour-pin--active';
-  if (visited) classes += ' maptour-pin--visited';
+  if (active)   classes += ' maptour-pin--active';
+  else if (pulsing) classes += ' maptour-pin--next';
+  else if (visited) classes += ' maptour-pin--visited';
 
   return L.divIcon({
     className: '',

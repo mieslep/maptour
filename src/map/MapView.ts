@@ -10,6 +10,7 @@ export class MapView {
   private gpsDot: L.CircleMarker | null = null;
   private tour: Tour;
   private activeStopId: number;
+  private pulsingStopId: number | null = null;
   private visitedStopIds: Set<number> = new Set();
 
   constructor(container: HTMLElement, tour: Tour) {
@@ -53,6 +54,7 @@ export class MapView {
           number: index + 1,
           active: stop.id === this.activeStopId,
           visited: this.visitedStopIds.has(stop.id),
+          pulsing: stop.id === this.pulsingStopId,
         }),
         title: stop.title,
         alt: `Stop ${index + 1}: ${stop.title}`,
@@ -96,6 +98,11 @@ export class MapView {
     this.activeStopId = stop.id;
     this.renderPins();
     this.map.panTo(stop.coords, { animate: true, duration: 0.5 });
+  }
+
+  setPulsingPin(stopId: number | null): void {
+    this.pulsingStopId = stopId;
+    this.renderPins();
   }
 
   setVisitedStops(visitedIds: Set<number>): void {
