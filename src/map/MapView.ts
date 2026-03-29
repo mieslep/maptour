@@ -12,6 +12,7 @@ export class MapView {
   private activeStopId: number;
   private pulsingStopId: number | null = null;
   private visitedStopIds: Set<number> = new Set();
+  private paddingBottom = 0;
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -94,10 +95,25 @@ export class MapView {
     this.map.fitBounds(bounds, { padding: [40, 40] });
   }
 
+  /** Set bottom padding (px) so panTo centres the stop in the visible map area above the sheet. */
+  setMapPadding(bottom: number): void {
+    this.paddingBottom = bottom;
+  }
+
   setActiveStop(stop: Stop): void {
     this.activeStopId = stop.id;
     this.renderPins();
-    this.map.panTo(stop.coords, { animate: true, duration: 0.5 });
+
+    if (this.paddingBottom > 0) {
+      // Offset the target so the stop is centred in the visible map sliver above the sheet
+      const zoom = this.map.getZoom();
+      const point = this.map.project(stop.coords, zoom);
+      point.y += this.paddingBottom / 2;
+      const offsetLatLng = this.map.unproject(point, zoom);
+      this.map.panTo(offsetLatLng, { animate: true, duration: 0.5 });
+    } else {
+      this.map.panTo(stop.coords, { animate: true, duration: 0.5 });
+    }
   }
 
   setPulsingPin(stopId: number | null): void {

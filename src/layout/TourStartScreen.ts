@@ -3,6 +3,7 @@ export interface TourStartScreenOptions {
   description?: string;
   duration?: string;
   stopCount: number;
+  returning?: boolean;
   onBegin: () => void;
 }
 
@@ -39,7 +40,7 @@ export class TourStartScreen {
 
     const cta = document.createElement('button');
     cta.className = 'maptour-start__cta';
-    cta.textContent = 'Begin tour';
+    cta.textContent = options.returning ? 'Re-take tour' : 'Begin tour';
     cta.addEventListener('click', options.onBegin);
     body.appendChild(cta);
 

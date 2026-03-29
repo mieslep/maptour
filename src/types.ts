@@ -4,8 +4,10 @@ export interface TourMeta {
   id: string;
   title: string;
   description?: string;
-  duration?: string;    // optional display string e.g. "45–60 minutes"
-  nav_mode?: LegMode;   // tour-level default travel mode; per-stop leg_to_next.mode takes priority
+  duration?: string;       // optional display string e.g. "45–60 minutes"
+  nav_mode?: LegMode;      // tour-level default travel mode; per-stop leg_to_next.mode takes priority
+  feedback_url?: string;   // URL (e.g. Google Form) shown on tour completion screen
+  close_url?: string;      // URL to navigate to when user closes/finishes the tour
 }
 
 export interface TextBlock {

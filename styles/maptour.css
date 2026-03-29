@@ -180,12 +180,78 @@
   background: var(--maptour-surface-2);
 }
 
+.maptour-stop-list-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 8px;
+}
+
+.maptour-nav-arrow {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--maptour-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.maptour-nav-arrow:hover:not(:disabled) {
+  background: var(--maptour-border);
+}
+
+.maptour-nav-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.maptour-nav-arrow:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-exit-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-right: 4px;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.maptour-exit-btn:hover {
+  background: var(--maptour-border);
+  color: var(--maptour-text);
+}
+
+.maptour-exit-btn:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
 .maptour-stop-list-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  padding: 10px 16px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
   background: none;
   border: none;
   cursor: pointer;
@@ -279,19 +345,16 @@
 }
 
 .maptour-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
-.maptour-card__badge {
-  display: inline-block;
-  background: var(--maptour-primary);
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 12px;
-  margin-bottom: 6px;
-  letter-spacing: 0.02em;
+.maptour-card__header-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .maptour-card__title {
@@ -300,6 +363,43 @@
   font-weight: 700;
   color: var(--maptour-text);
   line-height: 1.25;
+}
+
+.maptour-card__nav-icon {
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .maptour-card__nav-icon {
+    display: none;
+  }
+}
+
+.maptour-nav-btn--compact {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--maptour-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--maptour-shadow);
+  transition: background 0.15s;
+}
+
+.maptour-nav-btn--compact:hover {
+  background: #1d4ed8;
+}
+
+.maptour-nav-btn--compact:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
 }
 
 .maptour-card__leg-note {
@@ -319,11 +419,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 16px;
-}
-
-.maptour-card__nav-btn-container {
-  margin-top: 8px;
   margin-bottom: 16px;
 }
 
@@ -804,11 +899,13 @@
   outline-offset: 2px;
 }
 
-/* Desktop: start screen sits in content pane, not full overlay */
+/* Desktop: overlay the sheet (right 45%) rather than creating a third column */
 @media (min-width: 768px) {
   .maptour-start {
-    position: static;
-    background: none;
+    position: absolute;
+    inset: 0 0 0 55%;
+    background: var(--maptour-surface);
+    z-index: 20;
     padding: 32px 24px;
     align-items: flex-start;
     justify-content: flex-start;
@@ -909,10 +1006,48 @@
   outline-offset: 2px;
 }
 
+.maptour-complete__feedback {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-align: center;
+  font-family: var(--maptour-font);
+  font-size: 15px;
+  color: var(--maptour-primary);
+  text-decoration: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: var(--maptour-radius);
+  margin-top: 8px;
+  transition: background 0.15s;
+}
+
+.maptour-complete__feedback:hover {
+  background: var(--maptour-surface-2);
+}
+
+.maptour-complete__close {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-align: center;
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  color: #6b7280;
+  text-decoration: none;
+  margin-top: 8px;
+  transition: color 0.15s;
+}
+
+.maptour-complete__close:hover {
+  color: var(--maptour-text);
+}
+
 @media (min-width: 768px) {
   .maptour-complete {
-    position: static;
-    background: none;
+    position: absolute;
+    inset: 0 0 0 55%;
+    background: var(--maptour-surface);
+    z-index: 20;
     padding: 32px 24px;
     align-items: flex-start;
     justify-content: flex-start;

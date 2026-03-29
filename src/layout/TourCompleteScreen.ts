@@ -2,6 +2,8 @@ export interface TourCompleteScreenOptions {
   visitedCount: number;
   totalStops: number;
   onReview: () => void;
+  feedbackUrl?: string;
+  closeUrl?: string;
 }
 
 export class TourCompleteScreen {
@@ -34,9 +36,27 @@ export class TourCompleteScreen {
 
     const review = document.createElement('button');
     review.className = 'maptour-complete__review';
-    review.textContent = 'Review tour';
+    review.textContent = 'Revisit tour';
     review.addEventListener('click', options.onReview);
     body.appendChild(review);
+
+    if (options.feedbackUrl) {
+      const feedback = document.createElement('a');
+      feedback.className = 'maptour-complete__feedback';
+      feedback.href = options.feedbackUrl;
+      feedback.target = '_blank';
+      feedback.rel = 'noopener noreferrer';
+      feedback.textContent = 'Leave feedback';
+      body.appendChild(feedback);
+    }
+
+    if (options.closeUrl) {
+      const close = document.createElement('a');
+      close.className = 'maptour-complete__close';
+      close.href = options.closeUrl;
+      close.textContent = 'Close';
+      body.appendChild(close);
+    }
 
     this.el.appendChild(body);
     container.appendChild(this.el);

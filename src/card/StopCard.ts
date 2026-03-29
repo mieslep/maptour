@@ -56,21 +56,33 @@ export class StopCard {
     this.container.setAttribute('role', 'region');
     this.container.setAttribute('aria-label', `Stop ${stopNumber}: ${stop.title}`);
 
-    // Header
+    // Header row: title + compact nav icon
     const header = document.createElement('div');
     header.className = 'maptour-card__header';
 
-    const badge = document.createElement('span');
-    badge.className = 'maptour-card__badge';
-    badge.setAttribute('aria-label', `Stop ${stopNumber} of ${totalStops}`);
-    badge.textContent = `${stopNumber} / ${totalStops}`;
+    const headerText = document.createElement('div');
+    headerText.className = 'maptour-card__header-text';
 
     const title = document.createElement('h2');
     title.className = 'maptour-card__title';
     title.textContent = stop.title;
 
-    header.appendChild(badge);
-    header.appendChild(title);
+    headerText.appendChild(title);
+    header.appendChild(headerText);
+
+    // Compact "Take me there" icon button in header
+    const navIconContainer = document.createElement('div');
+    navIconContainer.className = 'maptour-card__nav-icon';
+    header.appendChild(navIconContainer);
+    this.navButton = new NavButton(
+      navIconContainer,
+      stop,
+      this.navPreference,
+      this.takeMethereCallback ?? undefined,
+      this.tourNavMode,
+      true, // compact mode
+    );
+
     this.container.appendChild(header);
 
     // Leg note
@@ -92,18 +104,6 @@ export class StopCard {
     });
 
     this.container.appendChild(content);
-
-    // Nav button
-    const navContainer = document.createElement('div');
-    navContainer.className = 'maptour-card__nav-btn-container';
-    this.container.appendChild(navContainer);
-    this.navButton = new NavButton(
-      navContainer,
-      stop,
-      this.navPreference,
-      this.takeMethereCallback ?? undefined,
-      this.tourNavMode,
-    );
   }
 
   update(stop: Stop, stopNumber: number, totalStops: number): void {

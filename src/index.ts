@@ -63,26 +63,69 @@ async function init(options: MapTourInitOptions): Promise<void> {
   stopListToggleBtn.className = 'maptour-stop-list-toggle';
   stopListToggleBtn.setAttribute('aria-expanded', 'true');
   stopListToggleBtn.setAttribute('aria-controls', 'maptour-stop-list');
-  stopListToggleBtn.innerHTML = '<span>All Stops</span><span class="maptour-stop-list-toggle__icon" aria-hidden="true">▲</span>';
+  stopListToggleBtn.innerHTML = '<span class="maptour-stop-list-toggle__label">All Stops</span><span class="maptour-stop-list-toggle__icon" aria-hidden="true">▲</span>';
 
   const stopListEl = document.createElement('div');
   stopListEl.id = 'maptour-stop-list';
 
   let stopListOpen = true;
+  let currentStopLabel = '';
 
   function setStopListOpen(open: boolean): void {
     stopListOpen = open;
     stopListEl.style.display = open ? '' : 'none';
     stopListToggleBtn.setAttribute('aria-expanded', String(open));
+    // Update label: "All Stops" when open, "Stop N / M" when collapsed
+    const label = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__label');
+    if (label) label.textContent = open ? 'All Stops' : currentStopLabel;
     const icon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
     if (icon) icon.textContent = open ? '▲' : '▼';
+  }
+
+  function updateStopLabel(stopNumber: number, totalStops: number): void {
+    currentStopLabel = `Stop ${stopNumber} / ${totalStops}`;
+    if (!stopListOpen) {
+      const label = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__label');
+      if (label) label.textContent = currentStopLabel;
+    }
   }
 
   stopListToggleBtn.addEventListener('click', () => {
     setStopListOpen(!stopListOpen);
   });
 
-  stopListWrapper.appendChild(stopListToggleBtn);
+  // Prev/Next arrow buttons (inline in the header bar)
+  const prevArrow = document.createElement('button');
+  prevArrow.className = 'maptour-nav-arrow';
+  prevArrow.innerHTML = '&#8249;';
+  prevArrow.setAttribute('aria-label', 'Previous stop');
+  prevArrow.disabled = true;
+
+  const nextArrow = document.createElement('button');
+  nextArrow.className = 'maptour-nav-arrow';
+  nextArrow.innerHTML = '&#8250;';
+  nextArrow.setAttribute('aria-label', 'Next stop');
+
+  // Exit tour button
+  const exitBtn = document.createElement('button');
+  exitBtn.className = 'maptour-exit-btn';
+  exitBtn.setAttribute('aria-label', 'End tour');
+  exitBtn.title = 'End tour';
+  exitBtn.textContent = '✕';
+  exitBtn.addEventListener('click', () => {
+    journeyState.clearSaved();
+    journeyState.transition('tour_complete');
+  });
+
+  // Header row: [◀ ▶] [STOP x/y ▼] [✕]
+  const toggleRow = document.createElement('div');
+  toggleRow.className = 'maptour-stop-list-header';
+  toggleRow.appendChild(prevArrow);
+  toggleRow.appendChild(nextArrow);
+  toggleRow.appendChild(stopListToggleBtn);
+  toggleRow.appendChild(exitBtn);
+
+  stopListWrapper.appendChild(toggleRow);
   stopListWrapper.appendChild(stopListEl);
   sheetContentEl.appendChild(stopListWrapper);
 
@@ -91,9 +134,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
   cardEl.className = 'maptour-card';
   sheetContentEl.appendChild(cardEl);
 
-  // Nav buttons
+  // Nav element (detached — NavController renders into it but we use arrow buttons instead)
   const navEl = document.createElement('div');
-  sheetContentEl.appendChild(navEl);
 
   // Bottom sheet (wraps sheetContentEl; on desktop becomes the side panel)
   const sheet = new BottomSheet(container, sheetContentEl);
@@ -128,19 +170,25 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
     if (state === 'tour_start') {
       sheet.setPosition('collapsed', false);
+      const returning = breadcrumb.getVisited().size > 0;
       startScreen = new TourStartScreen(container, {
         title: tour.tour.title,
         description: tour.tour.description,
         duration: tour.tour.duration,
         stopCount: tour.stops.length,
+        returning,
         onBegin: () => journeyState.transition('at_stop', 0),
       });
     } else if (state === 'at_stop') {
       sheet.setPosition('expanded', true);
-      // On mobile, collapse the stop list so card content has room to scroll
+      // On mobile, collapse the stop list and offset map centre above the sheet
       if (window.innerWidth < 768) {
         setStopListOpen(false);
+        mapView.setMapPadding(container.offsetHeight * 0.75);
+      } else {
+        mapView.setMapPadding(0);
       }
+      updateStopLabel(stopIndex + 1, tour.stops.length);
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
     } else if (state === 'in_transit') {
@@ -154,6 +202,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       completeScreen = new TourCompleteScreen(container, {
         visitedCount: breadcrumb.getVisited().size,
         totalStops: tour.stops.length,
+        feedbackUrl: tour.tour.feedback_url,
+        closeUrl: tour.tour.close_url,
         onReview: () => {
           journeyState.clearSaved();
           journeyState.transition('at_stop', 0);
@@ -174,6 +224,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
   });
 
   // === Navigation controller ===
+  // Wire arrow buttons (closures capture navController below)
+  prevArrow.addEventListener('click', () => navController.prev());
+  nextArrow.addEventListener('click', () => navController.next());
+
   const navController = new NavController(
     tour,
     mapView,
@@ -187,6 +241,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
         if (window.innerWidth < 768) {
           setStopListOpen(false);
         }
+        updateStopLabel(index + 1, tour.stops.length);
+        prevArrow.disabled = index === 0;
+        // Next always enabled — on last stop it triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
         // "Take me there" triggers in_transit
