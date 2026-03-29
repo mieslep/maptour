@@ -7,7 +7,7 @@ import { renderAudioBlock } from './blocks/AudioBlock';
 import { NavButton } from './NavButton';
 import { NavAppPreference } from '../navigation/NavAppPreference';
 
-const MODE_ICON: Partial<Record<LegMode, string>> = {
+const MODE_ICON: Record<LegMode, string> = {
   walk:    '🚶',
   drive:   '🚗',
   transit: '🚌',
@@ -51,12 +51,12 @@ export class StopCard {
     this.tourNavMode = mode;
   }
 
-  render(stop: Stop, stopNumber: number, totalStops: number): void {
+  render(stop: Stop, stopNumber: number, totalStops: number, nextStop?: Stop): void {
     this.container.innerHTML = '';
     this.container.setAttribute('role', 'region');
     this.container.setAttribute('aria-label', `Stop ${stopNumber}: ${stop.title}`);
 
-    // Header row: title + compact nav icon
+    // Header row: title + small "directions here" pin button
     const header = document.createElement('div');
     header.className = 'maptour-card__header';
 
@@ -70,29 +70,20 @@ export class StopCard {
     headerText.appendChild(title);
     header.appendChild(headerText);
 
-    // Compact "Take me there" icon button in header
-    const navIconContainer = document.createElement('div');
-    navIconContainer.className = 'maptour-card__nav-icon';
-    header.appendChild(navIconContainer);
-    this.navButton = new NavButton(
-      navIconContainer,
+    // Pin button — "directions to this stop" (no state change)
+    const pinContainer = document.createElement('div');
+    pinContainer.className = 'maptour-card__nav-icon';
+    header.appendChild(pinContainer);
+    new NavButton(
+      pinContainer,
       stop,
       this.navPreference,
-      this.takeMethereCallback ?? undefined,
+      undefined, // no state change — just opens directions
       this.tourNavMode,
-      true, // compact mode
+      'pin',
     );
 
     this.container.appendChild(header);
-
-    // Leg note
-    if (stop.leg_to_next?.note) {
-      const legNote = document.createElement('div');
-      legNote.className = 'maptour-card__leg-note';
-      const icon = MODE_ICON[stop.leg_to_next.mode] ?? '→';
-      legNote.textContent = `${icon} ${stop.leg_to_next.note}`;
-      this.container.appendChild(legNote);
-    }
 
     // Content blocks
     const content = document.createElement('div');
@@ -104,9 +95,35 @@ export class StopCard {
     });
 
     this.container.appendChild(content);
+
+    // Transition footer: leg note + "onwards" arrow button
+    if (stop.leg_to_next && nextStop) {
+      const footer = document.createElement('div');
+      footer.className = 'maptour-card__transition';
+
+      const noteEl = document.createElement('div');
+      noteEl.className = 'maptour-card__leg-note';
+      const icon = MODE_ICON[stop.leg_to_next.mode] ?? '→';
+      noteEl.textContent = `${icon} ${stop.leg_to_next.note ?? ''}`.trim();
+      footer.appendChild(noteEl);
+
+      const arrowContainer = document.createElement('div');
+      arrowContainer.className = 'maptour-card__nav-onwards';
+      footer.appendChild(arrowContainer);
+      this.navButton = new NavButton(
+        arrowContainer,
+        nextStop,
+        this.navPreference,
+        this.takeMethereCallback ?? undefined,
+        this.tourNavMode,
+        'arrow',
+      );
+
+      this.container.appendChild(footer);
+    }
   }
 
-  update(stop: Stop, stopNumber: number, totalStops: number): void {
-    this.render(stop, stopNumber, totalStops);
+  update(stop: Stop, stopNumber: number, totalStops: number, nextStop?: Stop): void {
+    this.render(stop, stopNumber, totalStops, nextStop);
   }
 }

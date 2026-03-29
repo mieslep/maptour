@@ -130,8 +130,9 @@ export class NavController {
     this.currentIndex = index;
     const stop = this.currentStop;
 
+    const nextStop = index < this.tour.stops.length - 1 ? this.tour.stops[index + 1] : undefined;
     this.mapView.setActiveStop(stop);
-    this.stopCard.update(stop, index + 1, this.tour.stops.length);
+    this.stopCard.update(stop, index + 1, this.tour.stops.length, nextStop);
     this.mapView.setVisitedStops(this.breadcrumb.getVisited());
     this.updateNavButtons();
     this.updateStopList();

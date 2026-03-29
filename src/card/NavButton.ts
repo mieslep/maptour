@@ -59,8 +59,11 @@ export function resolveMode(stop: Stop, tourNavMode?: LegMode): LegMode {
   return stop.leg_to_next?.mode ?? tourNavMode ?? 'walk';
 }
 
-// SVG navigation arrow (Material Design "navigation" icon)
-const NAV_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>';
+// SVG icons
+const PIN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>';
+const ARROW_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>';
+
+export type NavButtonVariant = 'pin' | 'arrow' | 'full';
 
 export class NavButton {
   private container: HTMLElement;
@@ -70,16 +73,16 @@ export class NavButton {
   private pickerOverlay: HTMLElement | null = null;
   private onNavigateCallback: (() => void) | undefined;
   private tourNavMode: LegMode | undefined;
-  private compact: boolean;
+  private variant: NavButtonVariant;
 
-  constructor(container: HTMLElement, stop: Stop, preference: NavAppPreference, onNavigate?: () => void, tourNavMode?: LegMode, compact = false) {
+  constructor(container: HTMLElement, stop: Stop, preference: NavAppPreference, onNavigate?: () => void, tourNavMode?: LegMode, variant: NavButtonVariant = 'full') {
     this.container = container;
     this.stop = stop;
     this.tourNavMode = tourNavMode;
     this.legMode = resolveMode(stop, tourNavMode);
     this.preference = preference;
     this.onNavigateCallback = onNavigate;
-    this.compact = compact;
+    this.variant = variant;
     this.render();
   }
 
@@ -87,15 +90,21 @@ export class NavButton {
     this.container.innerHTML = '';
 
     const btn = document.createElement('button');
-    if (this.compact) {
-      btn.className = 'maptour-nav-btn maptour-nav-btn--compact';
-      btn.innerHTML = NAV_SVG;
-      btn.title = BUTTON_LABELS[this.legMode];
+    if (this.variant === 'pin') {
+      btn.className = 'maptour-nav-btn maptour-nav-btn--pin';
+      btn.innerHTML = PIN_SVG;
+      btn.title = 'Directions to this stop';
+      btn.setAttribute('aria-label', `Get directions to ${this.stop.title}`);
+    } else if (this.variant === 'arrow') {
+      btn.className = 'maptour-nav-btn maptour-nav-btn--arrow';
+      btn.innerHTML = ARROW_SVG;
+      btn.title = `${BUTTON_LABELS[this.legMode]}`;
+      btn.setAttribute('aria-label', `${ARIA_PREFIX[this.legMode]} ${this.stop.title}`);
     } else {
       btn.className = 'maptour-nav-btn';
       btn.textContent = BUTTON_LABELS[this.legMode];
+      btn.setAttribute('aria-label', `${ARIA_PREFIX[this.legMode]} ${this.stop.title}`);
     }
-    btn.setAttribute('aria-label', `${ARIA_PREFIX[this.legMode]} ${this.stop.title}`);
     btn.addEventListener('click', () => this.handleClick());
 
     this.container.appendChild(btn);
