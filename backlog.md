@@ -178,9 +178,36 @@ Post-v1.1 quality pass: axe-core audit on new bottom sheet, start/complete scree
 
 ---
 
-## Backlog (post-v1.1, unsequenced)
+## Milestone: v1.2 — Tour experience enhancements
 
+### TOUR-020 — Welcome and goodbye cards (small)
 
+Add optional `tour.welcome` and `tour.goodbye` content blocks to YAML. These render as special non-stop cards at the start and end of the tour — not numbered stops, but bookend content (e.g. introduction text, sponsor acknowledgements, thank-you message).
+
+**Dependencies:** None (builds on current tour_start/tour_complete states)
+**Status:** Speccing
+
+---
+
+### TOUR-021 — Flexible tour start point (medium)
+
+Allow the user to start the tour at any stop. The start screen shows the map with all pins; user can tap a pin or cycle through stops to choose a starting point. GPS can pre-select the nearest stop. Default remains stop 1.
+
+**Dependencies:** TOUR-020 (welcome card flows into stop selection)
+**Status:** Speccing
+
+---
+
+### TOUR-022 — Journey cards between stops (medium)
+
+Add optional `journey` content blocks between stops — guided commentary for the route between two stops. Content tied to the transit segment, shown during the walk/drive. Could include waypoints along the polyline, points of interest en route, or narrative text.
+
+**Dependencies:** TOUR-021 (flexible start affects journey ordering)
+**Status:** Speccing
+
+---
+
+## Backlog (post-v1.2, unsequenced)
 
 - Authoring UI — web-based tour builder, no YAML editing required
 - npm package publication
