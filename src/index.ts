@@ -151,6 +151,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const mapView = new MapView(mapPane, tour);
   const stopCard = new StopCard(cardEl);
   stopCard.setTourNavMode(tour.tour.nav_mode);
+  // "Next stop" footer button advances via NavController
+  stopCard.onNext(() => navController.next());
   const breadcrumb = new Breadcrumb(tour.tour.id);
   const gpsTracker = new GpsTracker();
 
@@ -245,10 +247,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
         // Next always enabled — on last stop it triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
-        // "Take me there" triggers in_transit
-        stopCard.onTakeMethere(() => {
-          journeyState.transition('in_transit', index);
-        });
       },
       onNextFromLast: () => {
         breadcrumb.markVisited(tour.stops[tour.stops.length - 1].id);

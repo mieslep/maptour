@@ -14,7 +14,7 @@ function makeStop(overrides: Partial<Stop> = {}): Stop {
 
 describe('resolveMode', () => {
   it('prefers stop leg mode over tour default', () => {
-    const stop = makeStop({ leg_to_next: { mode: 'drive' } });
+    const stop = makeStop({ getting_here: { mode: 'drive' } });
     expect(resolveMode(stop, 'walk')).toBe('drive');
   });
 
@@ -100,13 +100,13 @@ stops:
     title: S
     coords: [52.5, -6.5]
     content: []
-    leg_to_next:
+    getting_here:
       mode: cycle
 `;
     const result = parseTourFromString(yaml);
     expect(result.error).toBeUndefined();
     expect(result.tour?.tour.nav_mode).toBe('transit');
-    expect(result.tour?.stops[0].leg_to_next?.mode).toBe('cycle');
+    expect(result.tour?.stops[0].getting_here?.mode).toBe('cycle');
   });
 
   it('warns and normalises invalid nav_mode', async () => {

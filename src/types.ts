@@ -5,7 +5,7 @@ export interface TourMeta {
   title: string;
   description?: string;
   duration?: string;       // optional display string e.g. "45–60 minutes"
-  nav_mode?: LegMode;      // tour-level default travel mode; per-stop leg_to_next.mode takes priority
+  nav_mode?: LegMode;      // tour-level default travel mode; per-stop getting_here.mode takes priority
   feedback_url?: string;   // URL (e.g. Google Form) shown on tour completion screen
   close_url?: string;      // URL to navigate to when user closes/finishes the tour
 }
@@ -59,7 +59,7 @@ export interface Stop {
   title: string;
   coords: [number, number]; // [lat, lng]
   content: ContentBlock[];
-  leg_to_next?: Leg;
+  getting_here?: Leg;
 }
 
 export interface Tour {

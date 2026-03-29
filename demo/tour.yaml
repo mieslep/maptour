@@ -46,12 +46,12 @@ stops:
             caption: Re-laid cobbled pathway to the main entrance
           - url: https://placehold.co/800x500/dc2626/ffffff?text=Heritage+Sign
             caption: New heritage interpretation signage
-    leg_to_next:
-      mode: walk
-      note: "Walk down Castle Hill to the river, ~6 min"
 
   - id: 2
     title: River Slaney Cleanup & Wildflower Bank
+    getting_here:
+      mode: walk
+      note: "Walk down Castle Hill to the river, ~6 min"
     coords: [52.50290, -6.55650]
     content:
       - type: text
@@ -78,12 +78,12 @@ stops:
       - type: image
         url: https://placehold.co/800x500/16a34a/ffffff?text=River+Slaney+Bank
         caption: The newly planted riverside wildflower bank, April 2025
-    leg_to_next:
-      mode: walk
-      note: "Follow the riverside path north, ~8 min"
 
   - id: 3
     title: Abbey Square Heritage Planting
+    getting_here:
+      mode: walk
+      note: "Follow the riverside path north, ~8 min"
     coords: [52.50390, -6.55750]
     content:
       - type: text
@@ -111,12 +111,12 @@ stops:
       - type: image
         url: https://placehold.co/800x500/d97706/ffffff?text=Abbey+Square+Overview
         caption: Abbey Square looking south, July 2025
-    leg_to_next:
-      mode: walk
-      note: "Head along Main Street to Templeshannon, ~10 min"
 
   - id: 4
     title: Templeshannon Community Garden
+    getting_here:
+      mode: walk
+      note: "Head along Main Street to Templeshannon, ~10 min"
     coords: [52.50520, -6.55900]
     content:
       - type: text
@@ -149,12 +149,12 @@ stops:
             caption: The polytunnel extends the growing season year-round
           - url: https://placehold.co/800x500/166534/ffffff?text=Bug+Hotel
             caption: The bug hotel in the children's sensory garden
-    leg_to_next:
-      mode: drive
-      note: "Drive across the bridge and up to Vinegar Hill, ~5 min"
 
   - id: 5
     title: Vinegar Hill Tree Planting Scheme
+    getting_here:
+      mode: drive
+      note: "Drive across the bridge and up to Vinegar Hill, ~5 min"
     coords: [52.50180, -6.54900]
     content:
       - type: text
@@ -185,12 +185,12 @@ stops:
             caption: Volunteers at the community planting day, February 2025
           - url: https://placehold.co/800x500/14532d/ffffff?text=Hawthorn+Saplings
             caption: Young hawthorn saplings in their first spring growth
-    leg_to_next:
-      mode: drive
-      note: "Return down to town and head for the station, ~7 min"
 
   - id: 6
     title: Enniscorthy Railway Station — Gateway Project
+    getting_here:
+      mode: drive
+      note: "Return down to town and head for the station, ~7 min"
     coords: [52.50650, -6.56200]
     content:
       - type: text

@@ -71,13 +71,13 @@ function validateStop(stop: unknown, index: number): string | null {
     const err = validateContentBlock(s.content[i], s.id, i);
     if (err) return err;
   }
-  if (s.leg_to_next !== undefined) {
-    const leg = s.leg_to_next as Record<string, unknown>;
+  if (s.getting_here !== undefined) {
+    const leg = s.getting_here as Record<string, unknown>;
     if (typeof leg !== 'object' || leg === null) {
-      return `Stop ${s.id}: "leg_to_next" must be an object`;
+      return `Stop ${s.id}: "getting_here" must be an object`;
     }
     if (typeof leg.mode !== 'string' || !VALID_LEG_MODES.has(leg.mode)) {
-      return `Stop ${s.id}: "leg_to_next.mode" must be one of: walk, drive, transit, cycle`;
+      return `Stop ${s.id}: "getting_here.mode" must be one of: walk, drive, transit, cycle`;
     }
   }
   return null;

@@ -73,8 +73,8 @@ export class MapView {
     for (let i = 0; i < this.tour.stops.length - 1; i++) {
       const current = this.tour.stops[i];
       const next = this.tour.stops[i + 1];
-      const leg = current.leg_to_next;
-      const mode = leg?.mode ?? 'walk';
+      // Mode comes from the destination stop's getting_here
+      const mode = next.getting_here?.mode ?? 'walk';
       const style = getLegStyle(mode);
 
       const polyline = L.polyline([current.coords, next.coords], {

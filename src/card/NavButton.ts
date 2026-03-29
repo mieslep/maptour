@@ -56,7 +56,7 @@ export function buildDeepLink(app: NavApp, lat: number, lng: number, mode: LegMo
 }
 
 export function resolveMode(stop: Stop, tourNavMode?: LegMode): LegMode {
-  return stop.leg_to_next?.mode ?? tourNavMode ?? 'walk';
+  return stop.getting_here?.mode ?? tourNavMode ?? 'walk';
 }
 
 // SVG icons

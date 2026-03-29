@@ -32,18 +32,17 @@ function renderBlock(block: ContentBlock, active: boolean): HTMLElement {
 export class StopCard {
   private container: HTMLElement;
   private navPreference: NavAppPreference;
-  private navButton: NavButton | null = null;
-  private takeMethereCallback: (() => void) | null = null;
   private tourNavMode: LegMode | undefined;
+  private nextCallback: (() => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.navPreference = new NavAppPreference();
   }
 
-  /** Register a callback that fires when "Take me there" is tapped. */
-  onTakeMethere(cb: () => void): void {
-    this.takeMethereCallback = cb;
+  /** Register a callback for the "Next stop" footer button. */
+  onNext(cb: () => void): void {
+    this.nextCallback = cb;
   }
 
   /** Set the tour-level nav mode default (passed down to NavButton). */
@@ -56,34 +55,38 @@ export class StopCard {
     this.container.setAttribute('role', 'region');
     this.container.setAttribute('aria-label', `Stop ${stopNumber}: ${stop.title}`);
 
-    // Header row: title + small "directions here" pin button
-    const header = document.createElement('div');
-    header.className = 'maptour-card__header';
+    // "Getting here" row — directions to THIS stop (if provided)
+    if (stop.getting_here) {
+      const gettingHere = document.createElement('div');
+      gettingHere.className = 'maptour-card__getting-here';
 
-    const headerText = document.createElement('div');
-    headerText.className = 'maptour-card__header-text';
+      const noteEl = document.createElement('div');
+      noteEl.className = 'maptour-card__getting-here-note';
+      const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
+      noteEl.textContent = `${icon} ${stop.getting_here.note ?? ''}`.trim();
+      gettingHere.appendChild(noteEl);
 
+      // Pin nav button — directions to this stop
+      const pinContainer = document.createElement('div');
+      pinContainer.className = 'maptour-card__nav-icon';
+      gettingHere.appendChild(pinContainer);
+      new NavButton(
+        pinContainer,
+        stop,
+        this.navPreference,
+        undefined,
+        this.tourNavMode,
+        'pin',
+      );
+
+      this.container.appendChild(gettingHere);
+    }
+
+    // Title
     const title = document.createElement('h2');
     title.className = 'maptour-card__title';
     title.textContent = stop.title;
-
-    headerText.appendChild(title);
-    header.appendChild(headerText);
-
-    // Pin button — "directions to this stop" (no state change)
-    const pinContainer = document.createElement('div');
-    pinContainer.className = 'maptour-card__nav-icon';
-    header.appendChild(pinContainer);
-    new NavButton(
-      pinContainer,
-      stop,
-      this.navPreference,
-      undefined, // no state change — just opens directions
-      this.tourNavMode,
-      'pin',
-    );
-
-    this.container.appendChild(header);
+    this.container.appendChild(title);
 
     // Content blocks
     const content = document.createElement('div');
@@ -96,28 +99,22 @@ export class StopCard {
 
     this.container.appendChild(content);
 
-    // Transition footer: leg note + "onwards" arrow button
-    if (stop.leg_to_next && nextStop) {
+    // "Next stop" footer
+    if (nextStop) {
       const footer = document.createElement('div');
-      footer.className = 'maptour-card__transition';
+      footer.className = 'maptour-card__next-stop';
 
-      const noteEl = document.createElement('div');
-      noteEl.className = 'maptour-card__leg-note';
-      const icon = MODE_ICON[stop.leg_to_next.mode] ?? '→';
-      noteEl.textContent = `${icon} ${stop.leg_to_next.note ?? ''}`.trim();
-      footer.appendChild(noteEl);
+      const label = document.createElement('div');
+      label.className = 'maptour-card__next-stop-label';
+      label.textContent = `Next: ${nextStop.title}`;
+      footer.appendChild(label);
 
-      const arrowContainer = document.createElement('div');
-      arrowContainer.className = 'maptour-card__nav-onwards';
-      footer.appendChild(arrowContainer);
-      this.navButton = new NavButton(
-        arrowContainer,
-        nextStop,
-        this.navPreference,
-        this.takeMethereCallback ?? undefined,
-        this.tourNavMode,
-        'arrow',
-      );
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'maptour-card__next-btn';
+      nextBtn.textContent = 'Next →';
+      nextBtn.setAttribute('aria-label', `Go to next stop: ${nextStop.title}`);
+      nextBtn.addEventListener('click', () => this.nextCallback?.());
+      footer.appendChild(nextBtn);
 
       this.container.appendChild(footer);
     }

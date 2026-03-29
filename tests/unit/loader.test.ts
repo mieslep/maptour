@@ -14,7 +14,7 @@ stops:
     content:
       - type: text
         body: "Hello world"
-    leg_to_next:
+    getting_here:
       mode: walk
       note: "Walk 5 min"
   - id: 2
@@ -38,7 +38,7 @@ stops:
       - type: audio
         url: https://example.com/audio.mp3
         label: Commentary
-    leg_to_next:
+    getting_here:
       mode: drive
 `;
 
@@ -64,8 +64,8 @@ describe('parseTourFromString', () => {
 
   it('parses leg modes correctly', () => {
     const result = parseTourFromString(VALID_TOUR_YAML);
-    expect(result.tour?.stops[0].leg_to_next?.mode).toBe('walk');
-    expect(result.tour?.stops[2].leg_to_next?.mode).toBe('drive');
+    expect(result.tour?.stops[0].getting_here?.mode).toBe('walk');
+    expect(result.tour?.stops[2].getting_here?.mode).toBe('drive');
   });
 
   it('parses coordinates as tuples', () => {
@@ -185,11 +185,11 @@ stops:
     title: Stop 1
     coords: [52.5022, -6.5581]
     content: []
-    leg_to_next:
+    getting_here:
       mode: bicycle
 `;
     const result = parseTourFromString(yaml);
-    expect(result.error).toContain('leg_to_next.mode');
+    expect(result.error).toContain('getting_here.mode');
   });
 
   it('returns error for duplicate stop IDs', () => {
