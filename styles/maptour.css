@@ -768,3 +768,172 @@
 @keyframes maptour-spin {
   to { transform: rotate(360deg); }
 }
+
+/* === In-Transit Bar === */
+
+.maptour-transit-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--maptour-surface);
+  border-top: 1px solid var(--maptour-border);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.maptour-transit-bar[hidden] {
+  display: none;
+}
+
+.maptour-transit-bar__label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--maptour-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.maptour-transit-bar__arrived {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  min-height: 44px;
+  background: var(--maptour-accent);
+  color: white;
+  border: none;
+  border-radius: var(--maptour-radius);
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.maptour-transit-bar__arrived:hover {
+  opacity: 0.9;
+}
+
+.maptour-transit-bar__arrived:focus-visible {
+  outline: 2px solid var(--maptour-accent);
+  outline-offset: 2px;
+}
+
+/* === Stop List FAB + Overlay === */
+
+.maptour-stop-list-fab {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--maptour-surface);
+  border: 1px solid var(--maptour-border);
+  box-shadow: var(--maptour-shadow);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--maptour-text);
+  transition: background 0.15s;
+}
+
+.maptour-stop-list-fab:hover {
+  background: var(--maptour-surface-2);
+}
+
+.maptour-stop-list-fab:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-stop-list-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.maptour-stop-list-overlay__backdrop[hidden] {
+  display: none;
+}
+
+.maptour-stop-list-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 31;
+  width: min(320px, 100%);
+  background: var(--maptour-surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.maptour-stop-list-overlay[hidden] {
+  display: none;
+}
+
+.maptour-stop-list-overlay__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--maptour-border);
+  flex-shrink: 0;
+}
+
+.maptour-stop-list-overlay__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.maptour-stop-list-overlay__close {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--maptour-text);
+  border-radius: var(--maptour-radius);
+}
+
+.maptour-stop-list-overlay__close:hover {
+  background: var(--maptour-surface-2);
+}
+
+.maptour-stop-list-overlay__close:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-stop-list-overlay .maptour-stop-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Hide FAB on desktop — stop list is already in the content pane */
+@media (min-width: 768px) {
+  .maptour-stop-list-fab,
+  .maptour-stop-list-overlay,
+  .maptour-stop-list-overlay__backdrop {
+    display: none !important;
+  }
+}
