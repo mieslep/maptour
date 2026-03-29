@@ -53,6 +53,7 @@ export type LegMode = 'walk' | 'drive' | 'transit' | 'cycle';
 export interface Leg {
   mode: LegMode;
   note?: string;
+  route?: [number, number][];  // optional pre-computed waypoints for polyline
 }
 
 export interface Stop {

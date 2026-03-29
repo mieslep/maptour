@@ -160,4 +160,171 @@ export class StopCard {
   update(stop: Stop, stopNumber: number, totalStops: number, nextStop?: Stop): void {
     this.render(stop, stopNumber, totalStops, nextStop);
   }
+
+  // === Welcome card ===
+
+  private welcomeSelectionEl: HTMLElement | null = null;
+  private welcomeCtaEl: HTMLButtonElement | null = null;
+  private welcomeBeginCallback: ((index: number) => void) | null = null;
+  private welcomeSelectedIndex = 0;
+
+  renderWelcome(options: {
+    title: string;
+    description?: string;
+    duration?: string;
+    stopCount: number;
+    welcome?: ContentBlock[];
+    returning: boolean;
+    stops: Stop[];
+    selectedIndex: number;
+    onBegin: (index: number) => void;
+  }): void {
+    this.container.innerHTML = '';
+    this.container.scrollTop = 0;
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', `Welcome: ${options.title}`);
+    this.welcomeBeginCallback = options.onBegin;
+    this.welcomeSelectedIndex = options.selectedIndex;
+
+    // Tour title
+    const title = document.createElement('h1');
+    title.className = 'maptour-card__title';
+    title.textContent = options.title;
+    this.container.appendChild(title);
+
+    // Description
+    if (options.description) {
+      const desc = document.createElement('p');
+      desc.className = 'maptour-card__description';
+      desc.textContent = options.description;
+      this.container.appendChild(desc);
+    }
+
+    // Meta (stop count + duration)
+    const meta = document.createElement('p');
+    meta.className = 'maptour-card__meta';
+    const stopLabel = `${options.stopCount} stop${options.stopCount !== 1 ? 's' : ''}`;
+    meta.textContent = options.duration ? `${stopLabel} · ${options.duration}` : stopLabel;
+    this.container.appendChild(meta);
+
+    // Welcome content blocks
+    if (options.welcome && options.welcome.length > 0) {
+      const welcomeContent = document.createElement('div');
+      welcomeContent.className = 'maptour-card__content';
+      options.welcome.forEach((block) => {
+        welcomeContent.appendChild(renderBlock(block, true));
+      });
+      this.container.appendChild(welcomeContent);
+    }
+
+    // Selected stop preview (updated dynamically via updateWelcomeSelection)
+    this.welcomeSelectionEl = document.createElement('div');
+    this.welcomeSelectionEl.className = 'maptour-card__start-from';
+    this.container.appendChild(this.welcomeSelectionEl);
+
+    // CTA button
+    this.welcomeCtaEl = document.createElement('button');
+    this.welcomeCtaEl.className = 'maptour-card__cta';
+    this.welcomeCtaEl.addEventListener('click', () => {
+      this.welcomeBeginCallback?.(this.welcomeSelectedIndex);
+    });
+    this.container.appendChild(this.welcomeCtaEl);
+
+    // Set initial selection
+    this.updateWelcomeSelection(options.stops[options.selectedIndex], options.selectedIndex, options.stops.length, options.returning);
+  }
+
+  updateWelcomeSelection(stop: Stop, index: number, totalStops: number, returning = false): void {
+    this.welcomeSelectedIndex = index;
+
+    if (this.welcomeSelectionEl) {
+      this.welcomeSelectionEl.innerHTML = '';
+      const label = document.createElement('div');
+      label.className = 'maptour-card__start-from-label';
+      label.textContent = `Start at Stop ${index + 1} / ${totalStops}:`;
+      this.welcomeSelectionEl.appendChild(label);
+
+      const stopName = document.createElement('div');
+      stopName.className = 'maptour-card__start-from-name';
+      stopName.textContent = stop.title;
+      this.welcomeSelectionEl.appendChild(stopName);
+
+      if (stop.getting_here?.note) {
+        const note = document.createElement('div');
+        note.className = 'maptour-card__getting-here-note';
+        const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
+        note.textContent = `${icon} ${stop.getting_here.note}`;
+        this.welcomeSelectionEl.appendChild(note);
+      }
+    }
+
+    if (this.welcomeCtaEl) {
+      if (returning) {
+        this.welcomeCtaEl.textContent = 'Re-take tour';
+      } else if (index === 0) {
+        this.welcomeCtaEl.textContent = 'Begin tour';
+      } else {
+        this.welcomeCtaEl.textContent = `Start from ${stop.title}`;
+      }
+    }
+  }
+
+  // === Goodbye card ===
+
+  renderGoodbye(options: {
+    goodbye?: ContentBlock[];
+    visitedCount: number;
+    totalStops: number;
+    closeUrl?: string;
+    onReview: () => void;
+  }): void {
+    this.container.innerHTML = '';
+    this.container.scrollTop = 0;
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', 'Tour complete');
+
+    // Checkmark icon
+    const icon = document.createElement('div');
+    icon.className = 'maptour-complete__icon';
+    icon.setAttribute('aria-hidden', 'true');
+    this.container.appendChild(icon);
+
+    // Heading
+    const heading = document.createElement('h2');
+    heading.className = 'maptour-card__title';
+    heading.textContent = 'Tour complete!';
+    this.container.appendChild(heading);
+
+    // Visited count
+    const count = document.createElement('p');
+    count.className = 'maptour-card__meta';
+    count.textContent = `${options.visitedCount} / ${options.totalStops} stops visited`;
+    this.container.appendChild(count);
+
+    // Goodbye content blocks
+    if (options.goodbye && options.goodbye.length > 0) {
+      const goodbyeContent = document.createElement('div');
+      goodbyeContent.className = 'maptour-card__content';
+      options.goodbye.forEach((block) => {
+        goodbyeContent.appendChild(renderBlock(block, true));
+      });
+      this.container.appendChild(goodbyeContent);
+    }
+
+    // Revisit button
+    const review = document.createElement('button');
+    review.className = 'maptour-card__cta';
+    review.textContent = 'Revisit tour';
+    review.addEventListener('click', options.onReview);
+    this.container.appendChild(review);
+
+    // Close link
+    if (options.closeUrl) {
+      const close = document.createElement('a');
+      close.className = 'maptour-card__close-link';
+      close.href = options.closeUrl;
+      close.textContent = 'Close';
+      this.container.appendChild(close);
+    }
+  }
 }

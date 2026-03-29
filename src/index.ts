@@ -10,8 +10,6 @@ import { JourneyStateManager } from './journey/JourneyStateManager';
 import { BottomSheet } from './layout/BottomSheet';
 import { InTransitBar } from './layout/InTransitBar';
 import { StopListOverlay } from './layout/StopListOverlay';
-import { TourStartScreen } from './layout/TourStartScreen';
-import { TourCompleteScreen } from './layout/TourCompleteScreen';
 import type { MapTourInitOptions } from './types';
 
 export type { MapTourInitOptions };
@@ -80,14 +78,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
     if (label) label.textContent = open ? 'All Stops' : currentStopLabel;
     const icon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
     if (icon) icon.textContent = open ? '▲' : '▼';
-  }
-
-  function updateStopLabel(stopNumber: number, totalStops: number): void {
-    currentStopLabel = `Stop ${stopNumber} / ${totalStops}`;
-    if (!stopListOpen) {
-      const label = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__label');
-      if (label) label.textContent = currentStopLabel;
-    }
   }
 
   stopListToggleBtn.addEventListener('click', () => {
@@ -159,41 +149,71 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const breadcrumb = new Breadcrumb(tour.tour.id);
   const gpsTracker = new GpsTracker();
 
-  let startScreen: TourStartScreen | null = null;
-  let completeScreen: TourCompleteScreen | null = null;
+  // Arrow mode: 'picker' during welcome (cycle stops to choose start), 'nav' during tour
+  let arrowMode: 'nav' | 'picker' = 'nav';
+  let pickerIndex = 0;
+  const returning = breadcrumb.getVisited().size > 0;
+
+  function setMobileMapPadding(): void {
+    if (window.innerWidth < 768) {
+      mapView.setMapPadding(container.offsetHeight * 0.75);
+    } else {
+      mapView.setMapPadding(0);
+    }
+  }
+
+  function updatePickerSelection(index: number): void {
+    pickerIndex = index;
+    const stop = tour.stops[index];
+    stopCard.updateWelcomeSelection(stop, index, tour.stops.length, returning);
+    mapView.setActiveStop(stop);
+    updateStopLabel(`Stop ${index + 1} / ${tour.stops.length}`);
+    prevArrow.disabled = index === 0;
+    nextArrow.disabled = index === tour.stops.length - 1;
+  }
+
+  function updateStopLabel(text: string): void {
+    currentStopLabel = text;
+    if (!stopListOpen) {
+      const label = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__label');
+      if (label) label.textContent = text;
+    }
+  }
 
   // === State change handler ===
   journeyState.onStateChange((state, stopIndex) => {
-    // Tear down overlays
-    startScreen?.destroy();
-    startScreen = null;
-    completeScreen?.destroy();
-    completeScreen = null;
     transitBar.hide();
     mapView.setPulsingPin(null);
 
     if (state === 'tour_start') {
-      sheet.setPosition('collapsed', false);
-      const returning = breadcrumb.getVisited().size > 0;
-      startScreen = new TourStartScreen(container, {
+      arrowMode = 'picker';
+      sheet.setPosition('expanded', true);
+      setMobileMapPadding();
+      if (window.innerWidth < 768) setStopListOpen(false);
+
+      pickerIndex = 0;
+      stopCard.renderWelcome({
         title: tour.tour.title,
         description: tour.tour.description,
         duration: tour.tour.duration,
         stopCount: tour.stops.length,
-        returning,
         welcome: tour.tour.welcome,
-        onBegin: () => journeyState.transition('at_stop', 0),
+        returning,
+        stops: tour.stops,
+        selectedIndex: 0,
+        onBegin: (idx) => journeyState.transition('at_stop', idx),
       });
+      updateStopLabel('Welcome');
+      prevArrow.disabled = true;
+      nextArrow.disabled = tour.stops.length <= 1;
+      // Centre map on first stop
+      mapView.setActiveStop(tour.stops[0]);
     } else if (state === 'at_stop') {
+      arrowMode = 'nav';
       sheet.setPosition('expanded', true);
-      // On mobile, collapse the stop list and offset map centre above the sheet
-      if (window.innerWidth < 768) {
-        setStopListOpen(false);
-        mapView.setMapPadding(container.offsetHeight * 0.75);
-      } else {
-        mapView.setMapPadding(0);
-      }
-      updateStopLabel(stopIndex + 1, tour.stops.length);
+      if (window.innerWidth < 768) setStopListOpen(false);
+      setMobileMapPadding();
+      updateStopLabel(`Stop ${stopIndex + 1} / ${tour.stops.length}`);
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
     } else if (state === 'in_transit') {
@@ -203,12 +223,18 @@ async function init(options: MapTourInitOptions): Promise<void> {
       transitBar.show(nextIndex + 1, nextStop.title);
       mapView.setPulsingPin(nextStop.id);
     } else if (state === 'tour_complete') {
-      sheet.setPosition('collapsed', false);
-      completeScreen = new TourCompleteScreen(container, {
+      arrowMode = 'nav';
+      sheet.setPosition('expanded', true);
+      setMobileMapPadding();
+      if (window.innerWidth < 768) setStopListOpen(false);
+      updateStopLabel('Complete');
+      prevArrow.disabled = true;
+      nextArrow.disabled = true;
+      stopCard.renderGoodbye({
+        goodbye: tour.tour.goodbye,
         visitedCount: breadcrumb.getVisited().size,
         totalStops: tour.stops.length,
         closeUrl: tour.tour.close_url,
-        goodbye: tour.tour.goodbye,
         onReview: () => {
           journeyState.clearSaved();
           journeyState.transition('at_stop', 0);
@@ -229,9 +255,28 @@ async function init(options: MapTourInitOptions): Promise<void> {
   });
 
   // === Navigation controller ===
-  // Wire arrow buttons (closures capture navController below)
-  prevArrow.addEventListener('click', () => navController.prev());
-  nextArrow.addEventListener('click', () => navController.next());
+  // Arrow buttons: 'picker' mode cycles stops on welcome, 'nav' mode advances tour
+  prevArrow.addEventListener('click', () => {
+    if (arrowMode === 'picker') {
+      if (pickerIndex > 0) updatePickerSelection(pickerIndex - 1);
+    } else {
+      navController.prev();
+    }
+  });
+  nextArrow.addEventListener('click', () => {
+    if (arrowMode === 'picker') {
+      if (pickerIndex < tour.stops.length - 1) updatePickerSelection(pickerIndex + 1);
+    } else {
+      navController.next();
+    }
+  });
+
+  // Pin click on map selects that stop during welcome picker
+  mapView.onPinClick((index) => {
+    if (arrowMode === 'picker') {
+      updatePickerSelection(index);
+    }
+  });
 
   const navController = new NavController(
     tour,
@@ -246,7 +291,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         if (window.innerWidth < 768) {
           setStopListOpen(false);
         }
-        updateStopLabel(index + 1, tour.stops.length);
+        updateStopLabel(`Stop ${index + 1} / ${tour.stops.length}`);
         prevArrow.disabled = index === 0;
         // Next always enabled — on last stop it triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());

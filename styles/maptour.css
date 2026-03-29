@@ -514,6 +514,86 @@
   outline-offset: 2px;
 }
 
+/* === Welcome / Goodbye card elements === */
+
+.maptour-card__description {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+
+.maptour-card__meta {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--maptour-primary);
+  margin: 0 0 16px;
+}
+
+.maptour-card__start-from {
+  padding: 12px;
+  margin: 16px 0;
+  background: var(--maptour-surface-2);
+  border: 1px solid var(--maptour-border);
+  border-radius: var(--maptour-radius);
+}
+
+.maptour-card__start-from-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.maptour-card__start-from-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--maptour-text);
+}
+
+.maptour-card__cta {
+  width: 100%;
+  padding: 14px;
+  min-height: 44px;
+  background: var(--maptour-primary);
+  color: white;
+  border: none;
+  border-radius: var(--maptour-radius);
+  font-family: var(--maptour-font);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 8px;
+}
+
+.maptour-card__cta:hover {
+  background: #1d4ed8;
+}
+
+.maptour-card__cta:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-card__close-link {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  margin-top: 8px;
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.maptour-card__close-link:hover {
+  color: var(--maptour-text);
+}
+
 .maptour-card__content {
   display: flex;
   flex-direction: column;

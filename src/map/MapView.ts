@@ -13,6 +13,7 @@ export class MapView {
   private pulsingStopId: number | null = null;
   private visitedStopIds: Set<number> = new Set();
   private paddingBottom = 0;
+  private pinClickCallbacks: Array<(index: number) => void> = [];
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -61,6 +62,9 @@ export class MapView {
         alt: `Stop ${index + 1}: ${stop.title}`,
       });
 
+      marker.on('click', () => {
+        this.pinClickCallbacks.forEach((cb) => cb(index));
+      });
       marker.addTo(this.map);
       this.markers.set(stop.id, marker);
     });
@@ -73,11 +77,16 @@ export class MapView {
     for (let i = 0; i < this.tour.stops.length - 1; i++) {
       const current = this.tour.stops[i];
       const next = this.tour.stops[i + 1];
-      // Mode comes from the destination stop's getting_here
-      const mode = next.getting_here?.mode ?? 'walk';
+      // Mode and route from the destination stop's getting_here
+      const gettingHere = next.getting_here;
+      const mode = gettingHere?.mode ?? 'walk';
       const style = getLegStyle(mode);
+      // Use pre-computed waypoints if available, otherwise straight line
+      const path = gettingHere?.route && gettingHere.route.length > 0
+        ? gettingHere.route
+        : [current.coords, next.coords];
 
-      const polyline = L.polyline([current.coords, next.coords], {
+      const polyline = L.polyline(path, {
         color: style.color,
         weight: style.weight,
         dashArray: style.dashArray,
@@ -148,6 +157,10 @@ export class MapView {
       this.gpsDot.remove();
       this.gpsDot = null;
     }
+  }
+
+  onPinClick(cb: (index: number) => void): void {
+    this.pinClickCallbacks.push(cb);
   }
 
   getMap(): L.Map {
