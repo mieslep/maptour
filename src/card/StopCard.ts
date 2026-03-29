@@ -257,13 +257,6 @@ export class StopCard {
       textCol.appendChild(stopName);
 
       headerRow.appendChild(textCol);
-
-      // Always show satnav pin for the selected stop
-      const pinContainer = document.createElement('div');
-      pinContainer.className = 'maptour-card__nav-icon';
-      headerRow.appendChild(pinContainer);
-      new NavButton(pinContainer, stop, this.navPreference, undefined, this.tourNavMode, 'pin');
-
       this.welcomeSelectionEl.appendChild(headerRow);
     }
 
