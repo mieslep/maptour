@@ -34,6 +34,8 @@ export class StopCard {
   private navPreference: NavAppPreference;
   private tourNavMode: LegMode | undefined;
   private nextCallback: (() => void) | null = null;
+  private finishCallback: (() => void) | null = null;
+  private closeUrl: string | undefined;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -43,6 +45,16 @@ export class StopCard {
   /** Register a callback for the "Next stop" footer button. */
   onNext(cb: () => void): void {
     this.nextCallback = cb;
+  }
+
+  /** Register a callback for "Finish Tour" when there's no close_url. */
+  onFinish(cb: () => void): void {
+    this.finishCallback = cb;
+  }
+
+  /** Set the close URL for the "Finish Tour" button on the last stop. */
+  setCloseUrl(url: string | undefined): void {
+    this.closeUrl = url;
   }
 
   /** Set the tour-level nav mode default (passed down to NavButton). */
@@ -104,7 +116,7 @@ export class StopCard {
 
     this.container.appendChild(content);
 
-    // "Next stop" footer
+    // Footer: "Next stop" or "Finish Tour"
     if (nextStop) {
       const footer = document.createElement('div');
       footer.className = 'maptour-card__next-stop';
@@ -120,6 +132,26 @@ export class StopCard {
       nextBtn.setAttribute('aria-label', `Go to next stop: ${nextStop.title}`);
       nextBtn.addEventListener('click', () => this.nextCallback?.());
       footer.appendChild(nextBtn);
+
+      this.container.appendChild(footer);
+    } else {
+      // Last stop — "Finish Tour"
+      const footer = document.createElement('div');
+      footer.className = 'maptour-card__finish';
+
+      if (this.closeUrl) {
+        const link = document.createElement('a');
+        link.className = 'maptour-card__finish-btn';
+        link.href = this.closeUrl;
+        link.textContent = 'Finish Tour';
+        footer.appendChild(link);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'maptour-card__finish-btn';
+        btn.textContent = 'Finish Tour';
+        btn.addEventListener('click', () => this.finishCallback?.());
+        footer.appendChild(btn);
+      }
 
       this.container.appendChild(footer);
     }

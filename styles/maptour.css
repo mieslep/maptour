@@ -484,6 +484,36 @@
   outline-offset: 2px;
 }
 
+/* "Finish Tour" footer on last stop */
+.maptour-card__finish {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.maptour-card__finish-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: var(--maptour-accent);
+  color: white;
+  border: none;
+  border-radius: var(--maptour-radius);
+  font-family: var(--maptour-font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.maptour-card__finish-btn:hover {
+  background: #15803d;
+}
+
+.maptour-card__finish-btn:focus-visible {
+  outline: 2px solid var(--maptour-accent);
+  outline-offset: 2px;
+}
+
 .maptour-card__content {
   display: flex;
   flex-direction: column;
@@ -1073,25 +1103,6 @@
 .maptour-complete__review:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
-}
-
-.maptour-complete__feedback {
-  display: block;
-  width: 100%;
-  padding: 12px 16px;
-  text-align: center;
-  font-family: var(--maptour-font);
-  font-size: 15px;
-  color: var(--maptour-primary);
-  text-decoration: none;
-  border: 1px solid var(--maptour-border);
-  border-radius: var(--maptour-radius);
-  margin-top: 8px;
-  transition: background 0.15s;
-}
-
-.maptour-complete__feedback:hover {
-  background: var(--maptour-surface-2);
 }
 
 .maptour-complete__close {
