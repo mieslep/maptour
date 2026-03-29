@@ -56,7 +56,7 @@ A person — typically on a mobile device — who arrives at a stop, opens the t
 MapTour must work as a static asset bundle. No Node.js server, no API, no build step required by the end-user. The distributable is a single JS file + one CSS file. A tour is a YAML file + a directory of linked media URLs.
 
 ### II. Responsive, Mobile-First
-UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44×44px. On small screens the map takes the upper ~50% of viewport with the stop card scrolling below. On wider screens the layout may place the map and stop card side-by-side. No hover-only interactions.
+UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44×44px. On small screens the map fills the full container with stop content presented as a draggable bottom sheet above it. On wider screens the layout places the map and stop card side-by-side. No hover-only interactions.
 
 ### III. Embeddability
 All CSS is namespaced under `.maptour-`. No modifications to `body`, `html`, or global element styles. Leaflet is bundled within the MapTour JS bundle. A host page with its own Leaflet must not conflict.
@@ -92,4 +92,4 @@ MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency imm
 
 This constitution governs all MapTour development. Amendments require a spec change approved by Phil before implementation. All architectural decisions must trace to a requirement in the spec or an explicit constitution principle.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-28
+**Version**: 1.1.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-29

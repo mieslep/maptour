@@ -132,7 +132,55 @@ Tag v1.0.0, verify release workflow attaches `dist/` files to the GitHub Release
 
 ---
 
-## Backlog (post-v1.0, unsequenced)
+---
+
+## Milestone: v1.1 — Mobile-first tour experience
+
+### TOUR-016 — Journey state machine + mobile bottom sheet layout (large)
+
+Introduce a four-state journey machine (`tour_start`, `at_stop`, `in_transit`, `tour_complete`) and replace the current stacked mobile layout with a map-as-base-layer + draggable bottom sheet. Desktop layout unchanged.
+
+**Key deliverables:** `JourneyStateManager`, `BottomSheet`, `InTransitBar`, `StopListOverlay` (FAB-triggered overlay), map CSS refactor (container `position: fixed` on mobile), journey state persisted in localStorage.
+
+**Spec:** `specs/TOUR-016-spec.md` | **Plan:** `specs/TOUR-016-plan.md` | **Tasks:** `specs/TOUR-016-tasks.md`
+**Dependencies:** TOUR-009 (localStorage pattern), TOUR-010 (responsive layout to replace)
+**Status:** Specced — awaiting Phil sign-off
+
+---
+
+### TOUR-017 — Tour start screen + completion screen (small)
+
+Implement the visual `tour_start` and `tour_complete` states. Start screen: tour title, stop count, optional duration, "Begin tour" CTA. Completion screen: "Tour complete!", visited/total, "Review tour". Adds optional `tour.duration` YAML field.
+
+**Spec:** `specs/TOUR-017-spec.md` | **Plan:** `specs/TOUR-017-plan.md` | **Tasks:** `specs/TOUR-017-tasks.md`
+**Dependencies:** TOUR-016
+**Status:** Specced — awaiting Phil sign-off
+
+---
+
+### TOUR-018 — Extended nav modes + tour-level nav_mode YAML (small)
+
+Extend `LegMode` to `walk | drive | transit | cycle`. Add `tour.nav_mode` default to YAML. Update "Take me there" deep-links for all four modes. Filter nav app picker by mode capability (Waze: drive only). Update button labels. Add `transit`/`cycle` polyline styles.
+
+**Spec:** `specs/TOUR-018-spec.md` | **Plan:** `specs/TOUR-018-plan.md` | **Tasks:** `specs/TOUR-018-tasks.md`
+**Dependencies:** TOUR-016 (for integration; logically independent)
+**Parallelisable with:** TOUR-017
+**Status:** Specced — awaiting Phil sign-off
+
+---
+
+### TOUR-019 — v1.1 WCAG audit + integration guide update (small)
+
+Post-v1.1 quality pass: axe-core audit on new bottom sheet, start/complete screens, and overlay components. Update README integration guide to document new YAML fields (`tour.duration`, `tour.nav_mode`, extended `leg_to_next.mode`).
+
+**Dependencies:** TOUR-016, TOUR-017, TOUR-018
+**Status:** Not yet specced
+
+---
+
+## Backlog (post-v1.1, unsequenced)
+
+
 
 - Authoring UI — web-based tour builder, no YAML editing required
 - npm package publication
@@ -141,3 +189,5 @@ Tag v1.0.0, verify release workflow attaches `dist/` files to the GitHub Release
 - Audio commentary auto-play on stop entry (with user opt-in)
 - Cluster rendering for tours with many closely-spaced stops
 - Tour analytics (opt-in, privacy-preserving)
+- GPS proximity arrival detection — auto-reveal stop card when user enters detection radius; `arrival_radius` configurable in YAML at tour level (default 50m) and per-stop override; requires accuracy guard (only trigger if `accuracy < radius * 2`) and re-trigger protection (must exit radius before re-entry counts); only triggers for next unvisited stop in sequence
+- Battery preservation — reduce GPS polling frequency when user has been stationary at a stop for a while, or when next stop is >500m away; pause high-accuracy mode in the background

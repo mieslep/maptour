@@ -24,7 +24,7 @@ Creates and maintains the YAML tour file and assembles media URLs. Comfortable w
 Embeds MapTour in an existing static site. Needs: a single script tag, CSS variable hooks, no conflicts with host site styles or scripts.
 
 ### Tour Visitor
-Experiences the tour on a mobile device, possibly in the field. May start partway through, skip stops, lose signal. Needs: fast initial load, live GPS position, breadcrumb progress, one-tap navigation to any stop.
+Primarily on a mobile phone (~85% of usage); tablet ~10%, desktop ~5%. Desktop visitors are typically doing the tour virtually rather than in the field. Mobile visitors are physically at or travelling between stops: they need to know where they are, what to see at their current stop, and how to get to the next one. May start mid-tour, skip stops, lose signal. Needs: fast initial load, clear journey state (am I at a stop or travelling?), live GPS position for orientation, breadcrumb progress, one-tap navigation to any stop.
 
 ---
 
@@ -33,18 +33,22 @@ Experiences the tour on a mobile device, possibly in the field. May start partwa
 ### In scope (v1.0)
 
 **Tour player:**
-- Full-page responsive layout: Leaflet map (top) + stop card (bottom), side-by-side on wide screens
-- Numbered pins for all stops on the map
-- Route polylines between stops, styled by leg mode (walk vs drive)
-- Live GPS dot showing user's current position
+- Full-page responsive layout: on mobile (<768px) map fills the viewport with stop card as a bottom sheet; on wide screens (≥768px) map and stop card side-by-side
+- Four-state journey machine: `tour_start` → `at_stop` ↔ `in_transit` → `tour_complete`
+- Tour start screen (first-time load) and tour completion screen (after final stop)
+- Numbered pins for all stops on the map; next-stop pin pulses during `in_transit`
+- Route polylines between stops, styled by leg mode (walk/cycle = dashed, drive/transit = solid)
+- Live GPS dot showing user's current position (orientation aid; no auto-arrival detection)
 - Stop card: title, sequence number, content blocks (text, single image, gallery, YouTube embed, audio)
-- Prev/Next navigation between stops
+- Prev/Next navigation between stops; stop list accessible via overlay
 - Breadcrumb: visited stops marked on map and in stop list; state persisted in localStorage
-- "Take me there" button: prompts once for preferred nav app (Google Maps, Apple Maps, Waze), remembers choice, deep-links with stop coordinates and leg mode
+- "Take me there" button: supports walk/drive/transit/cycle; prompts once for preferred nav app (filtered by mode capability); deep-links with stop coordinates and leg mode; remembers choice in localStorage
+- Journey state (active stop, `at_stop`/`in_transit`) persisted in localStorage — tour resumes where left off
 
 **Tour data format:**
 - YAML file defining tour metadata and ordered stop array
-- Each stop: id, title, coords, content blocks array, optional leg_to_next (mode, optional note)
+- Tour metadata: id, title, optional description, optional duration (display string), optional nav_mode default (walk/drive/transit/cycle)
+- Each stop: id, title, coords, content blocks array, optional leg_to_next (mode, optional note); mode now supports walk/drive/transit/cycle
 - External media only (YouTube URLs, image URLs, audio URLs) — no bundled media
 - JSON Schema provided for validation; clear error messages for malformed files
 
@@ -95,6 +99,13 @@ Experiences the tour on a mobile device, possibly in the field. May start partwa
 - Full test suite (unit + E2E)
 - Demo site on GitHub Pages
 - Integration guide and example YAML
+
+### v1.1 — Mobile-first tour experience
+
+- TOUR-016: Journey state machine (at_stop / in_transit / tour_start / tour_complete) + mobile bottom sheet layout
+- TOUR-017: Tour start screen and completion screen
+- TOUR-018: Extended nav modes (walk/drive/transit/cycle), tour-level nav_mode default, mode-filtered nav app picker
+- Post-v1.1: WCAG audit pass for new UI; integration guide update for new YAML fields
 
 ---
 
