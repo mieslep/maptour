@@ -69,12 +69,17 @@ async function init(options: MapTourInitOptions): Promise<void> {
   stopListEl.id = 'maptour-stop-list';
 
   let stopListOpen = true;
-  stopListToggleBtn.addEventListener('click', () => {
-    stopListOpen = !stopListOpen;
-    stopListEl.style.display = stopListOpen ? '' : 'none';
-    stopListToggleBtn.setAttribute('aria-expanded', String(stopListOpen));
+
+  function setStopListOpen(open: boolean): void {
+    stopListOpen = open;
+    stopListEl.style.display = open ? '' : 'none';
+    stopListToggleBtn.setAttribute('aria-expanded', String(open));
     const icon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
-    if (icon) icon.textContent = stopListOpen ? '▲' : '▼';
+    if (icon) icon.textContent = open ? '▲' : '▼';
+  }
+
+  stopListToggleBtn.addEventListener('click', () => {
+    setStopListOpen(!stopListOpen);
   });
 
   stopListWrapper.appendChild(stopListToggleBtn);
@@ -132,6 +137,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
       });
     } else if (state === 'at_stop') {
       sheet.setPosition('expanded', true);
+      // On mobile, collapse the stop list so card content has room to scroll
+      if (window.innerWidth < 768) {
+        setStopListOpen(false);
+      }
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
     } else if (state === 'in_transit') {
@@ -174,6 +183,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
     stopListEl,
     {
       onStopChange: (stop, index) => {
+        // On mobile, collapse stop list to give card content room
+        if (window.innerWidth < 768) {
+          setStopListOpen(false);
+        }
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
         // "Take me there" triggers in_transit

@@ -73,6 +73,16 @@ export class BottomSheet {
     const pts = this.snapPoints();
     const target = pts.find((p) => p.position === pos) ?? pts[0];
     this.applyTranslate(target.translateY, animate && this.animate());
+    // On mobile, constrain content to visible portion of the sheet
+    const isDesktop = typeof window?.matchMedia === 'function'
+      && window.matchMedia('(min-width: 768px)').matches;
+    if (!isDesktop) {
+      const visibleHeight = this.containerHeight - target.translateY;
+      const handleHeight = this.handle.offsetHeight || 24;
+      this.content.style.maxHeight = `${visibleHeight - handleHeight}px`;
+    } else {
+      this.content.style.maxHeight = '';
+    }
   }
 
   private applyTranslate(y: number, animate: boolean): void {
@@ -90,7 +100,7 @@ export class BottomSheet {
 
   private bindDrag(): void {
     const onDown = (e: PointerEvent) => {
-      if (!(e.target as HTMLElement).closest('.maptour-sheet__handle, .maptour-sheet')) return;
+      if (!(e.target as HTMLElement).closest('.maptour-sheet__handle')) return;
       this.isDragging = true;
       this.dragStartY = e.clientY;
       this.dragStartTranslate = this.currentTranslateY();
