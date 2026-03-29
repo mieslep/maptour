@@ -4,6 +4,7 @@ export interface TourMeta {
   id: string;
   title: string;
   description?: string;
+  duration?: string;   // optional display string e.g. "45–60 minutes"
 }
 
 export interface TextBlock {

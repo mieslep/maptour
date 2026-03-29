@@ -125,6 +125,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       startScreen = new TourStartScreen(container, {
         title: tour.tour.title,
         description: tour.tour.description,
+        duration: tour.tour.duration,
         stopCount: tour.stops.length,
         onBegin: () => journeyState.transition('at_stop', 0),
       });

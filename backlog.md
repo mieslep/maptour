@@ -154,7 +154,7 @@ Implement the visual `tour_start` and `tour_complete` states. Start screen: tour
 
 **Spec:** `specs/TOUR-017-spec.md` | **Plan:** `specs/TOUR-017-plan.md` | **Tasks:** `specs/TOUR-017-tasks.md`
 **Dependencies:** TOUR-016
-**Status:** Specced — awaiting Phil sign-off
+**Status:** ✅ Implemented — branch `TOUR-017-start-complete-screens`
 
 ---
 

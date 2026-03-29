@@ -232,4 +232,37 @@ stops:
     const result = parseTourFromString(yaml);
     expect(result.error).toContain('url');
   });
+
+  it('parses tour.duration when present', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+  duration: "45–60 minutes"
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.duration).toBe('45–60 minutes');
+  });
+
+  it('parses successfully when tour.duration is absent', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.duration).toBeUndefined();
+  });
 });
