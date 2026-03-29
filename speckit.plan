@@ -73,23 +73,31 @@ MapTour is a client-side JavaScript library distributed as a single bundle. It r
 
 ```
 src/
-├── index.ts              ← public API: MapTour.init()
+├── index.ts              ← public API: MapTour.init(); orchestrates all components
 ├── loader.ts             ← fetch + parse tour YAML, validate schema
 ├── schema.ts             ← JSON Schema definition + validation (ajv or manual)
+├── journey/
+│   └── JourneyStateManager.ts  ← four-state machine (tour_start/at_stop/in_transit/tour_complete); localStorage persistence
+├── layout/
+│   ├── BottomSheet.ts    ← draggable sheet (mobile) / side panel (desktop); three snap positions
+│   ├── InTransitBar.ts   ← collapsed 80px bar during in_transit; "I'm here" button
+│   ├── StopListOverlay.ts ← full-screen stop list modal (mobile); FAB trigger
+│   ├── TourStartScreen.ts ← tour_start overlay/panel; "Begin tour" CTA
+│   └── TourCompleteScreen.ts ← tour_complete overlay/panel; "Review tour" CTA
 ├── map/
-│   ├── MapView.ts        ← Leaflet map init, pin rendering, route polylines, GPS dot
-│   └── layers.ts         ← pin icon factory, leg style lookup (walk vs drive)
+│   ├── MapView.ts        ← Leaflet map init, pin rendering, route polylines, GPS dot, pulsing pin
+│   └── layers.ts         ← pin icon factory, leg style lookup (walk/cycle=dashed, drive/transit=solid)
 ├── card/
-│   ├── StopCard.ts       ← stop card DOM controller
+│   ├── StopCard.ts       ← stop card DOM controller; onTakeMethere callback
 │   ├── blocks/
 │   │   ├── TextBlock.ts
 │   │   ├── ImageBlock.ts
 │   │   ├── GalleryBlock.ts
 │   │   ├── VideoBlock.ts  ← YouTube iframe embed
 │   │   └── AudioBlock.ts
-│   └── NavButton.ts      ← "Take me there" button, app preference, deep-link
+│   └── NavButton.ts      ← "Take me there" button, app preference, deep-link; onNavigate callback
 ├── navigation/
-│   ├── NavController.ts  ← Prev/Next, active stop state, map re-centre
+│   ├── NavController.ts  ← Prev/Next, active stop state, map re-centre; onNextFromLast callback
 │   └── NavAppPreference.ts ← localStorage-backed app choice (Maps/Waze/Google)
 ├── breadcrumb/
 │   └── Breadcrumb.ts     ← visited set in localStorage, pin decoration

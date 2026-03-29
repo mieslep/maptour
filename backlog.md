@@ -144,7 +144,7 @@ Introduce a four-state journey machine (`tour_start`, `at_stop`, `in_transit`, `
 
 **Spec:** `specs/TOUR-016-spec.md` | **Plan:** `specs/TOUR-016-plan.md` | **Tasks:** `specs/TOUR-016-tasks.md`
 **Dependencies:** TOUR-009 (localStorage pattern), TOUR-010 (responsive layout to replace)
-**Status:** Specced — awaiting Phil sign-off
+**Status:** ✅ Implemented — branch `TOUR-016-mobile-bottom-sheet`
 
 ---
 
