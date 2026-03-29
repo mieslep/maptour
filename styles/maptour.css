@@ -111,7 +111,7 @@
   }
 }
 
-/* Desktop: side by side — restore v1.0 layout */
+/* Desktop: side by side — sheet becomes the right content panel */
 @media (min-width: 768px) {
   .maptour-container {
     display: flex;
@@ -133,18 +133,33 @@
     overflow: hidden;
   }
 
-  /* Hide bottom sheet on desktop */
+  /* Sheet becomes a static side panel */
   .maptour-sheet {
+    position: static;
+    width: 45%;
+    height: 100vh;
+    transform: none !important;
+    border-radius: 0;
+    box-shadow: none;
+    border-left: 1px solid var(--maptour-border);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Hide drag handle on desktop */
+  .maptour-sheet__handle {
     display: none;
   }
 
-  /* Restore content pane on desktop */
-  .maptour-content-pane {
-    display: flex;
-    flex-direction: column;
-    width: 45%;
-    height: 100vh;
-    overflow-y: auto;
+  /* Card scrolls inside the side panel naturally */
+  .maptour-sheet .maptour-card {
+    overflow-y: visible;
+    flex: none;
+  }
+
+  .maptour-sheet .maptour-nav {
+    position: sticky;
+    bottom: 0;
   }
 }
 

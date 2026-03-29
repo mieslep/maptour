@@ -21,12 +21,14 @@ export class NavButton {
   private legMode: LegMode;
   private preference: NavAppPreference;
   private pickerOverlay: HTMLElement | null = null;
+  private onNavigateCallback: (() => void) | undefined;
 
-  constructor(container: HTMLElement, stop: Stop, preference: NavAppPreference) {
+  constructor(container: HTMLElement, stop: Stop, preference: NavAppPreference, onNavigate?: () => void) {
     this.container = container;
     this.stop = stop;
     this.legMode = stop.leg_to_next?.mode ?? 'walk';
     this.preference = preference;
+    this.onNavigateCallback = onNavigate;
     this.render();
   }
 
@@ -47,6 +49,7 @@ export class NavButton {
     if (savedApp) {
       const [lat, lng] = this.stop.coords;
       window.open(buildDeepLink(savedApp as NavApp, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
+      this.onNavigateCallback?.();
     } else {
       this.showPicker();
     }
@@ -82,6 +85,7 @@ export class NavButton {
         this.hidePicker();
         const [lat, lng] = this.stop.coords;
         window.open(buildDeepLink(app.id, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
+        this.onNavigateCallback?.();
       });
       overlay.appendChild(btn);
     });

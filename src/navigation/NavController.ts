@@ -5,6 +5,8 @@ import type { Breadcrumb } from '../breadcrumb/Breadcrumb';
 
 export interface NavControllerCallbacks {
   onStopChange?: (stop: Stop, index: number) => void;
+  /** Called when the user taps Next on the final stop. */
+  onNextFromLast?: () => void;
 }
 
 export class NavController {
@@ -140,6 +142,9 @@ export class NavController {
     if (this.currentIndex < this.tour.stops.length - 1) {
       this.breadcrumb.markVisited(this.currentStop.id);
       this.goTo(this.currentIndex + 1);
+    } else {
+      // Final stop — fire callback for tour_complete transition
+      this.callbacks.onNextFromLast?.();
     }
   }
 

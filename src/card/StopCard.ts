@@ -26,10 +26,16 @@ export class StopCard {
   private container: HTMLElement;
   private navPreference: NavAppPreference;
   private navButton: NavButton | null = null;
+  private takeMethereCallback: (() => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.navPreference = new NavAppPreference();
+  }
+
+  /** Register a callback that fires when "Take me there" is tapped. */
+  onTakeMethere(cb: () => void): void {
+    this.takeMethereCallback = cb;
   }
 
   render(stop: Stop, stopNumber: number, totalStops: number): void {
@@ -78,7 +84,7 @@ export class StopCard {
     const navContainer = document.createElement('div');
     navContainer.className = 'maptour-card__nav-btn-container';
     this.container.appendChild(navContainer);
-    this.navButton = new NavButton(navContainer, stop, this.navPreference);
+    this.navButton = new NavButton(navContainer, stop, this.navPreference, this.takeMethereCallback ?? undefined);
   }
 
   update(stop: Stop, stopNumber: number, totalStops: number): void {
