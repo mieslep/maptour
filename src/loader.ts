@@ -2,7 +2,7 @@ import * as yaml from 'js-yaml';
 import type { Tour, Stop, ContentBlock, TourLoadResult } from './types';
 
 const VALID_BLOCK_TYPES = new Set(['text', 'image', 'gallery', 'video', 'audio']);
-const VALID_LEG_MODES = new Set(['walk', 'drive']);
+const VALID_LEG_MODES = new Set(['walk', 'drive', 'transit', 'cycle']);
 
 function validateContentBlock(block: unknown, stopId: number | string, index: number): string | null {
   if (typeof block !== 'object' || block === null) {
@@ -77,7 +77,7 @@ function validateStop(stop: unknown, index: number): string | null {
       return `Stop ${s.id}: "leg_to_next" must be an object`;
     }
     if (typeof leg.mode !== 'string' || !VALID_LEG_MODES.has(leg.mode)) {
-      return `Stop ${s.id}: "leg_to_next.mode" must be "walk" or "drive"`;
+      return `Stop ${s.id}: "leg_to_next.mode" must be one of: walk, drive, transit, cycle`;
     }
   }
   return null;
@@ -98,6 +98,12 @@ function validateTour(data: unknown): string | null {
   }
   if (typeof meta.title !== 'string' || meta.title.trim() === '') {
     return 'Missing required field "tour.title"';
+  }
+  if (meta.nav_mode !== undefined) {
+    if (typeof meta.nav_mode !== 'string' || !VALID_LEG_MODES.has(meta.nav_mode)) {
+      console.warn(`MapTour: unrecognised tour.nav_mode "${meta.nav_mode}" — falling back to "walk". Valid values: walk, drive, transit, cycle`);
+      meta.nav_mode = 'walk';
+    }
   }
   if (!Array.isArray(d.stops) || d.stops.length === 0) {
     return 'Missing required "stops" array (must have at least one stop)';

@@ -3,16 +3,60 @@ import { NavAppPreference } from '../navigation/NavAppPreference';
 
 type NavApp = 'google' | 'apple' | 'waze';
 
-function buildDeepLink(app: NavApp, lat: number, lng: number, mode: LegMode): string {
-  const travelMode = mode === 'walk' ? 'walking' : 'driving';
+const GOOGLE_MODE: Record<LegMode, string> = {
+  walk:    'walking',
+  drive:   'driving',
+  transit: 'transit',
+  cycle:   'bicycling',
+};
+
+const APPLE_FLAG: Record<LegMode, string> = {
+  walk:    'w',
+  drive:   'd',
+  transit: 'r',
+  cycle:   'b',
+};
+
+const APPS_BY_MODE: Record<LegMode, NavApp[]> = {
+  walk:    ['google', 'apple'],
+  drive:   ['google', 'apple', 'waze'],
+  transit: ['google', 'apple'],
+  cycle:   ['google', 'apple'],
+};
+
+const BUTTON_LABELS: Record<LegMode, string> = {
+  walk:    'Walk me there',
+  drive:   'Drive me there',
+  transit: 'Get transit directions',
+  cycle:   'Get cycling directions',
+};
+
+const ARIA_PREFIX: Record<LegMode, string> = {
+  walk:    'Get walking directions to',
+  drive:   'Get driving directions to',
+  transit: 'Get transit directions to',
+  cycle:   'Get cycling directions to',
+};
+
+const APP_LABELS: Record<NavApp, string> = {
+  google: 'Google Maps',
+  apple:  'Apple Maps',
+  waze:   'Waze',
+};
+
+export function buildDeepLink(app: NavApp, lat: number, lng: number, mode: LegMode): string {
   switch (app) {
     case 'google':
-      return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${travelMode}`;
+      return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${GOOGLE_MODE[mode]}`;
     case 'apple':
-      return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=${mode === 'walk' ? 'w' : 'd'}`;
+      return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=${APPLE_FLAG[mode]}`;
     case 'waze':
       return `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
   }
+}
+
+export function resolveMode(stop: Stop, tourNavMode?: LegMode): LegMode {
+  return stop.leg_to_next?.mode ?? tourNavMode ?? 'walk';
 }
 
 export class NavButton {
@@ -22,11 +66,13 @@ export class NavButton {
   private preference: NavAppPreference;
   private pickerOverlay: HTMLElement | null = null;
   private onNavigateCallback: (() => void) | undefined;
+  private tourNavMode: LegMode | undefined;
 
-  constructor(container: HTMLElement, stop: Stop, preference: NavAppPreference, onNavigate?: () => void) {
+  constructor(container: HTMLElement, stop: Stop, preference: NavAppPreference, onNavigate?: () => void, tourNavMode?: LegMode) {
     this.container = container;
     this.stop = stop;
-    this.legMode = stop.leg_to_next?.mode ?? 'walk';
+    this.tourNavMode = tourNavMode;
+    this.legMode = resolveMode(stop, tourNavMode);
     this.preference = preference;
     this.onNavigateCallback = onNavigate;
     this.render();
@@ -37,18 +83,20 @@ export class NavButton {
 
     const btn = document.createElement('button');
     btn.className = 'maptour-nav-btn';
-    btn.textContent = 'Take me there';
-    btn.setAttribute('aria-label', `Get directions to ${this.stop.title}`);
+    btn.textContent = BUTTON_LABELS[this.legMode];
+    btn.setAttribute('aria-label', `${ARIA_PREFIX[this.legMode]} ${this.stop.title}`);
     btn.addEventListener('click', () => this.handleClick());
 
     this.container.appendChild(btn);
   }
 
   private handleClick(): void {
-    const savedApp = this.preference.get();
-    if (savedApp) {
+    const savedApp = this.preference.get() as NavApp | null;
+    const validApps = APPS_BY_MODE[this.legMode];
+
+    if (savedApp && validApps.includes(savedApp)) {
       const [lat, lng] = this.stop.coords;
-      window.open(buildDeepLink(savedApp as NavApp, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
+      window.open(buildDeepLink(savedApp, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
       this.onNavigateCallback?.();
     } else {
       this.showPicker();
@@ -67,24 +115,18 @@ export class NavButton {
     const title = document.createElement('p');
     title.className = 'maptour-nav-picker__title';
     title.textContent = 'Open directions in:';
-
-    const apps: Array<{ id: NavApp; label: string }> = [
-      { id: 'google', label: 'Google Maps' },
-      { id: 'apple', label: 'Apple Maps' },
-      { id: 'waze', label: 'Waze' },
-    ];
-
     overlay.appendChild(title);
 
-    apps.forEach((app) => {
+    const validApps = APPS_BY_MODE[this.legMode];
+    validApps.forEach((appId) => {
       const btn = document.createElement('button');
       btn.className = 'maptour-nav-picker__option';
-      btn.textContent = app.label;
+      btn.textContent = APP_LABELS[appId];
       btn.addEventListener('click', () => {
-        this.preference.set(app.id);
+        this.preference.set(appId);
         this.hidePicker();
         const [lat, lng] = this.stop.coords;
-        window.open(buildDeepLink(app.id, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
+        window.open(buildDeepLink(appId, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
         this.onNavigateCallback?.();
       });
       overlay.appendChild(btn);
@@ -99,7 +141,6 @@ export class NavButton {
     this.container.appendChild(overlay);
     this.pickerOverlay = overlay;
 
-    // Focus first option
     const firstOption = overlay.querySelector<HTMLButtonElement>('.maptour-nav-picker__option');
     firstOption?.focus();
   }
@@ -111,9 +152,10 @@ export class NavButton {
     }
   }
 
-  update(stop: Stop): void {
+  update(stop: Stop, tourNavMode?: LegMode): void {
     this.stop = stop;
-    this.legMode = stop.leg_to_next?.mode ?? 'walk';
+    this.tourNavMode = tourNavMode;
+    this.legMode = resolveMode(stop, tourNavMode);
     this.hidePicker();
     this.render();
   }

@@ -33,18 +33,22 @@ export interface LegStyle {
 }
 
 export function getLegStyle(mode: LegMode): LegStyle {
-  if (mode === 'walk') {
-    return {
-      color: 'var(--maptour-accent, #16a34a)',
-      weight: 3,
-      dashArray: '8, 6',
-      opacity: 0.8,
-    };
+  switch (mode) {
+    case 'walk':
+    case 'cycle':
+      return {
+        color: 'var(--maptour-accent, #16a34a)',
+        weight: 3,
+        dashArray: '8, 6',
+        opacity: 0.8,
+      };
+    case 'drive':
+    case 'transit':
+    default:
+      return {
+        color: 'var(--maptour-primary, #2563eb)',
+        weight: 3,
+        opacity: 0.8,
+      };
   }
-  // drive
-  return {
-    color: 'var(--maptour-primary, #2563eb)',
-    weight: 3,
-    opacity: 0.8,
-  };
 }

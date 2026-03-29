@@ -104,6 +104,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // === Initialise core components ===
   const mapView = new MapView(mapPane, tour);
   const stopCard = new StopCard(cardEl);
+  stopCard.setTourNavMode(tour.tour.nav_mode);
   const breadcrumb = new Breadcrumb(tour.tour.id);
   const gpsTracker = new GpsTracker();
 

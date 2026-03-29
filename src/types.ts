@@ -4,7 +4,8 @@ export interface TourMeta {
   id: string;
   title: string;
   description?: string;
-  duration?: string;   // optional display string e.g. "45–60 minutes"
+  duration?: string;    // optional display string e.g. "45–60 minutes"
+  nav_mode?: LegMode;   // tour-level default travel mode; per-stop leg_to_next.mode takes priority
 }
 
 export interface TextBlock {
@@ -44,7 +45,7 @@ export interface AudioBlock {
 
 export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock;
 
-export type LegMode = 'walk' | 'drive';
+export type LegMode = 'walk' | 'drive' | 'transit' | 'cycle';
 
 export interface Leg {
   mode: LegMode;

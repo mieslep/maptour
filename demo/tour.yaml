@@ -8,7 +8,9 @@ tour:
   description: >
     Discover the community projects that earned Enniscorthy its 2025 Tidy Towns commendation.
     This self-guided tour takes you from the castle grounds to the River Slaney,
-    through our heritage trail and community gardens. Allow about 90 minutes on foot.
+    through our heritage trail and community gardens.
+  duration: "Approx. 90 minutes on foot"
+  nav_mode: walk
 
 stops:
   - id: 1

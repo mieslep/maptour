@@ -165,7 +165,7 @@ Extend `LegMode` to `walk | drive | transit | cycle`. Add `tour.nav_mode` defaul
 **Spec:** `specs/TOUR-018-spec.md` | **Plan:** `specs/TOUR-018-plan.md` | **Tasks:** `specs/TOUR-018-tasks.md`
 **Dependencies:** TOUR-016 (for integration; logically independent)
 **Parallelisable with:** TOUR-017
-**Status:** Specced — awaiting Phil sign-off
+**Status:** ✅ Implemented — branch `TOUR-018-nav-mode-yaml`
 
 ---
 

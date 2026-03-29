@@ -1,4 +1,4 @@
-import type { Stop, ContentBlock } from '../types';
+import type { Stop, ContentBlock, LegMode } from '../types';
 import { renderTextBlock } from './blocks/TextBlock';
 import { renderImageBlock } from './blocks/ImageBlock';
 import { renderGalleryBlock } from './blocks/GalleryBlock';
@@ -6,6 +6,13 @@ import { renderVideoBlock } from './blocks/VideoBlock';
 import { renderAudioBlock } from './blocks/AudioBlock';
 import { NavButton } from './NavButton';
 import { NavAppPreference } from '../navigation/NavAppPreference';
+
+const MODE_ICON: Partial<Record<LegMode, string>> = {
+  walk:    '🚶',
+  drive:   '🚗',
+  transit: '🚌',
+  cycle:   '🚲',
+};
 
 function renderBlock(block: ContentBlock, active: boolean): HTMLElement {
   switch (block.type) {
@@ -27,6 +34,7 @@ export class StopCard {
   private navPreference: NavAppPreference;
   private navButton: NavButton | null = null;
   private takeMethereCallback: (() => void) | null = null;
+  private tourNavMode: LegMode | undefined;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -36,6 +44,11 @@ export class StopCard {
   /** Register a callback that fires when "Take me there" is tapped. */
   onTakeMethere(cb: () => void): void {
     this.takeMethereCallback = cb;
+  }
+
+  /** Set the tour-level nav mode default (passed down to NavButton). */
+  setTourNavMode(mode: LegMode | undefined): void {
+    this.tourNavMode = mode;
   }
 
   render(stop: Stop, stopNumber: number, totalStops: number): void {
@@ -64,8 +77,8 @@ export class StopCard {
     if (stop.leg_to_next?.note) {
       const legNote = document.createElement('div');
       legNote.className = 'maptour-card__leg-note';
-      const modeIcon = stop.leg_to_next.mode === 'walk' ? '🚶' : '🚗';
-      legNote.textContent = `${modeIcon} ${stop.leg_to_next.note}`;
+      const icon = MODE_ICON[stop.leg_to_next.mode] ?? '→';
+      legNote.textContent = `${icon} ${stop.leg_to_next.note}`;
       this.container.appendChild(legNote);
     }
 
@@ -84,7 +97,13 @@ export class StopCard {
     const navContainer = document.createElement('div');
     navContainer.className = 'maptour-card__nav-btn-container';
     this.container.appendChild(navContainer);
-    this.navButton = new NavButton(navContainer, stop, this.navPreference, this.takeMethereCallback ?? undefined);
+    this.navButton = new NavButton(
+      navContainer,
+      stop,
+      this.navPreference,
+      this.takeMethereCallback ?? undefined,
+      this.tourNavMode,
+    );
   }
 
   update(stop: Stop, stopNumber: number, totalStops: number): void {
