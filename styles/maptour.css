@@ -547,6 +547,17 @@
   margin-bottom: 4px;
 }
 
+.maptour-card__start-from-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.maptour-card__start-from-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .maptour-card__start-from-name {
   font-size: 16px;
   font-weight: 700;

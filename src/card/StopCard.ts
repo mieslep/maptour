@@ -239,23 +239,32 @@ export class StopCard {
 
     if (this.welcomeSelectionEl) {
       this.welcomeSelectionEl.innerHTML = '';
+
+      const headerRow = document.createElement('div');
+      headerRow.className = 'maptour-card__start-from-header';
+
+      const textCol = document.createElement('div');
+      textCol.className = 'maptour-card__start-from-text';
+
       const label = document.createElement('div');
       label.className = 'maptour-card__start-from-label';
       label.textContent = `Start at Stop ${index + 1} / ${totalStops}:`;
-      this.welcomeSelectionEl.appendChild(label);
+      textCol.appendChild(label);
 
       const stopName = document.createElement('div');
       stopName.className = 'maptour-card__start-from-name';
       stopName.textContent = stop.title;
-      this.welcomeSelectionEl.appendChild(stopName);
+      textCol.appendChild(stopName);
 
-      if (stop.getting_here?.note) {
-        const note = document.createElement('div');
-        note.className = 'maptour-card__getting-here-note';
-        const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
-        note.textContent = `${icon} ${stop.getting_here.note}`;
-        this.welcomeSelectionEl.appendChild(note);
-      }
+      headerRow.appendChild(textCol);
+
+      // Always show satnav pin for the selected stop
+      const pinContainer = document.createElement('div');
+      pinContainer.className = 'maptour-card__nav-icon';
+      headerRow.appendChild(pinContainer);
+      new NavButton(pinContainer, stop, this.navPreference, undefined, this.tourNavMode, 'pin');
+
+      this.welcomeSelectionEl.appendChild(headerRow);
     }
 
     if (this.welcomeCtaEl) {

@@ -38,6 +38,9 @@ tour:
 stops:
   - id: 1
     title: Enniscorthy Castle Grounds
+    getting_here:
+      mode: drive
+      note: "From the station, head up Railway Square to Castle Hill, ~5 min"
     coords: [52.50185, -6.55820]
     content:
       - type: text
