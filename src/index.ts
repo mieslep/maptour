@@ -106,15 +106,14 @@ async function init(options: MapTourInitOptions): Promise<void> {
   nextArrow.innerHTML = '&#8250;';
   nextArrow.setAttribute('aria-label', 'Next stop');
 
-  // Exit tour button
+  // Minimize button — collapses the sheet, tour stays active
   const exitBtn = document.createElement('button');
   exitBtn.className = 'maptour-exit-btn';
-  exitBtn.setAttribute('aria-label', 'End tour');
-  exitBtn.title = 'End tour';
+  exitBtn.setAttribute('aria-label', 'Minimize');
+  exitBtn.title = 'Minimize';
   exitBtn.textContent = '✕';
   exitBtn.addEventListener('click', () => {
-    journeyState.clearSaved();
-    journeyState.transition('tour_complete');
+    sheet.setPosition('collapsed', true);
   });
 
   // Header row: [◀ ▶] [STOP x/y ▼] [✕]
