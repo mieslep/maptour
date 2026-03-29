@@ -1,9 +1,27 @@
+import type { ContentBlock } from '../types';
+import { renderTextBlock } from '../card/blocks/TextBlock';
+import { renderImageBlock } from '../card/blocks/ImageBlock';
+import { renderGalleryBlock } from '../card/blocks/GalleryBlock';
+import { renderVideoBlock } from '../card/blocks/VideoBlock';
+import { renderAudioBlock } from '../card/blocks/AudioBlock';
+
+function renderBlock(block: ContentBlock): HTMLElement {
+  switch (block.type) {
+    case 'text':    return renderTextBlock(block);
+    case 'image':   return renderImageBlock(block);
+    case 'gallery': return renderGalleryBlock(block);
+    case 'video':   return renderVideoBlock(block, false);
+    case 'audio':   return renderAudioBlock(block);
+  }
+}
+
 export interface TourStartScreenOptions {
   title: string;
   description?: string;
   duration?: string;
   stopCount: number;
   returning?: boolean;
+  welcome?: ContentBlock[];
   onBegin: () => void;
 }
 
@@ -37,6 +55,16 @@ export class TourStartScreen {
     const stopLabel = `${options.stopCount} stop${options.stopCount !== 1 ? 's' : ''}`;
     meta.textContent = options.duration ? `${stopLabel} · ${options.duration}` : stopLabel;
     body.appendChild(meta);
+
+    // Welcome content blocks (optional)
+    if (options.welcome && options.welcome.length > 0) {
+      const welcomeEl = document.createElement('div');
+      welcomeEl.className = 'maptour-start__welcome';
+      options.welcome.forEach((block) => {
+        welcomeEl.appendChild(renderBlock(block));
+      });
+      body.appendChild(welcomeEl);
+    }
 
     const cta = document.createElement('button');
     cta.className = 'maptour-start__cta';

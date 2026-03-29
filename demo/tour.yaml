@@ -12,6 +12,28 @@ tour:
   duration: "Approx. 90 minutes on foot"
   nav_mode: walk
   close_url: "https://ennistidytowns.ie"
+  welcome:
+    - type: text
+      body: |
+        Welcome! This self-guided walking tour showcases the hard work
+        of Enniscorthy's Tidy Towns volunteers. Each stop highlights a
+        community project completed in 2025.
+
+        **Tips for your walk:**
+        - Wear comfortable shoes — the route includes some hills
+        - Allow about 90 minutes to see everything
+        - Use the navigation button on each stop to get directions
+    - type: image
+      url: https://placehold.co/800x400/2563eb/ffffff?text=Enniscorthy+Panorama
+      caption: Enniscorthy from Vinegar Hill
+  goodbye:
+    - type: text
+      body: |
+        Thank you for taking the Enniscorthy Tidy Towns Tour!
+
+        Our volunteers put in over 3,000 hours of work this year to make
+        Enniscorthy a better place. If you enjoyed the tour, please
+        consider supporting us — visit ennistidytowns.ie to learn more.
 
 stops:
   - id: 1

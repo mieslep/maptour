@@ -105,6 +105,19 @@ function validateTour(data: unknown): string | null {
       meta.nav_mode = 'walk';
     }
   }
+  // Validate optional welcome/goodbye content blocks
+  for (const field of ['welcome', 'goodbye'] as const) {
+    if (meta[field] !== undefined) {
+      if (!Array.isArray(meta[field])) {
+        return `"tour.${field}" must be an array of content blocks`;
+      }
+      for (let i = 0; i < (meta[field] as unknown[]).length; i++) {
+        const err = validateContentBlock((meta[field] as unknown[])[i], field, i);
+        if (err) return err;
+      }
+    }
+  }
+
   if (!Array.isArray(d.stops) || d.stops.length === 0) {
     return 'Missing required "stops" array (must have at least one stop)';
   }

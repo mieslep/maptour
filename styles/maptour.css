@@ -974,6 +974,13 @@
   letter-spacing: 0.02em;
 }
 
+.maptour-start__welcome {
+  margin: 16px 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--maptour-text);
+}
+
 .maptour-start__cta {
   width: 100%;
   padding: 14px;
@@ -1078,6 +1085,14 @@
   margin: 0 0 24px;
   font-size: 14px;
   color: #6b7280;
+}
+
+.maptour-complete__goodbye {
+  margin: 16px 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--maptour-text);
+  text-align: left;
 }
 
 .maptour-complete__review {

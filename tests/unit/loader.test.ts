@@ -265,4 +265,82 @@ stops:
     expect(result.error).toBeUndefined();
     expect(result.tour?.tour.duration).toBeUndefined();
   });
+
+  it('parses tour.welcome and tour.goodbye content blocks', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+  welcome:
+    - type: text
+      body: "Welcome to the tour!"
+    - type: image
+      url: https://example.com/banner.jpg
+  goodbye:
+    - type: text
+      body: "Thanks for visiting!"
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.welcome).toHaveLength(2);
+    expect(result.tour?.tour.welcome?.[0].type).toBe('text');
+    expect(result.tour?.tour.goodbye).toHaveLength(1);
+  });
+
+  it('parses successfully when welcome/goodbye are absent', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.welcome).toBeUndefined();
+    expect(result.tour?.tour.goodbye).toBeUndefined();
+  });
+
+  it('handles empty welcome/goodbye arrays', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+  welcome: []
+  goodbye: []
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.welcome).toHaveLength(0);
+  });
+
+  it('returns error for invalid block in welcome', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+  welcome:
+    - type: invalid_type
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toContain('welcome');
+  });
 });

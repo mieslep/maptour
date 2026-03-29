@@ -181,6 +181,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         duration: tour.tour.duration,
         stopCount: tour.stops.length,
         returning,
+        welcome: tour.tour.welcome,
         onBegin: () => journeyState.transition('at_stop', 0),
       });
     } else if (state === 'at_stop') {
@@ -207,6 +208,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         visitedCount: breadcrumb.getVisited().size,
         totalStops: tour.stops.length,
         closeUrl: tour.tour.close_url,
+        goodbye: tour.tour.goodbye,
         onReview: () => {
           journeyState.clearSaved();
           journeyState.transition('at_stop', 0);
