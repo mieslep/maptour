@@ -79,6 +79,17 @@ function validateStop(stop: unknown, index: number): string | null {
     if (typeof leg.mode !== 'string' || !VALID_LEG_MODES.has(leg.mode)) {
       return `Stop ${s.id}: "getting_here.mode" must be one of: walk, drive, transit, cycle`;
     }
+    if (leg.route !== undefined) {
+      if (!Array.isArray(leg.route)) {
+        return `Stop ${s.id}: "getting_here.route" must be an array of [lat, lng] pairs`;
+      }
+      for (let i = 0; i < leg.route.length; i++) {
+        const pt = leg.route[i] as unknown;
+        if (!Array.isArray(pt) || pt.length !== 2 || typeof pt[0] !== 'number' || typeof pt[1] !== 'number') {
+          return `Stop ${s.id}: "getting_here.route[${i}]" must be a [lat, lng] pair`;
+        }
+      }
+    }
   }
   return null;
 }
