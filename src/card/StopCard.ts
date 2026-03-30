@@ -80,7 +80,8 @@ export class StopCard {
     title.textContent = stop.title;
     headerText.appendChild(title);
 
-    if (stop.getting_here?.note) {
+    // Show getting_here note on all stops except the first (starting point)
+    if (stop.getting_here?.note && stopNumber > 1) {
       const note = document.createElement('div');
       note.className = 'maptour-card__getting-here-note';
       const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
@@ -186,6 +187,11 @@ export class StopCard {
     this.welcomeBeginCallback = options.onBegin;
     this.welcomeSelectedIndex = options.selectedIndex;
 
+    // Stop picker at top (right under header bar)
+    this.welcomeSelectionEl = document.createElement('div');
+    this.welcomeSelectionEl.className = 'maptour-card__start-from';
+    this.container.appendChild(this.welcomeSelectionEl);
+
     // Tour title
     const title = document.createElement('h1');
     title.className = 'maptour-card__title';
@@ -217,12 +223,7 @@ export class StopCard {
       this.container.appendChild(welcomeContent);
     }
 
-    // Selected stop preview (updated dynamically via updateWelcomeSelection)
-    this.welcomeSelectionEl = document.createElement('div');
-    this.welcomeSelectionEl.className = 'maptour-card__start-from';
-    this.container.appendChild(this.welcomeSelectionEl);
-
-    // CTA button
+    // CTA button at bottom
     this.welcomeCtaEl = document.createElement('button');
     this.welcomeCtaEl.className = 'maptour-card__cta';
     this.welcomeCtaEl.addEventListener('click', () => {
