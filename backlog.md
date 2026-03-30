@@ -180,30 +180,23 @@ Post-v1.1 quality pass: axe-core audit on new bottom sheet, start/complete scree
 
 ## Milestone: v1.2 — Tour experience enhancements
 
-### TOUR-020 — Welcome and goodbye cards (small)
+### TOUR-020 + TOUR-021 — Welcome/goodbye cards, flexible start, circular tour (combined)
 
-Add optional `tour.welcome` and `tour.goodbye` content blocks to YAML. These render as special non-stop cards at the start and end of the tour — not numbered stops, but bookend content (e.g. introduction text, sponsor acknowledgements, thank-you message).
+Welcome and goodbye are cards in the sheet (not modals). The welcome card includes a stop picker — user cycles through stops with arrows or taps a map pin. Tour is circular: starting at any stop, the user visits all stops wrapping around. `getting_here.route` supports pre-computed polyline waypoints. `tour.close_url` navigates away on goodbye card.
 
-**Dependencies:** None (builds on current tour_start/tour_complete states)
-**Status:** Speccing
-
----
-
-### TOUR-021 — Flexible tour start point (medium)
-
-Allow the user to start the tour at any stop. The start screen shows the map with all pins; user can tap a pin or cycle through stops to choose a starting point. GPS can pre-select the nearest stop. Default remains stop 1.
-
-**Dependencies:** TOUR-020 (welcome card flows into stop selection)
-**Status:** Speccing
+**Spec:** `specs/TOUR-020-*.md`, `specs/TOUR-021-*.md`
+**Dependencies:** TOUR-016
+**Status:** ✅ Implemented — merged to main
 
 ---
 
 ### TOUR-022 — Journey cards between stops (medium)
 
-Add optional `journey` content blocks between stops — guided commentary for the route between two stops. Content tied to the transit segment, shown during the walk/drive. Could include waypoints along the polyline, points of interest en route, or narrative text.
+Add optional `getting_here.journey` content blocks between stops — guided commentary for the route between two stops. Shown as a transient card during transit with "I've arrived" button. Content tied to the transit segment.
 
-**Dependencies:** TOUR-021 (flexible start affects journey ordering)
-**Status:** Speccing
+**Spec:** `specs/TOUR-022-*.md`
+**Dependencies:** TOUR-020/021
+**Status:** Specced — awaiting implementation
 
 ---
 

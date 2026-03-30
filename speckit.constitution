@@ -10,7 +10,7 @@ MapTour is the only embeddable tour player that is simultaneously:
 - **Zero-backend** — pure static HTML/JS/CSS, deployable on GitHub Pages
 - **Authoring-friendly** — a single YAML file per tour; no CMS, no database
 - **Fully themeable** — ships with sensible defaults, all colours and styles overridable via CSS custom properties
-- **Navigation-aware** — each leg knows its mode (walk/drive) and deep-links to the user's preferred native nav app
+- **Navigation-aware** — each leg knows its mode (walk/drive/transit/cycle) and deep-links to the user's preferred native nav app
 
 ## User Personas
 
@@ -21,7 +21,7 @@ A non-developer community volunteer (e.g. Tidy Towns committee member) who defin
 A developer or technically capable volunteer who embeds MapTour into an existing static site. They need clear integration docs, CSS variable hooks to match site branding, and confidence that adding MapTour won't break the host site.
 
 ### Tour Visitor
-A person — typically on a mobile device — who arrives at a stop, opens the tour page, and wants to know: where am I relative to the stops, what is there to see here, and how do I get to the next stop. They may start mid-tour, skip stops, and may lose connectivity briefly.
+A person — typically on a mobile device — who arrives at a stop, opens the tour page, and wants to know: where am I relative to the stops, what is there to see here, and how do I get to the next stop. They choose their starting stop from the welcome card (defaulting to stop 1, or the nearest stop if GPS is available) and may lose connectivity briefly.
 
 ## Behavioural Expectations Per Persona
 
@@ -56,7 +56,7 @@ A person — typically on a mobile device — who arrives at a stop, opens the t
 MapTour must work as a static asset bundle. No Node.js server, no API, no build step required by the end-user. The distributable is a single JS file + one CSS file. A tour is a YAML file + a directory of linked media URLs.
 
 ### II. Responsive, Mobile-First
-UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44×44px. On small screens the map fills the full container with stop content presented as a draggable bottom sheet above it. On wider screens the layout places the map and stop card side-by-side. No hover-only interactions.
+UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44×44px. On small screens the map fills the full container with stop content presented as a draggable bottom sheet above it. All tour content — welcome, stops, and goodbye — renders as cards within the sheet. No modal overlays. On wider screens the layout places the map and stop card side-by-side. No hover-only interactions. The tour is circular: users may start at any stop and visit all stops in sequence, wrapping around to the beginning.
 
 ### III. Embeddability
 All CSS is namespaced under `.maptour-`. No modifications to `body`, `html`, or global element styles. Leaflet is bundled within the MapTour JS bundle. A host page with its own Leaflet must not conflict.
@@ -92,4 +92,4 @@ MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency imm
 
 This constitution governs all MapTour development. Amendments require a spec change approved by Phil before implementation. All architectural decisions must trace to a requirement in the spec or an explicit constitution principle.
 
-**Version**: 1.1.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-29
+**Version**: 1.2.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-30
