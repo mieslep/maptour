@@ -196,7 +196,25 @@ Add optional `getting_here.journey` content blocks between stops — guided comm
 
 **Spec:** `specs/TOUR-022-*.md`
 **Dependencies:** TOUR-020/021
-**Status:** Specced — awaiting implementation
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-023 — i18n framework for UI label localisation (small)
+
+All hardcoded UI labels replaced with `t()` lookups. Default English strings with named placeholders (`{stop}`, `{n}`, `{total}`). Tour authors override via `tour.strings` in YAML. Validation of string keys and placeholder names.
+
+**Dependencies:** TOUR-020/021
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-024 — GPS nearest-stop pre-selection (small)
+
+When GPS is available and accurate, pre-selects the nearest tour stop on the welcome picker. Configurable via `tour.gps` YAML block: `max_distance` (default 5km) and `max_accuracy` (default 500m). Fires once per welcome entry, resets on revisit.
+
+**Dependencies:** TOUR-021
+**Status:** ✅ Implemented — merged to main
 
 ---
 

@@ -1,6 +1,6 @@
 # MapTour
 
-MapTour is an embeddable, zero-backend map tour player for static websites. Drop it into any HTML page with a single `<script>` tag, point it at a YAML file, and it renders a full-page guided tour experience: a Leaflet map with numbered pins and route polylines, a rich stop card with text, images, gallery, YouTube, and audio content, live GPS positioning, visited-stop breadcrumbs, and native navigation deep-links to Google Maps, Apple Maps, or Waze. No server, no build step, no CMS.
+MapTour is an embeddable, zero-backend map tour player for static websites. Drop it into any HTML page with a single `<script>` tag, point it at a YAML file, and it renders a guided tour experience: a Leaflet map with numbered pins and route polylines, a mobile-first bottom sheet with rich stop cards, welcome and goodbye screens, journey commentary between stops, live GPS positioning with nearest-stop pre-selection, visited-stop breadcrumbs, native navigation deep-links, and full UI label localisation. No server, no build step, no CMS.
 
 Built for Tidy Towns committees, heritage trails, festival maps, and any community organisation that wants to publish a guided tour directly from GitHub Pages.
 
@@ -15,11 +15,11 @@ Built for Tidy Towns committees, heritage trails, festival maps, and any communi
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Tour</title>
-  <link rel="stylesheet" href="https://github.com/YOUR-ORG/maptour/releases/download/v1.0.0/maptour.css">
+  <link rel="stylesheet" href="maptour.css">
 </head>
 <body>
   <div id="maptour" style="width:100%;height:100vh;"></div>
-  <script src="https://github.com/YOUR-ORG/maptour/releases/download/v1.0.0/maptour.js"></script>
+  <script src="maptour.js"></script>
   <script>
     MapTour.init({
       container: '#maptour',
@@ -30,7 +30,43 @@ Built for Tidy Towns committees, heritage trails, festival maps, and any communi
 </html>
 ```
 
-Download `maptour.js` and `maptour.css` from the [latest GitHub Release](https://github.com/YOUR-ORG/maptour/releases/latest) and place them alongside your HTML file. Or link directly to the release CDN URL shown above.
+Download `maptour.js` and `maptour.css` from the [latest GitHub Release](https://github.com/YOUR-ORG/maptour/releases/latest) and place them alongside your HTML file.
+
+### Init options
+
+| Option | Type | Required | Description |
+|---|---|---|---|
+| `container` | string or HTMLElement | yes | CSS selector or DOM element to render into |
+| `tourUrl` | string | yes | URL to the tour YAML file |
+| `startStop` | number | no | Stop ID to jump to directly (skips welcome screen) |
+
+---
+
+## Features
+
+### Mobile-first bottom sheet
+On viewports below 768px, the map fills the screen and content appears in a draggable bottom sheet with collapsed, half, and expanded positions. On desktop, the map and content sit side by side.
+
+### Welcome and goodbye cards
+The tour opens with a welcome card showing the tour title, description, duration, and optional rich content. Users can browse stops with arrow buttons or tap map pins to choose a starting point. The tour is circular - starting at any stop, the user visits all stops wrapping around. A goodbye card appears at the end with visit stats and optional closing content.
+
+### Journey cards
+Optional guided commentary shown between stops. Add `getting_here.journey` content blocks to a stop and the user sees a transit card with route commentary and an "I've arrived" button.
+
+### GPS nearest-stop pre-selection
+When GPS is available and the user is within range of the tour, the welcome screen automatically pre-selects the nearest stop. Configurable via `tour.gps.max_distance` (default 5km) and `tour.gps.max_accuracy` (default 500m).
+
+### Navigation deep-links
+Each stop has a "Take me there" button linking to Google Maps, Apple Maps, or Waze. The user picks their preferred app once; the choice is remembered. Supports walk, drive, transit, and cycle modes.
+
+### Localisation (i18n)
+All UI labels are overridable via `tour.strings` in the YAML file. Named placeholders (`{stop}`, `{n}`, `{total}`) keep translations readable.
+
+### Visited-stop breadcrumbs
+Stops are marked as visited when the user navigates away. The visited set persists in localStorage and is shown on both the map (pin colour) and stop list.
+
+### Content blocks
+Stop cards support five content block types: `text` (Markdown), `image` (with caption), `gallery` (horizontally scrollable), `video` (lazy-loaded YouTube), and `audio` (native player).
 
 ---
 
@@ -40,14 +76,14 @@ Override these in your own stylesheet to match your site's brand colours. Set th
 
 | Property | Default | Description |
 |---|---|---|
-| `--maptour-primary` | `#2563eb` | Primary colour — buttons, active pin, polyline |
+| `--maptour-primary` | `#2563eb` | Primary colour - buttons, active pin, polyline |
 | `--maptour-surface` | `#ffffff` | Card and UI background |
 | `--maptour-text` | `#111827` | Body text colour |
-| `--maptour-accent` | `#16a34a` | Accent colour — "Take me there" button, walk polyline, visited pins |
+| `--maptour-accent` | `#16a34a` | Accent colour - nav button, walk polyline, visited pins |
 | `--maptour-font` | `system-ui, sans-serif` | UI font stack |
 | `--maptour-radius` | `8px` | Corner radius for cards and buttons |
 
-**Example — match a green heritage brand:**
+**Example - match a green heritage brand:**
 
 ```css
 :root {
@@ -67,12 +103,27 @@ Tour files are standard YAML. Create one file per tour.
 
 ```yaml
 tour:
-  id: my-tour-id          # required, unique string, used for localStorage keys
-  title: My Tour Title    # required
-  description: Optional one-paragraph description of the tour.
+  id: my-tour-id            # required, unique string, used for localStorage keys
+  title: My Tour Title       # required
+  description: >             # optional
+    One-paragraph description of the tour.
+  duration: "45-60 minutes"  # optional, displayed on welcome card
+  nav_mode: walk             # optional default travel mode: walk | drive | transit | cycle
+  close_url: https://...     # optional, navigates here when tour ends
+  gps:                       # optional GPS behaviour tuning
+    max_distance: 5000       # metres - ignore GPS if nearest stop is further (default: 5000)
+    max_accuracy: 500        # metres - ignore GPS if reading is less accurate (default: 500)
+  strings:                   # optional i18n overrides (see Localisation section)
+    welcome: "Bienvenue"
+  welcome:                   # optional rich content blocks for welcome card
+    - type: text
+      body: "Welcome text here"
+  goodbye:                   # optional rich content blocks for goodbye card
+    - type: text
+      body: "Thank you text here"
 
 stops:
-  - ...                   # ordered array of stops, see below
+  - ...                      # ordered array of stops
 ```
 
 ### Stop fields
@@ -83,41 +134,46 @@ stops:
 | `title` | string | yes | Stop name (shown in card heading and stop list) |
 | `coords` | `[lat, lng]` | yes | GPS coordinates as decimal degrees |
 | `content` | array | yes | Array of content blocks (may be empty) |
-| `leg_to_next` | object | no | Travel info to the next stop |
+| `getting_here` | object | no | Travel info for reaching this stop |
 
-### `leg_to_next`
+### `getting_here`
 
 ```yaml
-leg_to_next:
-  mode: walk    # required: "walk" or "drive"
-  note: "Follow the river path, ~8 min"   # optional hint shown on card
+getting_here:
+  mode: walk                # required: walk | drive | transit | cycle
+  note: "Follow the river path, ~8 min"  # optional hint shown on card
+  route:                    # optional pre-computed waypoints for polyline
+    - [52.502, -6.558]
+    - [52.503, -6.556]
+  journey:                  # optional content blocks shown between stops
+    - type: text
+      body: "Commentary during transit..."
 ```
 
-Walk legs are rendered as dashed polylines; drive legs as solid polylines.
+Polyline styles by mode: walk = dashed, drive = solid, transit = dotted, cycle = dash-dot.
 
 ### Content block types
 
-#### `text` — Markdown paragraph
+#### `text` - Markdown paragraph
 
 ```yaml
 - type: text
   body: |
     ## Section heading
-
     Paragraph text with **bold**, *italic*, and [links](https://example.com).
     Markdown is fully supported via marked.js.
 ```
 
-#### `image` — Single image with optional caption
+#### `image` - Single image with optional caption
 
 ```yaml
 - type: image
-  url: https://example.com/photo.jpg     # required
-  caption: Descriptive caption           # optional, shown below image
-  alt: Alt text for accessibility        # optional, falls back to caption
+  url: https://example.com/photo.jpg
+  caption: Descriptive caption
+  alt: Alt text for accessibility
 ```
 
-#### `gallery` — Horizontally scrollable image gallery
+#### `gallery` - Horizontally scrollable image gallery
 
 ```yaml
 - type: gallery
@@ -128,7 +184,7 @@ Walk legs are rendered as dashed polylines; drive legs as solid polylines.
       alt: Alt text for second image
 ```
 
-#### `video` — YouTube embed (lazy-loaded)
+#### `video` - YouTube embed (lazy-loaded)
 
 ```yaml
 - type: video
@@ -136,9 +192,7 @@ Walk legs are rendered as dashed polylines; drive legs as solid polylines.
   caption: Optional video caption
 ```
 
-YouTube videos are lazy-loaded: a thumbnail is shown until the visitor taps Play, keeping the initial page load fast.
-
-#### `audio` — Native audio player
+#### `audio` - Native audio player
 
 ```yaml
 - type: audio
@@ -148,34 +202,70 @@ YouTube videos are lazy-loaded: a thumbnail is shown until the visitor taps Play
 
 ---
 
+## Localisation
+
+All UI labels can be overridden via `tour.strings`. Keys use named placeholders.
+
+| Key | Default | Placeholders |
+|---|---|---|
+| `welcome` | Welcome | |
+| `en_route` | En route | |
+| `complete` | Complete | |
+| `all_stops` | All Stops | |
+| `stop_n` | Stop {n} / {total} | `{n}`, `{total}` |
+| `start_at` | Start at Stop {n} / {total}: | `{n}`, `{total}` |
+| `start_from` | Start from {stop} | `{stop}` |
+| `tip` | Use the arrows above to change your starting point | |
+| `next_stop` | Next: {stop} | `{stop}` |
+| `next_btn` | Next -> | |
+| `finish_tour` | Finish Tour | |
+| `arrived` | I've arrived -> | |
+| `tour_complete` | Tour complete! | |
+| `stops_visited` | {n} / {total} stops visited | `{n}`, `{total}` |
+| `revisit` | Revisit tour | |
+| `close` | Close | |
+| `walk_me` | Walk me there | |
+| `drive_me` | Drive me there | |
+| `transit_dir` | Get transit directions | |
+| `cycle_dir` | Get cycling directions | |
+| `directions_to` | Directions to this stop | |
+| `picker_title` | Open directions in: | |
+| `picker_cancel` | Cancel | |
+| `minimize` | Minimize | |
+
+**Example - Irish language tour:**
+
+```yaml
+tour:
+  strings:
+    welcome: "Failte"
+    next_btn: "Ar aghaidh ->"
+    finish_tour: "Criochnaigh an turas"
+    arrived: "Taim tagtha ->"
+    revisit: "Tabhair cuairt aris"
+```
+
+---
+
 ## Media hosting
 
 ### Images
-
-Host images wherever you like as long as the URL is publicly accessible without authentication. Options:
-
-- **GitHub repository** — commit images to the repo and use the raw URL. Good for small images; avoid files over 1 MB.
-- **Google Drive** — upload, set sharing to "Anyone with the link can view", then use the direct download URL format: `https://drive.google.com/uc?id=FILE_ID&export=download`. Note: Drive direct-link URLs can expire if Google throttles them.
-- **Imgur, Cloudinary, or any public CDN** — recommended for reliability.
+Host images at any publicly accessible URL. Options: GitHub raw URLs (small files), Imgur/Cloudinary/any CDN (recommended for production), or Google Drive direct-download URLs (`https://drive.google.com/uc?id=FILE_ID&export=download` - note these can be throttled by Google).
 
 ### YouTube
-
-Use a standard YouTube watch URL (`https://www.youtube.com/watch?v=VIDEO_ID`) or a short URL (`https://youtu.be/VIDEO_ID`). The video must be set to Public or Unlisted.
-
-**CSP note:** If your host site has a `Content-Security-Policy` header, you must allow `frame-src https://www.youtube.com` for YouTube embeds to work.
+Use standard YouTube watch URLs or short URLs. Videos must be Public or Unlisted. **CSP note:** allow `frame-src https://www.youtube.com` if your site uses Content-Security-Policy headers.
 
 ### Audio
-
-Provide a direct URL to an MP3 or OGG file. The browser's native audio player handles playback. Google Drive share links do not work reliably for audio — use a proper CDN or GitHub raw URLs for small files.
+Direct URL to an MP3 or OGG file. Google Drive share links do not work reliably for audio - use a CDN or GitHub raw URLs.
 
 ---
 
 ## Known limitations
 
-- **Google Drive link expiry** — Drive direct-download URLs can be throttled by Google for high-traffic files. For production tours, host images on a CDN.
-- **YouTube CSP** — YouTube iframes require `frame-src https://www.youtube.com` in your CSP header.
-- **GPS permission** — GPS positioning requires the visitor to grant location permission. On iOS Safari, this only works on HTTPS. The map works fully without GPS.
-- **Private browsing** — Visited stop breadcrumbs and navigation app preference are stored in `localStorage`. These features degrade silently in private/incognito mode.
-- **One tour per page** — MapTour does not support multiple `MapTour.init()` calls on a single page in v1.0.
-- **Audio/video hosting** — MapTour does not host media. External URLs only.
-- **No offline support** — Tour YAML and map tiles require connectivity. The player does not implement a service worker in v1.0.
+- **Google Drive link expiry** - Drive direct-download URLs can be throttled for high-traffic files. Use a CDN for production tours.
+- **YouTube CSP** - YouTube iframes require `frame-src https://www.youtube.com` in your CSP header.
+- **GPS permission** - GPS positioning requires location permission. On iOS Safari, HTTPS is required. The map works fully without GPS.
+- **Private browsing** - Visited-stop breadcrumbs and nav app preference use localStorage. These degrade silently in private/incognito mode.
+- **One tour per page** - Multiple `MapTour.init()` calls on a single page are not supported.
+- **No offline support** - Tour YAML and map tiles require connectivity. No service worker is implemented.
+- **Audio/video hosting** - MapTour does not host media. External URLs only.
