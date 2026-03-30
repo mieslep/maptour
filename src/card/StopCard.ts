@@ -193,16 +193,16 @@ export class StopCard {
     this.welcomeBeginCallback = options.onBegin;
     this.welcomeSelectedIndex = options.selectedIndex;
 
-    // Stop picker at top (right under header bar)
-    this.welcomeSelectionEl = document.createElement('div');
-    this.welcomeSelectionEl.className = 'maptour-card__start-from';
-    this.container.appendChild(this.welcomeSelectionEl);
-
     // Guided tip
     const tip = document.createElement('p');
     tip.className = 'maptour-card__tip';
     tip.textContent = 'Use the arrows above to change your starting point';
     this.container.appendChild(tip);
+
+    // Stop picker (right under tip)
+    this.welcomeSelectionEl = document.createElement('div');
+    this.welcomeSelectionEl.className = 'maptour-card__start-from';
+    this.container.appendChild(this.welcomeSelectionEl);
 
     // Tour title
     const title = document.createElement('h1');

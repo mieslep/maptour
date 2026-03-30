@@ -12,6 +12,7 @@ export interface NavControllerCallbacks {
 export class NavController {
   private tour: Tour;
   private currentIndex: number;
+  private startIndex = 0;
   private mapView: MapView;
   private stopCard: StopCard;
   private breadcrumb: Breadcrumb;
@@ -44,6 +45,23 @@ export class NavController {
 
   private get currentStop(): Stop {
     return this.tour.stops[this.currentIndex];
+  }
+
+  /** Set the starting stop index for circular tour navigation. */
+  setStartIndex(index: number): void {
+    this.startIndex = index;
+  }
+
+  /** True if advancing from this stop would return to the starting stop (tour complete). */
+  private isLastTourStop(index: number): boolean {
+    const nextInSequence = (index + 1) % this.tour.stops.length;
+    return nextInSequence === this.startIndex;
+  }
+
+  /** Get the next stop in circular order, or undefined if this is the last tour stop. */
+  private getNextStop(index: number): Stop | undefined {
+    if (this.isLastTourStop(index)) return undefined;
+    return this.tour.stops[(index + 1) % this.tour.stops.length];
   }
 
   private renderNav(): void {
@@ -129,8 +147,8 @@ export class NavController {
 
     this.currentIndex = index;
     const stop = this.currentStop;
+    const nextStop = this.getNextStop(index);
 
-    const nextStop = index < this.tour.stops.length - 1 ? this.tour.stops[index + 1] : undefined;
     this.mapView.setActiveStop(stop);
     this.stopCard.update(stop, index + 1, this.tour.stops.length, nextStop);
     this.mapView.setVisitedStops(this.breadcrumb.getVisited());
@@ -140,19 +158,21 @@ export class NavController {
   }
 
   next(): void {
-    if (this.currentIndex < this.tour.stops.length - 1) {
-      this.breadcrumb.markVisited(this.currentStop.id);
-      this.goTo(this.currentIndex + 1);
-    } else {
-      // Final stop — fire callback for tour_complete transition
+    this.breadcrumb.markVisited(this.currentStop.id);
+    if (this.isLastTourStop(this.currentIndex)) {
+      // Completed all stops — fire tour_complete
       this.callbacks.onNextFromLast?.();
+    } else {
+      const nextIndex = (this.currentIndex + 1) % this.tour.stops.length;
+      this.goTo(nextIndex);
     }
   }
 
   prev(): void {
-    if (this.currentIndex > 0) {
-      this.goTo(this.currentIndex - 1);
-    }
+    // Don't go before the starting stop
+    if (this.currentIndex === this.startIndex) return;
+    const prevIndex = (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length;
+    this.goTo(prevIndex);
   }
 
   getCurrentIndex(): number {

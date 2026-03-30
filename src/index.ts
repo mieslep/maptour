@@ -152,6 +152,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // Arrow mode: 'picker' during welcome (cycle stops to choose start), 'nav' during tour
   let arrowMode: 'nav' | 'picker' = 'nav';
   let pickerIndex = 0;
+  let tourStartIndex = 0;
   const returning = breadcrumb.getVisited().size > 0;
 
   function setMobileMapPadding(): void {
@@ -203,7 +204,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
         stops: tour.stops,
         selectedIndex: 0,
         onBegin: (idx) => {
+          tourStartIndex = idx;
           stopCard.setStartingStop(idx);
+          navController.setStartIndex(idx);
           journeyState.transition('at_stop', idx);
         },
       });
@@ -296,8 +299,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
           setStopListOpen(false);
         }
         updateStopLabel(`Stop ${index + 1} / ${tour.stops.length}`);
-        prevArrow.disabled = index === 0;
-        // Next always enabled — on last stop it triggers tour_complete
+        prevArrow.disabled = index === tourStartIndex;
+        // Next always enabled — wraps around or triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
       },
