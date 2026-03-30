@@ -189,7 +189,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       arrowMode = 'picker';
       sheet.setPosition('expanded', true);
       setMobileMapPadding();
-      if (window.innerWidth < 768) setStopListOpen(false);
+      // Always collapse stop list on welcome — picker is the navigation
+      setStopListOpen(false);
 
       pickerIndex = 0;
       stopCard.renderWelcome({
