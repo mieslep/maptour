@@ -150,20 +150,44 @@ export class StopCard {
 
   // === Journey card ===
 
-  renderJourney(gettingHere: Leg, onArrived: () => void): void {
+  renderJourney(destinationStop: Stop, onArrived: () => void): void {
+    const gettingHere = destinationStop.getting_here!;
     this.container.innerHTML = '';
     this.container.scrollTop = 0;
     this.container.setAttribute('role', 'region');
-    this.container.setAttribute('aria-label', 'En route');
+    this.container.setAttribute('aria-label', `En route to ${destinationStop.title}`);
 
-    // Getting here note at top
+    // Header: getting_here note + satnav pin to destination
+    const header = document.createElement('div');
+    header.className = 'maptour-card__header';
+
+    const headerText = document.createElement('div');
+    headerText.className = 'maptour-card__header-text';
+
     if (gettingHere.note) {
       const note = document.createElement('div');
       note.className = 'maptour-card__getting-here-note';
       const icon = MODE_ICON[gettingHere.mode] ?? '→';
       note.textContent = `${icon} ${gettingHere.note}`;
-      this.container.appendChild(note);
+      headerText.appendChild(note);
     }
+
+    header.appendChild(headerText);
+
+    // Pin nav button — directions to the destination stop
+    const pinContainer = document.createElement('div');
+    pinContainer.className = 'maptour-card__nav-icon';
+    header.appendChild(pinContainer);
+    new NavButton(
+      pinContainer,
+      destinationStop,
+      this.navPreference,
+      undefined,
+      this.tourNavMode,
+      'pin',
+    );
+
+    this.container.appendChild(header);
 
     // Journey content blocks
     if (gettingHere.journey && gettingHere.journey.length > 0) {

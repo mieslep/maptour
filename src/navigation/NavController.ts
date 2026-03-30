@@ -183,7 +183,7 @@ export class NavController {
     if (nextStop.getting_here?.journey && nextStop.getting_here.journey.length > 0) {
       this.inJourney = true;
       this.journeyDestIndex = nextIndex;
-      this.stopCard.renderJourney(nextStop.getting_here, () => {
+      this.stopCard.renderJourney(nextStop, () => {
         // "I've arrived" — advance to the destination stop
         this.goTo(nextIndex);
       });
