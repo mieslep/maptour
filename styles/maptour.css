@@ -514,6 +514,29 @@
   outline-offset: 2px;
 }
 
+.maptour-card__arrived-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: var(--maptour-primary);
+  color: white;
+  border: none;
+  border-radius: var(--maptour-radius);
+  font-family: var(--maptour-font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.maptour-card__arrived-btn:hover {
+  background: #1d4ed8;
+}
+
+.maptour-card__arrived-btn:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
 /* === Welcome / Goodbye card elements === */
 
 .maptour-card__description {

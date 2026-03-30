@@ -7,12 +7,16 @@ export interface NavControllerCallbacks {
   onStopChange?: (stop: Stop, index: number) => void;
   /** Called when the user taps Next on the final stop. */
   onNextFromLast?: () => void;
+  /** Called when a journey card is shown/hidden. */
+  onJourneyChange?: (inJourney: boolean) => void;
 }
 
 export class NavController {
   private tour: Tour;
   private currentIndex: number;
   private startIndex = 0;
+  private inJourney = false;
+  private journeyDestIndex = -1;
   private mapView: MapView;
   private stopCard: StopCard;
   private breadcrumb: Breadcrumb;
@@ -145,6 +149,7 @@ export class NavController {
   goTo(index: number): void {
     if (index < 0 || index >= this.tour.stops.length) return;
 
+    this.clearJourney();
     this.currentIndex = index;
     const stop = this.currentStop;
     const nextStop = this.getNextStop(index);
@@ -158,21 +163,54 @@ export class NavController {
   }
 
   next(): void {
+    // If in a journey, "next" skips to the destination stop
+    if (this.inJourney) {
+      this.goTo(this.journeyDestIndex);
+      return;
+    }
+
     this.breadcrumb.markVisited(this.currentStop.id);
+
     if (this.isLastTourStop(this.currentIndex)) {
-      // Completed all stops — fire tour_complete
       this.callbacks.onNextFromLast?.();
+      return;
+    }
+
+    const nextIndex = (this.currentIndex + 1) % this.tour.stops.length;
+    const nextStop = this.tour.stops[nextIndex];
+
+    // Check for journey content on the destination stop
+    if (nextStop.getting_here?.journey && nextStop.getting_here.journey.length > 0) {
+      this.inJourney = true;
+      this.journeyDestIndex = nextIndex;
+      this.stopCard.renderJourney(nextStop.getting_here, () => {
+        // "I've arrived" — advance to the destination stop
+        this.goTo(nextIndex);
+      });
+      this.callbacks.onJourneyChange?.(true);
     } else {
-      const nextIndex = (this.currentIndex + 1) % this.tour.stops.length;
       this.goTo(nextIndex);
     }
   }
 
   prev(): void {
+    // If in a journey, go back to the origin stop
+    if (this.inJourney) {
+      this.goTo(this.currentIndex);
+      return;
+    }
     // Don't go before the starting stop
     if (this.currentIndex === this.startIndex) return;
     const prevIndex = (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length;
     this.goTo(prevIndex);
+  }
+
+  private clearJourney(): void {
+    if (this.inJourney) {
+      this.inJourney = false;
+      this.journeyDestIndex = -1;
+      this.callbacks.onJourneyChange?.(false);
+    }
   }
 
   getCurrentIndex(): number {

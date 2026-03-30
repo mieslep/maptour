@@ -1,4 +1,4 @@
-import type { Stop, ContentBlock, LegMode } from '../types';
+import type { Stop, ContentBlock, LegMode, Leg } from '../types';
 import { renderTextBlock } from './blocks/TextBlock';
 import { renderImageBlock } from './blocks/ImageBlock';
 import { renderGalleryBlock } from './blocks/GalleryBlock';
@@ -146,6 +146,47 @@ export class StopCard {
 
   update(stop: Stop, stopNumber: number, totalStops: number, nextStop?: Stop): void {
     this.render(stop, stopNumber, totalStops, nextStop);
+  }
+
+  // === Journey card ===
+
+  renderJourney(gettingHere: Leg, onArrived: () => void): void {
+    this.container.innerHTML = '';
+    this.container.scrollTop = 0;
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', 'En route');
+
+    // Getting here note at top
+    if (gettingHere.note) {
+      const note = document.createElement('div');
+      note.className = 'maptour-card__getting-here-note';
+      const icon = MODE_ICON[gettingHere.mode] ?? '→';
+      note.textContent = `${icon} ${gettingHere.note}`;
+      this.container.appendChild(note);
+    }
+
+    // Journey content blocks
+    if (gettingHere.journey && gettingHere.journey.length > 0) {
+      const content = document.createElement('div');
+      content.className = 'maptour-card__content';
+      gettingHere.journey.forEach((block) => {
+        content.appendChild(renderBlock(block, true));
+      });
+      this.container.appendChild(content);
+    }
+
+    // "I've arrived" button
+    const footer = document.createElement('div');
+    footer.className = 'maptour-card__finish';
+
+    const btn = document.createElement('button');
+    btn.className = 'maptour-card__arrived-btn';
+    btn.textContent = "I've arrived →";
+    btn.setAttribute('aria-label', 'Continue to the next stop');
+    btn.addEventListener('click', onArrived);
+    footer.appendChild(btn);
+
+    this.container.appendChild(footer);
   }
 
   // === Welcome card ===

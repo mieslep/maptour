@@ -76,6 +76,18 @@ stops:
     getting_here:
       mode: walk
       note: "Walk down Castle Hill to the river, ~6 min"
+      journey:
+        - type: text
+          body: |
+            As you walk down Castle Hill, look to your left for the
+            original Norman town wall foundations. These date to the
+            13th century and were uncovered during drainage works in 2019.
+
+            At the bottom of the hill, cross the road at the pedestrian
+            crossing and follow the riverside path to the left.
+        - type: image
+          url: https://placehold.co/800x400/6b7280/ffffff?text=Town+Wall+Foundations
+          caption: Norman town wall foundations along Castle Hill
     coords: [52.50290, -6.55650]
     content:
       - type: text

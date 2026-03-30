@@ -90,6 +90,15 @@ function validateStop(stop: unknown, index: number): string | null {
         }
       }
     }
+    if (leg.journey !== undefined) {
+      if (!Array.isArray(leg.journey)) {
+        return `Stop ${s.id}: "getting_here.journey" must be an array of content blocks`;
+      }
+      for (let i = 0; i < leg.journey.length; i++) {
+        const err = validateContentBlock(leg.journey[i], `${s.id} getting_here.journey`, i);
+        if (err) return err;
+      }
+    }
   }
   return null;
 }

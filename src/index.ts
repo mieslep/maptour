@@ -308,6 +308,12 @@ async function init(options: MapTourInitOptions): Promise<void> {
         breadcrumb.markVisited(tour.stops[tour.stops.length - 1].id);
         journeyState.transition('tour_complete');
       },
+      onJourneyChange: (inJourney) => {
+        if (inJourney) {
+          updateStopLabel('En route');
+        }
+        // When journey ends, onStopChange will set the correct label
+      },
     }
   );
 
