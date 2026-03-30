@@ -4,6 +4,7 @@ import { MapView } from './map/MapView';
 import { StopCard } from './card/StopCard';
 import { NavController } from './navigation/NavController';
 import { GpsTracker } from './gps/GpsTracker';
+import { nearestStop } from './gps/nearestStop';
 import { Breadcrumb } from './breadcrumb/Breadcrumb';
 import { showError } from './errors/ErrorDisplay';
 import { JourneyStateManager } from './journey/JourneyStateManager';
@@ -154,6 +155,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   let arrowMode: 'nav' | 'picker' = 'nav';
   let pickerIndex = 0;
   let tourStartIndex = 0;
+  let gpsPickerApplied = false;
   const returning = breadcrumb.getVisited().size > 0;
 
   function setMobileMapPadding(): void {
@@ -189,6 +191,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
     if (state === 'tour_start') {
       arrowMode = 'picker';
+      gpsPickerApplied = false;
       sheet.setPosition('expanded', true);
       setMobileMapPadding();
       mapView.fitBounds();
@@ -327,8 +330,23 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // === GPS ===
   if (gpsTracker.isAvailable()) {
     gpsTracker.onPosition((pos) => {
-      if (pos) mapView.updateGpsPosition(pos.lat, pos.lng);
-      else mapView.clearGpsPosition();
+      if (pos) {
+        mapView.updateGpsPosition(pos.lat, pos.lng);
+        // Pre-select nearest stop on welcome screen (once, if accuracy and distance acceptable)
+        if (!gpsPickerApplied && arrowMode === 'picker') {
+          const maxAccuracy = tour.tour.gps?.max_accuracy ?? 500;
+          const maxDistance = tour.tour.gps?.max_distance ?? 5000;
+          if (pos.accuracy <= maxAccuracy) {
+            const result = nearestStop(pos.lat, pos.lng, tour.stops);
+            if (result.distance <= maxDistance) {
+              gpsPickerApplied = true;
+              updatePickerSelection(result.index);
+            }
+          }
+        }
+      } else {
+        mapView.clearGpsPosition();
+      }
     });
     gpsTracker.start();
   }

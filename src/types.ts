@@ -1,5 +1,10 @@
 // MapTour Type Definitions
 
+export interface GpsConfig {
+  max_distance?: number;   // max metres from nearest stop for GPS pre-selection (default: 5000)
+  max_accuracy?: number;   // max GPS accuracy in metres to trust the reading (default: 500)
+}
+
 export interface TourMeta {
   id: string;
   title: string;
@@ -10,6 +15,7 @@ export interface TourMeta {
   strings?: Record<string, string>;  // i18n overrides for UI labels
   welcome?: ContentBlock[];  // optional rich content for the start screen
   goodbye?: ContentBlock[];  // optional rich content for the completion screen
+  gps?: GpsConfig;          // GPS behaviour tuning
 }
 
 export interface TextBlock {
