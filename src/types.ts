@@ -7,6 +7,7 @@ export interface TourMeta {
   duration?: string;       // optional display string e.g. "45–60 minutes"
   nav_mode?: LegMode;      // tour-level default travel mode; per-stop getting_here.mode takes priority
   close_url?: string;      // URL to navigate to when user finishes the tour
+  strings?: Record<string, string>;  // i18n overrides for UI labels
   welcome?: ContentBlock[];  // optional rich content for the start screen
   goodbye?: ContentBlock[];  // optional rich content for the completion screen
 }

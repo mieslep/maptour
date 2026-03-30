@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml';
 import type { Tour, Stop, ContentBlock, TourLoadResult } from './types';
+import { validateStrings } from './i18n';
 
 const VALID_BLOCK_TYPES = new Set(['text', 'image', 'gallery', 'video', 'audio']);
 const VALID_LEG_MODES = new Set(['walk', 'drive', 'transit', 'cycle']);
@@ -125,6 +126,12 @@ function validateTour(data: unknown): string | null {
       meta.nav_mode = 'walk';
     }
   }
+  // Validate optional string overrides (i18n)
+  if (meta.strings !== undefined) {
+    const strErr = validateStrings(meta.strings);
+    if (strErr) return strErr;
+  }
+
   // Validate optional welcome/goodbye content blocks
   for (const field of ['welcome', 'goodbye'] as const) {
     if (meta[field] !== undefined) {

@@ -1,4 +1,5 @@
 import type { Stop, ContentBlock, LegMode, Leg } from '../types';
+import { t } from '../i18n';
 import { renderTextBlock } from './blocks/TextBlock';
 import { renderImageBlock } from './blocks/ImageBlock';
 import { renderGalleryBlock } from './blocks/GalleryBlock';
@@ -118,13 +119,13 @@ export class StopCard {
 
       const label = document.createElement('div');
       label.className = 'maptour-card__next-stop-label';
-      label.textContent = `Next: ${nextStop.title}`;
+      label.textContent = t('next_stop', { stop: nextStop.title });
       footer.appendChild(label);
 
       const nextBtn = document.createElement('button');
       nextBtn.className = 'maptour-card__next-btn';
-      nextBtn.textContent = 'Next →';
-      nextBtn.setAttribute('aria-label', `Go to next stop: ${nextStop.title}`);
+      nextBtn.textContent = t('next_btn');
+      nextBtn.setAttribute('aria-label', t('next_stop', { stop: nextStop.title }));
       nextBtn.addEventListener('click', () => this.nextCallback?.());
       footer.appendChild(nextBtn);
 
@@ -136,7 +137,7 @@ export class StopCard {
 
       const btn = document.createElement('button');
       btn.className = 'maptour-card__finish-btn';
-      btn.textContent = 'Finish Tour';
+      btn.textContent = t('finish_tour');
       btn.addEventListener('click', () => this.nextCallback?.());
       footer.appendChild(btn);
 
@@ -205,8 +206,8 @@ export class StopCard {
 
     const btn = document.createElement('button');
     btn.className = 'maptour-card__arrived-btn';
-    btn.textContent = "I've arrived →";
-    btn.setAttribute('aria-label', 'Continue to the next stop');
+    btn.textContent = t('arrived');
+    btn.setAttribute('aria-label', t('arrived'));
     btn.addEventListener('click', onArrived);
     footer.appendChild(btn);
 
@@ -241,7 +242,7 @@ export class StopCard {
     // Guided tip
     const tip = document.createElement('p');
     tip.className = 'maptour-card__tip';
-    tip.textContent = 'Use the arrows above to change your starting point';
+    tip.textContent = t('tip');
     this.container.appendChild(tip);
 
     // Stop picker (right under tip)
@@ -306,7 +307,7 @@ export class StopCard {
 
       const label = document.createElement('div');
       label.className = 'maptour-card__start-from-label';
-      label.textContent = `Start at Stop ${index + 1} / ${totalStops}:`;
+      label.textContent = t('start_at', { n: index + 1, total: totalStops });
       textCol.appendChild(label);
 
       const stopName = document.createElement('div');
@@ -319,7 +320,7 @@ export class StopCard {
     }
 
     if (this.welcomeCtaEl) {
-      this.welcomeCtaEl.textContent = `Start from ${stop.title}`;
+      this.welcomeCtaEl.textContent = t('start_from', { stop: stop.title });
     }
   }
 
@@ -346,13 +347,13 @@ export class StopCard {
     // Heading
     const heading = document.createElement('h2');
     heading.className = 'maptour-card__title';
-    heading.textContent = 'Tour complete!';
+    heading.textContent = t('tour_complete');
     this.container.appendChild(heading);
 
     // Visited count
     const count = document.createElement('p');
     count.className = 'maptour-card__meta';
-    count.textContent = `${options.visitedCount} / ${options.totalStops} stops visited`;
+    count.textContent = t('stops_visited', { n: options.visitedCount, total: options.totalStops });
     this.container.appendChild(count);
 
     // Goodbye content blocks
@@ -368,7 +369,7 @@ export class StopCard {
     // Revisit button
     const review = document.createElement('button');
     review.className = 'maptour-card__cta';
-    review.textContent = 'Revisit tour';
+    review.textContent = t('revisit');
     review.addEventListener('click', options.onReview);
     this.container.appendChild(review);
 
@@ -377,7 +378,7 @@ export class StopCard {
       const close = document.createElement('a');
       close.className = 'maptour-card__close-link';
       close.href = options.closeUrl;
-      close.textContent = 'Close';
+      close.textContent = t('close');
       this.container.appendChild(close);
     }
   }

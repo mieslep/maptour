@@ -1,4 +1,5 @@
 import type { Stop, LegMode } from '../types';
+import { t } from '../i18n';
 import { NavAppPreference } from '../navigation/NavAppPreference';
 
 type NavApp = 'google' | 'apple' | 'waze';
@@ -24,18 +25,11 @@ const APPS_BY_MODE: Record<LegMode, NavApp[]> = {
   cycle:   ['google', 'apple'],
 };
 
-const BUTTON_LABELS: Record<LegMode, string> = {
-  walk:    'Walk me there',
-  drive:   'Drive me there',
-  transit: 'Get transit directions',
-  cycle:   'Get cycling directions',
-};
-
-const ARIA_PREFIX: Record<LegMode, string> = {
-  walk:    'Get walking directions to',
-  drive:   'Get driving directions to',
-  transit: 'Get transit directions to',
-  cycle:   'Get cycling directions to',
+const BUTTON_LABEL_KEYS: Record<LegMode, string> = {
+  walk:    'walk_me',
+  drive:   'drive_me',
+  transit: 'transit_dir',
+  cycle:   'cycle_dir',
 };
 
 const APP_LABELS: Record<NavApp, string> = {
@@ -90,20 +84,21 @@ export class NavButton {
     this.container.innerHTML = '';
 
     const btn = document.createElement('button');
+    const label = t(BUTTON_LABEL_KEYS[this.legMode]);
     if (this.variant === 'pin') {
       btn.className = 'maptour-nav-btn maptour-nav-btn--pin';
       btn.innerHTML = PIN_SVG;
-      btn.title = 'Directions to this stop';
-      btn.setAttribute('aria-label', `Get directions to ${this.stop.title}`);
+      btn.title = t('directions_to');
+      btn.setAttribute('aria-label', `${t('directions_to')}: ${this.stop.title}`);
     } else if (this.variant === 'arrow') {
       btn.className = 'maptour-nav-btn maptour-nav-btn--arrow';
       btn.innerHTML = ARROW_SVG;
-      btn.title = `${BUTTON_LABELS[this.legMode]}`;
-      btn.setAttribute('aria-label', `${ARIA_PREFIX[this.legMode]} ${this.stop.title}`);
+      btn.title = label;
+      btn.setAttribute('aria-label', `${label}: ${this.stop.title}`);
     } else {
       btn.className = 'maptour-nav-btn';
-      btn.textContent = BUTTON_LABELS[this.legMode];
-      btn.setAttribute('aria-label', `${ARIA_PREFIX[this.legMode]} ${this.stop.title}`);
+      btn.textContent = label;
+      btn.setAttribute('aria-label', `${label}: ${this.stop.title}`);
     }
     btn.addEventListener('click', () => this.handleClick());
 
@@ -134,7 +129,7 @@ export class NavButton {
 
     const title = document.createElement('p');
     title.className = 'maptour-nav-picker__title';
-    title.textContent = 'Open directions in:';
+    title.textContent = t('picker_title');
     overlay.appendChild(title);
 
     const validApps = APPS_BY_MODE[this.legMode];
@@ -154,7 +149,7 @@ export class NavButton {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'maptour-nav-picker__cancel';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('picker_cancel');
     cancelBtn.addEventListener('click', () => this.hidePicker());
     overlay.appendChild(cancelBtn);
 

@@ -10,6 +10,7 @@ import { JourneyStateManager } from './journey/JourneyStateManager';
 import { BottomSheet } from './layout/BottomSheet';
 import { InTransitBar } from './layout/InTransitBar';
 import { StopListOverlay } from './layout/StopListOverlay';
+import { setStrings, t } from './i18n';
 import type { MapTourInitOptions } from './types';
 
 export type { MapTourInitOptions };
@@ -39,6 +40,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
   }
 
   const { tour } = result;
+
+  // Initialise i18n with tour-level string overrides
+  setStrings(tour.tour.strings);
 
   // === Build layout ===
   container.innerHTML = '';
@@ -75,7 +79,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     stopListToggleBtn.setAttribute('aria-expanded', String(open));
     // Update label: "All Stops" when open, "Stop N / M" when collapsed
     const label = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__label');
-    if (label) label.textContent = open ? 'All Stops' : currentStopLabel;
+    if (label) label.textContent = open ? t('all_stops') : currentStopLabel;
     const icon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
     if (icon) icon.textContent = open ? '▲' : '▼';
   }
@@ -99,8 +103,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // Minimize button — collapses the sheet, tour stays active
   const exitBtn = document.createElement('button');
   exitBtn.className = 'maptour-exit-btn';
-  exitBtn.setAttribute('aria-label', 'Minimize');
-  exitBtn.title = 'Minimize';
+  exitBtn.setAttribute('aria-label', t('minimize'));
+  exitBtn.title = t('minimize');
   exitBtn.textContent = '✕';
   exitBtn.addEventListener('click', () => {
     sheet.setPosition('collapsed', true);
@@ -165,7 +169,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     const stop = tour.stops[index];
     stopCard.updateWelcomeSelection(stop, index, tour.stops.length, returning);
     mapView.setActiveStop(stop);
-    updateStopLabel(`Stop ${index + 1} / ${tour.stops.length}`);
+    updateStopLabel(t('stop_n', { n: index + 1, total: tour.stops.length }));
     prevArrow.disabled = index === 0;
     nextArrow.disabled = index === tour.stops.length - 1;
   }
@@ -190,7 +194,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.fitBounds();
       // Show "WELCOME" label, hide the expand/collapse icon
       setStopListOpen(false);
-      updateStopLabel('Welcome');
+      updateStopLabel(t('welcome'));
       const toggleIcon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
       if (toggleIcon) toggleIcon.style.display = 'none';
 
@@ -211,7 +215,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
           journeyState.transition('at_stop', idx);
         },
       });
-      updateStopLabel('Welcome');
+      updateStopLabel(t('welcome'));
       prevArrow.disabled = true;
       nextArrow.disabled = tour.stops.length <= 1;
       // Centre map on first stop
@@ -223,7 +227,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       sheet.setPosition('expanded', true);
       if (window.innerWidth < 768) setStopListOpen(false);
       setMobileMapPadding();
-      updateStopLabel(`Stop ${stopIndex + 1} / ${tour.stops.length}`);
+      updateStopLabel(t('stop_n', { n: stopIndex + 1, total: tour.stops.length }));
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
     } else if (state === 'in_transit') {
@@ -237,7 +241,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       sheet.setPosition('expanded', true);
       setMobileMapPadding();
       if (window.innerWidth < 768) setStopListOpen(false);
-      updateStopLabel('Complete');
+      updateStopLabel(t('complete'));
       prevArrow.disabled = true;
       nextArrow.disabled = true;
       stopCard.renderGoodbye({
@@ -301,7 +305,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         if (window.innerWidth < 768) {
           setStopListOpen(false);
         }
-        updateStopLabel(`Stop ${index + 1} / ${tour.stops.length}`);
+        updateStopLabel(t('stop_n', { n: index + 1, total: tour.stops.length }));
         prevArrow.disabled = index === tourStartIndex;
         // Next always enabled — wraps around or triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());
@@ -313,7 +317,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       },
       onJourneyChange: (inJourney) => {
         if (inJourney) {
-          updateStopLabel('En route');
+          updateStopLabel(t('en_route'));
         }
         // When journey ends, onStopChange will set the correct label
       },
