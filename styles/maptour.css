@@ -564,6 +564,14 @@
   color: var(--maptour-text);
 }
 
+.maptour-card__tip {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  margin: 4px 0 12px;
+  font-style: italic;
+}
+
 .maptour-card__cta {
   width: 100%;
   padding: 14px;

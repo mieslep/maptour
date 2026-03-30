@@ -202,7 +202,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
         returning,
         stops: tour.stops,
         selectedIndex: 0,
-        onBegin: (idx) => journeyState.transition('at_stop', idx),
+        onBegin: (idx) => {
+          stopCard.setStartingStop(idx);
+          journeyState.transition('at_stop', idx);
+        },
       });
       updateStopLabel('Welcome');
       prevArrow.disabled = true;

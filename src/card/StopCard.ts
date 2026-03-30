@@ -36,10 +36,16 @@ export class StopCard {
   private nextCallback: (() => void) | null = null;
   private finishCallback: (() => void) | null = null;
   private closeUrl: string | undefined;
+  private startingStopIndex = 0;
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.navPreference = new NavAppPreference();
+  }
+
+  /** Set which stop the tour starts at (getting_here hidden on this stop). */
+  setStartingStop(index: number): void {
+    this.startingStopIndex = index;
   }
 
   /** Register a callback for the "Next stop" footer button. */
@@ -80,8 +86,8 @@ export class StopCard {
     title.textContent = stop.title;
     headerText.appendChild(title);
 
-    // Show getting_here note on all stops except the first (starting point)
-    if (stop.getting_here?.note && stopNumber > 1) {
+    // Show getting_here note on all stops except the starting stop
+    if (stop.getting_here?.note && (stopNumber - 1) !== this.startingStopIndex) {
       const note = document.createElement('div');
       note.className = 'maptour-card__getting-here-note';
       const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
@@ -191,6 +197,12 @@ export class StopCard {
     this.welcomeSelectionEl = document.createElement('div');
     this.welcomeSelectionEl.className = 'maptour-card__start-from';
     this.container.appendChild(this.welcomeSelectionEl);
+
+    // Guided tip
+    const tip = document.createElement('p');
+    tip.className = 'maptour-card__tip';
+    tip.textContent = 'Use the arrows above to change your starting point';
+    this.container.appendChild(tip);
 
     // Tour title
     const title = document.createElement('h1');
