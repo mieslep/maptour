@@ -254,13 +254,7 @@ export class StopCard {
     }
 
     if (this.welcomeCtaEl) {
-      if (returning) {
-        this.welcomeCtaEl.textContent = 'Re-take tour';
-      } else if (index === 0) {
-        this.welcomeCtaEl.textContent = 'Begin tour';
-      } else {
-        this.welcomeCtaEl.textContent = `Start from ${stop.title}`;
-      }
+      this.welcomeCtaEl.textContent = `Start from ${stop.title}`;
     }
   }
 
