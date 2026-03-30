@@ -247,6 +247,69 @@ tour:
 
 ---
 
+## Creating a tour
+
+### 1. Plan your stops
+
+Walk or drive the route and note each stop location. For each stop you need GPS coordinates (`[lat, lng]`) - the easiest way to get these is to long-press on Google Maps or Apple Maps and copy the coordinates.
+
+Alternatively, import stops from a GPX file exported from a GPS app or route planner.
+
+### 2. Get route waypoints
+
+Route waypoints (`getting_here.route`) draw the polyline path between stops on the map. Without them, MapTour draws a straight line between stops. There are three ways to get route data:
+
+**Option A: OpenRouteService API (recommended for most tours)**
+
+The [OpenRouteService](https://openrouteservice.org) `foot-walking` profile routes along actual footpaths, not just roads. Sign up for a free API key (2000 requests/day) and call:
+
+```
+POST https://api.openrouteservice.org/v2/directions/foot-walking/geojson
+Authorization: YOUR_API_KEY
+Content-Type: application/json
+
+{"coordinates": [[lng1, lat1], [lng2, lat2]]}
+```
+
+The response contains a GeoJSON LineString. Convert the `[lng, lat]` pairs to `[lat, lng]` for the YAML. Use `drive-car` or `cycling-regular` profiles for non-walking segments.
+
+**Option B: Record a GPS trail in the field (most accurate)**
+
+Walk the route with a GPS recording app and export the track as GPX. Good free options:
+- **iOS**: Open GPX Tracker (free, exports GPX directly)
+- **Android**: OsmAnd or GPX Recorder (both free)
+- **Any phone**: Strava or Komoot (record activity, export GPX from the web dashboard)
+
+Then split the track into per-segment routes and convert the coordinates to `[lat, lng]` arrays in the YAML. This is the most accurate method for trails, park paths, and routes that don't appear on routing services.
+
+**Option C: No route data (straight lines)**
+
+If you omit `getting_here.route`, MapTour draws a straight dashed line between stops. This is fine for stops that are very close together or when route accuracy is not important.
+
+### 3. Write the YAML
+
+Create a `tour.yaml` file following the format reference below. Start with the `tour` metadata, then list stops in order. Each stop needs at minimum an `id`, `title`, `coords`, and `content` array.
+
+### 4. Add content
+
+Fill in the `content` blocks for each stop - text, images, galleries, video, audio. See the content block reference below for all supported types.
+
+### 5. Test locally
+
+Serve your tour directory with any static file server and open it in a browser:
+
+```bash
+# Python
+python3 -m http.server 8000
+
+# Node
+npx serve .
+```
+
+Use the welcome screen picker to cycle through stops and verify coordinates, routes, and content render correctly.
+
+---
+
 ## Media hosting
 
 ### Images
