@@ -141,11 +141,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const mapView = new MapView(mapPane, tour);
   const stopCard = new StopCard(cardEl);
   stopCard.setTourNavMode(tour.tour.nav_mode);
-  stopCard.setCloseUrl(tour.tour.close_url);
-  // "Next stop" footer button advances via NavController
+  // "Next stop" and "Finish Tour" both advance via NavController
   stopCard.onNext(() => navController.next());
-  // "Finish Tour" when no close_url — collapse the sheet
-  stopCard.onFinish(() => sheet.setPosition('collapsed', true));
   const breadcrumb = new Breadcrumb(tour.tour.id);
   const gpsTracker = new GpsTracker();
 
