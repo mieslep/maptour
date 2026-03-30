@@ -98,10 +98,13 @@ export class MapView {
     }
   }
 
-  private fitBounds(): void {
+  fitBounds(): void {
     if (this.tour.stops.length === 0) return;
     const bounds = L.latLngBounds(this.tour.stops.map((s) => s.coords));
-    this.map.fitBounds(bounds, { padding: [40, 40] });
+    this.map.fitBounds(bounds, {
+      paddingTopLeft: [40, 40],
+      paddingBottomRight: [40, 40 + this.paddingBottom],
+    });
   }
 
   /** Set bottom padding (px) so panTo centres the stop in the visible map area above the sheet. */
