@@ -188,9 +188,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
       sheet.setPosition('expanded', true);
       setMobileMapPadding();
       mapView.fitBounds();
-      // Hide stop list toggle on welcome — picker handles stop selection
+      // Show "WELCOME" label, hide the expand/collapse icon
       setStopListOpen(false);
-      stopListToggleBtn.style.visibility = 'hidden';
+      updateStopLabel('Welcome');
+      const toggleIcon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
+      if (toggleIcon) toggleIcon.style.display = 'none';
 
       pickerIndex = 0;
       stopCard.renderWelcome({
@@ -216,7 +218,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.setActiveStop(tour.stops[0]);
     } else if (state === 'at_stop') {
       arrowMode = 'nav';
-      stopListToggleBtn.style.visibility = '';
+      const toggleIcon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
+      if (toggleIcon) toggleIcon.style.display = '';
       sheet.setPosition('expanded', true);
       if (window.innerWidth < 768) setStopListOpen(false);
       setMobileMapPadding();
@@ -244,7 +247,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         closeUrl: tour.tour.close_url,
         onReview: () => {
           journeyState.clearSaved();
-          journeyState.transition('at_stop', 0);
+          journeyState.transition('tour_start');
         },
       });
     }
