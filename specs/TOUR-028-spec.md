@@ -1,8 +1,8 @@
-# TOUR-028 — Show User GPS Position During Tour
+# TOUR-028 — Show User GPS Position and Heading During Tour
 
 ## Summary
 
-The GPS person icon (currently only visible during the welcome phase) should remain visible on the map throughout the entire tour. The user should be able to see their position relative to the current and next stops at all times.
+The GPS person icon (currently only visible during the welcome phase) should remain visible on the map throughout the entire tour. The user should be able to see their position relative to the current and next stops at all times. The marker should include a directional arrow showing which way the user is facing.
 
 ## Motivation
 
@@ -34,12 +34,29 @@ During a walking tour, knowing where you are on the map is essential. The GPS ma
 - **When** the user's position changes
 - **Then** the marker moves to the new position in real time
 
-### FR-4: GPS marker does not interfere with stop pins
+### FR-4: Heading indicator
+- **Given** the device provides heading/compass data (via `DeviceOrientationEvent` or `watchPosition` with `heading`)
+- **When** the GPS marker is displayed
+- **Then** a directional arrow extends from the marker showing which way the user is facing
+- The arrow rotates in real time as the user turns
+
+### FR-5: Heading fallback from movement
+- **Given** the device does not provide compass heading
+- **When** the user is moving (position has changed by >5m since last update)
+- **Then** the heading arrow is calculated from the direction of travel (bearing between last two positions)
+- When the user is stationary, the arrow is hidden (direction unknown)
+
+### FR-6: No heading available
+- **Given** neither compass nor movement-based heading is available
+- **When** the GPS marker is displayed
+- **Then** the marker is shown without a directional arrow (position only)
+
+### FR-7: GPS marker does not interfere with stop pins
 - **Given** the GPS marker and a stop pin overlap
 - **When** both are rendered
 - **Then** the stop pin has higher z-index (appears on top of the GPS marker)
 
-### FR-5: GPS unavailable
+### FR-8: GPS unavailable
 - **Given** the user has denied GPS permission or the device has no GPS
 - **When** the tour is active
 - **Then** no GPS marker is shown and no errors are thrown
@@ -56,7 +73,7 @@ During a walking tour, knowing where you are on the map is essential. The GPS ma
 - Accuracy circle around the GPS position
 - Auto-panning the map to follow the user
 - GPS-triggered navigation (auto-advance to next stop when near)
-- Heading/direction indicator on the GPS marker
+- Compass calibration UI or accuracy indicator
 
 ## Failure Modes
 
@@ -66,18 +83,22 @@ During a walking tour, knowing where you are on the map is essential. The GPS ma
 | GPS accuracy is very low (>100m) | Marker still shown at reported position |
 | Device returns to GPS after signal loss | Marker updates to new position |
 | Map is collapsed (bottom sheet full-screen) | GPS updates continue in background; marker visible when map re-expands |
+| Device compass not available | Heading derived from movement; hidden when stationary |
+| Compass heading is erratic (near metal/magnets) | Movement-based fallback preferred when user is walking |
 
 ## Acceptance Criteria
 
 1. GPS marker is visible on the map during stop cards
 2. GPS marker is visible on the map during journey cards
 3. Marker position updates as the user moves
-4. Stop pins render above the GPS marker when overlapping
-5. No GPS marker when permission is denied — no errors in console
-6. No regression on welcome phase GPS behaviour
+4. Directional arrow shows heading when compass or movement data is available
+5. Arrow hidden when stationary and no compass heading available
+6. Stop pins render above the GPS marker when overlapping
+7. No GPS marker when permission is denied — no errors in console
+8. No regression on welcome phase GPS behaviour
 
 ## Test Approach
 
-- **Unit**: MapView renders GPS marker when position is available and journey state is not welcome-only
-- **Integration**: Navigate through stops and journey cards — GPS marker persists
-- **Manual**: Walk-test on mobile device — confirm marker tracks real movement across all tour phases
+- **Unit**: MapView renders GPS marker when position is available and journey state is not welcome-only; heading arrow rotates with bearing input
+- **Integration**: Navigate through stops and journey cards — GPS marker persists; heading updates
+- **Manual**: Walk-test on mobile device — confirm marker tracks real movement and arrow points in direction of travel across all tour phases
