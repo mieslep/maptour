@@ -6,16 +6,38 @@ import { generateRoute, generateAllRoutes } from '../ors';
 import { renderContentBlockEditor } from './content-blocks';
 
 // i18n default keys for the string overrides editor
-const I18N_KEYS = [
-  'welcome', 'en_route', 'complete', 'all_stops', 'stop_n',
-  'start_at', 'start_from', 'tip',
-  'next_stop', 'next_btn', 'finish_tour',
-  'arrived', 'tour_complete', 'stops_visited', 'revisit', 'close',
-  'walk_me', 'drive_me', 'transit_dir', 'cycle_dir', 'directions_to',
-  'picker_title', 'picker_cancel',
-  'stop_order', 'im_here', 'all_stops_title',
-  'tour_load_error', 'image_error', 'audio_error', 'minimize',
-];
+const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
+  welcome:         { default: 'Welcome', desc: 'Header label on welcome screen' },
+  en_route:        { default: 'En route', desc: 'Header label during journey between stops' },
+  complete:        { default: 'Complete', desc: 'Header label on goodbye screen' },
+  all_stops:       { default: 'All Stops', desc: 'Stop list toggle label when expanded' },
+  stop_n:          { default: 'Stop {n} / {total}', desc: 'Header label showing current stop. Placeholders: {n}, {total}' },
+  start_at:        { default: 'Start at Stop {n} / {total}:', desc: 'Welcome card stop selector label. Placeholders: {n}, {total}' },
+  start_from:      { default: 'Start from {stop}', desc: 'CTA button on welcome card. Placeholder: {stop}' },
+  tip:             { default: 'Select a stop on the map or use the arrows above to change your starting point', desc: 'Hint text on welcome card' },
+  next_stop:       { default: 'Next: {stop}', desc: 'Footer showing next stop name. Placeholder: {stop}' },
+  next_btn:        { default: 'Next →', desc: 'Next button text' },
+  finish_tour:     { default: 'Finish Tour', desc: 'Button on last stop to end tour' },
+  arrived:         { default: "I've arrived at {stop} →", desc: 'Journey card CTA. Placeholder: {stop}' },
+  tour_complete:   { default: 'Tour complete!', desc: 'Goodbye screen heading' },
+  stops_visited:   { default: '{n} / {total} stops visited', desc: 'Goodbye screen stats. Placeholders: {n}, {total}' },
+  revisit:         { default: 'Revisit tour', desc: 'Button to restart tour from goodbye screen' },
+  close:           { default: 'Close', desc: 'Close button on goodbye screen' },
+  walk_me:         { default: 'Walk me there', desc: 'Nav button for walk mode' },
+  drive_me:        { default: 'Drive me there', desc: 'Nav button for drive mode' },
+  transit_dir:     { default: 'Get transit directions', desc: 'Nav button for transit mode' },
+  cycle_dir:       { default: 'Get cycling directions', desc: 'Nav button for cycle mode' },
+  directions_to:   { default: 'Directions to this stop', desc: 'Generic nav button label' },
+  picker_title:    { default: 'Open directions in:', desc: 'Nav app picker dialog title' },
+  picker_cancel:   { default: 'Cancel', desc: 'Nav app picker cancel button' },
+  stop_order:      { default: 'Stop order:', desc: 'Label for forward/reverse toggle' },
+  im_here:         { default: "I'm here", desc: 'Transit bar arrival button' },
+  all_stops_title: { default: 'All stops', desc: 'Stop list overlay title' },
+  tour_load_error: { default: 'Tour could not load', desc: 'Error screen heading' },
+  image_error:     { default: 'Image could not be loaded', desc: 'Image fallback text' },
+  audio_error:     { default: 'Audio could not be loaded.', desc: 'Audio fallback text' },
+  minimize:        { default: 'Minimize', desc: 'Minimize button tooltip' },
+};
 
 export interface EditorCallbacks {
   onBackToList: () => void;
@@ -603,8 +625,22 @@ export class TourEditor {
     };
     toolbar.appendChild(titleInput);
 
+    this.sidePanel.appendChild(toolbar);
+
+    // Scrollable content
+    const scrollable = document.createElement('div');
+    scrollable.className = 'panel-scrollable';
+
+    scrollable.appendChild(this.renderMetadataSection());
+    scrollable.appendChild(this.renderStopList());
+    scrollable.appendChild(this.renderStringsSection());
+
+    // Export button at the bottom
+    const exportDiv = document.createElement('div');
+    exportDiv.style.cssText = 'padding: 12px;';
     const exportBtn = document.createElement('button');
     exportBtn.className = 'btn btn-primary';
+    exportBtn.style.width = '100%';
     exportBtn.innerHTML = '<i class="fa-solid fa-download"></i> Export YAML';
     exportBtn.onclick = () => {
       if (this.tour.stops.length === 0) {
@@ -614,16 +650,8 @@ export class TourEditor {
       downloadYaml(this.tour);
       this.setStatus('YAML exported.');
     };
-    toolbar.appendChild(exportBtn);
-
-    this.sidePanel.appendChild(toolbar);
-
-    // Scrollable content
-    const scrollable = document.createElement('div');
-    scrollable.className = 'panel-scrollable';
-
-    scrollable.appendChild(this.renderMetadataSection());
-    scrollable.appendChild(this.renderStopList());
+    exportDiv.appendChild(exportBtn);
+    scrollable.appendChild(exportDiv);
 
     this.sidePanel.appendChild(scrollable);
 
@@ -660,7 +688,6 @@ export class TourEditor {
       scrollable.appendChild(this.renderStopEditor(this.tour.stops[this.selectedStopIdx]));
       scrollable.appendChild(this.renderWelcomeSection());
       scrollable.appendChild(this.renderGoodbyeSection());
-      scrollable.appendChild(this.renderStringsSection());
       this.detailPanel.appendChild(scrollable);
     } else {
       // Show empty state with welcome/goodbye/strings
@@ -676,7 +703,6 @@ export class TourEditor {
       scrollable.className = 'panel-scrollable';
       scrollable.appendChild(this.renderWelcomeSection());
       scrollable.appendChild(this.renderGoodbyeSection());
-      scrollable.appendChild(this.renderStringsSection());
       this.detailPanel.appendChild(scrollable);
     }
   }
@@ -1158,17 +1184,20 @@ export class TourEditor {
     if (!this.tour.tour.strings) this.tour.tour.strings = {};
     const strings = this.tour.tour.strings;
 
-    I18N_KEYS.forEach(key => {
+    for (const [key, info] of Object.entries(I18N_DEFAULTS)) {
       const row = document.createElement('div');
       row.className = 'input-row';
+      row.title = info.desc;
       const label = document.createElement('label');
       label.className = 'input-label input-label-sm';
       label.textContent = key;
+      label.title = info.desc;
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'input input-sm';
-      input.placeholder = key;
+      input.placeholder = info.default;
       input.value = strings[key] ?? '';
+      input.title = info.desc;
       input.oninput = () => {
         if (input.value.trim()) {
           strings[key] = input.value;
@@ -1180,9 +1209,9 @@ export class TourEditor {
       row.appendChild(label);
       row.appendChild(input);
       content.appendChild(row);
-    });
+    }
 
-    return this.renderCollapsible('String Overrides', content, false);
+    return this.renderCollapsible('String Overrides (i18n)', content, false);
   }
 
   private performUndo(): void {
