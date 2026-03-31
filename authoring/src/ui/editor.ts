@@ -30,6 +30,7 @@ export class TourEditor {
   private routePolylines: L.Polyline[] = [];
   private selectedStopIdx: number = -1;
   private sidePanel!: HTMLElement;
+  private detailPanel!: HTMLElement;
   private mapContainer!: HTMLElement;
   private statusEl!: HTMLElement;
 
@@ -60,10 +61,21 @@ export class TourEditor {
     this.mapContainer.className = 'editor-map';
     this.container.appendChild(this.mapContainer);
 
-    // Side panel
+    // Resize handle between map and panels
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'editor-resize-handle';
+    this.container.appendChild(resizeHandle);
+    this.setupResize(resizeHandle);
+
+    // Side panel (stop list, metadata, routes)
     this.sidePanel = document.createElement('div');
     this.sidePanel.className = 'editor-panel';
     this.container.appendChild(this.sidePanel);
+
+    // Detail panel (stop editor, welcome/goodbye, strings - appears on selection)
+    this.detailPanel = document.createElement('div');
+    this.detailPanel.className = 'editor-detail';
+    this.container.appendChild(this.detailPanel);
 
     // Status bar
     this.statusEl = document.createElement('div');
@@ -74,6 +86,36 @@ export class TourEditor {
     this.renderPanel();
     this.setupKeyboard();
     this.refreshMap();
+  }
+
+  private setupResize(handle: HTMLElement): void {
+    let startX = 0;
+    let startWidth = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - startX;
+      const newWidth = Math.max(200, Math.min(startWidth + delta, window.innerWidth - 500));
+      this.mapContainer.style.width = newWidth + 'px';
+      handle.classList.add('dragging');
+      this.map?.invalidateSize();
+    };
+
+    const onMouseUp = () => {
+      handle.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    handle.addEventListener('mousedown', (e) => {
+      startX = e.clientX;
+      startWidth = this.mapContainer.offsetWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
   }
 
   private initMap(): void {
@@ -280,14 +322,61 @@ export class TourEditor {
 
     scrollable.appendChild(this.renderMetadataSection());
     scrollable.appendChild(this.renderStopList());
-    if (this.selectedStopIdx >= 0 && this.selectedStopIdx < this.tour.stops.length) {
-      scrollable.appendChild(this.renderStopEditor(this.tour.stops[this.selectedStopIdx]));
-    }
-    scrollable.appendChild(this.renderWelcomeSection());
-    scrollable.appendChild(this.renderGoodbyeSection());
-    scrollable.appendChild(this.renderStringsSection());
 
     this.sidePanel.appendChild(scrollable);
+
+    // Detail panel: stop editor or welcome/goodbye/strings
+    this.renderDetailPanel();
+  }
+
+  private renderDetailPanel(): void {
+    this.detailPanel.innerHTML = '';
+
+    if (this.selectedStopIdx >= 0 && this.selectedStopIdx < this.tour.stops.length) {
+      // Show stop editor
+      const toolbar = document.createElement('div');
+      toolbar.className = 'panel-toolbar';
+      const label = document.createElement('span');
+      label.style.cssText = 'font-weight:600; font-size:14px; flex:1;';
+      label.textContent = `Stop ${this.selectedStopIdx + 1}: ${this.tour.stops[this.selectedStopIdx].title || 'Untitled'}`;
+      toolbar.appendChild(label);
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'btn btn-icon';
+      closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      closeBtn.title = 'Close';
+      closeBtn.onclick = () => {
+        this.selectedStopIdx = -1;
+        this.refreshMap();
+        this.renderDetailPanel();
+      };
+      toolbar.appendChild(closeBtn);
+      this.detailPanel.appendChild(toolbar);
+
+      const scrollable = document.createElement('div');
+      scrollable.className = 'panel-scrollable';
+      scrollable.appendChild(this.renderStopEditor(this.tour.stops[this.selectedStopIdx]));
+      scrollable.appendChild(this.renderWelcomeSection());
+      scrollable.appendChild(this.renderGoodbyeSection());
+      scrollable.appendChild(this.renderStringsSection());
+      this.detailPanel.appendChild(scrollable);
+    } else {
+      // Show empty state with welcome/goodbye/strings
+      const toolbar = document.createElement('div');
+      toolbar.className = 'panel-toolbar';
+      const label = document.createElement('span');
+      label.style.cssText = 'font-weight:500; font-size:13px; color:#94a3b8;';
+      label.textContent = 'Select a stop to edit, or expand sections below';
+      toolbar.appendChild(label);
+      this.detailPanel.appendChild(toolbar);
+
+      const scrollable = document.createElement('div');
+      scrollable.className = 'panel-scrollable';
+      scrollable.appendChild(this.renderWelcomeSection());
+      scrollable.appendChild(this.renderGoodbyeSection());
+      scrollable.appendChild(this.renderStringsSection());
+      this.detailPanel.appendChild(scrollable);
+    }
   }
 
   private renderCollapsible(title: string, content: HTMLElement, startOpen = false): HTMLElement {
