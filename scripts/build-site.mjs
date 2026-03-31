@@ -9,9 +9,7 @@
  *   ├── index.html              ← demo tour player
  *   ├── tour.yaml               ← demo tour data
  *   ├── images/                  ← demo tour images
- *   ├── maptour.js + .css       ← player bundle
- *   ├── route-editor.html        ← standalone route editor
- *   ├── editor-data.json         ← route editor data
+ *   ├── maptour.js + .css       ← player bundle (linkable by external sites)
  *   └── authoring/
  *       └── index.html + assets/ ← authoring app
  */
@@ -46,8 +44,6 @@ console.log('Player bundle: ✓ (already built)');
 copy('demo/index.html', 'index.html');
 copy('demo/tour.yaml', 'tour.yaml');
 copy('demo/images', 'images');
-copy('demo/route-editor.html', 'route-editor.html');
-copy('demo/editor-data.json', 'editor-data.json');
 
 // Authoring app (already in dist/authoring/ from `npm run build:authoring`)
 if (existsSync(resolve(dist, 'authoring/index.html'))) {
