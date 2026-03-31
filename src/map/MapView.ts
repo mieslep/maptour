@@ -145,12 +145,26 @@ export class MapView {
     } else {
       const icon = L.divIcon({
         className: 'maptour-gps-icon',
-        html: '<span class="maptour-gps-icon__person">🧍</span>',
+        html: '<span class="maptour-gps-icon__person">🧍</span><span class="maptour-gps-heading-arrow" aria-hidden="true"></span>',
         iconSize: [28, 28],
         iconAnchor: [14, 14],
       });
-      this.gpsDot = L.marker(latlng, { icon, interactive: false, zIndexOffset: 1000 });
+      this.gpsDot = L.marker(latlng, { icon, interactive: false, zIndexOffset: -100 });
       this.gpsDot.addTo(this.map);
+    }
+  }
+
+  updateGpsHeading(heading: number | null): void {
+    if (!this.gpsDot) return;
+    const el = (this.gpsDot as L.Marker).getElement();
+    if (!el) return;
+    const arrow = el.querySelector<HTMLElement>('.maptour-gps-heading-arrow');
+    if (!arrow) return;
+    if (heading === null) {
+      arrow.style.display = 'none';
+    } else {
+      arrow.style.display = '';
+      arrow.style.transform = `rotate(${heading}deg)`;
     }
   }
 

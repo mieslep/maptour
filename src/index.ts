@@ -348,6 +348,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
         mapView.clearGpsPosition();
       }
     });
+    gpsTracker.onHeading((heading) => {
+      mapView.updateGpsHeading(heading);
+    });
     gpsTracker.start();
   }
 

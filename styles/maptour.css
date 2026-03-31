@@ -1052,6 +1052,7 @@
 .maptour-gps-icon {
   background: none;
   border: none;
+  position: relative;
 }
 
 .maptour-gps-icon__person {
@@ -1066,6 +1067,24 @@
 @keyframes maptour-gps-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.15); }
+}
+
+/* GPS heading arrow — rotated via inline style transform: rotate(Xdeg) */
+.maptour-gps-heading-arrow {
+  display: none; /* hidden until heading is known */
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform-origin: center bottom;
+  margin-left: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 14px solid rgba(37, 99, 235, 0.6);
+  pointer-events: none;
+  z-index: -1;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
 }
 
 /* === Tour Start Screen === */
