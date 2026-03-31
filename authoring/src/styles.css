@@ -325,10 +325,14 @@ textarea.input {
 
 .stop-list-info {
   flex: 1;
+  min-width: 0;
   font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stop-num {
@@ -398,7 +402,10 @@ textarea.input {
   border-radius: 6px;
   margin-bottom: 8px;
   background: white;
+  cursor: default;
 }
+.cb-block.dragging { opacity: 0.4; }
+.cb-block.drag-over { border-top: 2px solid #2563eb; }
 .cb-block-header {
   display: flex;
   align-items: center;

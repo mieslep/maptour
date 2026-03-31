@@ -51,10 +51,17 @@ function renderSingleBlock(
 ): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'cb-block';
+  wrapper.draggable = true;
+  wrapper.dataset.idx = String(idx);
 
-  // Block header with type selector and controls
+  // Block header: [drag handle] [type selector] [delete]
   const header = document.createElement('div');
   header.className = 'cb-block-header';
+
+  const handle = document.createElement('span');
+  handle.className = 'stop-drag-handle';
+  handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+  header.appendChild(handle);
 
   const typeSelect = document.createElement('select');
   typeSelect.className = 'input-sm';
@@ -68,7 +75,6 @@ function renderSingleBlock(
   typeSelect.onchange = () => {
     const newType = typeSelect.value as ContentBlock['type'];
     if (newType === block.type) return;
-    // Convert block type, preserving what we can
     if (newType === 'text') blocks[idx] = { type: 'text', body: '' };
     else if (newType === 'image') blocks[idx] = { type: 'image', url: '' };
     else if (newType === 'gallery') blocks[idx] = { type: 'gallery', images: [{ url: '' }] };
@@ -79,33 +85,50 @@ function renderSingleBlock(
   };
   header.appendChild(typeSelect);
 
-  const controls = document.createElement('span');
-  controls.className = 'cb-controls';
-
-  if (idx > 0) {
-    const upBtn = document.createElement('button');
-    upBtn.className = 'btn btn-icon';
-    upBtn.title = 'Move up';
-    upBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
-    upBtn.onclick = () => { [blocks[idx - 1], blocks[idx]] = [blocks[idx], blocks[idx - 1]]; onChange(); rebuild(); };
-    controls.appendChild(upBtn);
-  }
-  if (idx < blocks.length - 1) {
-    const downBtn = document.createElement('button');
-    downBtn.className = 'btn btn-icon';
-    downBtn.title = 'Move down';
-    downBtn.innerHTML = '<i class="fa-solid fa-arrow-down"></i>';
-    downBtn.onclick = () => { [blocks[idx], blocks[idx + 1]] = [blocks[idx + 1], blocks[idx]]; onChange(); rebuild(); };
-    controls.appendChild(downBtn);
-  }
   const delBtn = document.createElement('button');
   delBtn.className = 'btn btn-icon btn-danger';
   delBtn.title = 'Remove block';
   delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
   delBtn.onclick = () => { blocks.splice(idx, 1); onChange(); rebuild(); };
-  controls.appendChild(delBtn);
+  header.appendChild(delBtn);
 
-  header.appendChild(controls);
+  // Drag events for reordering
+  let dragBlockIdx: number | null = null;
+  wrapper.ondragstart = (e) => {
+    dragBlockIdx = idx;
+    wrapper.classList.add('dragging');
+    e.dataTransfer!.effectAllowed = 'move';
+  };
+  wrapper.ondragend = () => {
+    wrapper.classList.remove('dragging');
+    dragBlockIdx = null;
+  };
+  wrapper.ondragover = (e) => {
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'move';
+    wrapper.classList.add('drag-over');
+  };
+  wrapper.ondragleave = () => {
+    wrapper.classList.remove('drag-over');
+  };
+  wrapper.ondrop = (e) => {
+    e.preventDefault();
+    wrapper.classList.remove('drag-over');
+    // Find the source index from the dragged element
+    const srcIdx = parseInt((e.dataTransfer!.getData('text/plain') || String(dragBlockIdx)) || '-1');
+    if (srcIdx >= 0 && srcIdx !== idx && srcIdx < blocks.length) {
+      const [moved] = blocks.splice(srcIdx, 1);
+      blocks.splice(idx, 0, moved);
+      onChange();
+      rebuild();
+    }
+  };
+  wrapper.ondragstart = (e) => {
+    e.dataTransfer!.setData('text/plain', String(idx));
+    e.dataTransfer!.effectAllowed = 'move';
+    wrapper.classList.add('dragging');
+  };
+
   wrapper.appendChild(header);
 
   // Block body based on type
