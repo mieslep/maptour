@@ -288,6 +288,13 @@ export class TourEditor {
         m.on('mousedown', (e) => {
           justDragged = false;
           pushUndo(this.tour); // snapshot before drag starts
+          // Select this point visually
+          this.routePointMarkers.forEach(rm => {
+            rm.setStyle({ fillColor: '#2563eb', radius: 8 });
+            (rm.options as any)._selected = false;
+          });
+          m.setStyle({ fillColor: '#dc2626', radius: 10 });
+          (m.options as any)._selected = true;
           this.map.dragging.disable();
           L.DomEvent.stopPropagation(e);
           const onMove = (ev: L.LeafletMouseEvent) => {
@@ -357,11 +364,14 @@ export class TourEditor {
 
   private showRouteEditWidget(stopIdx: number): void {
     this.hideRouteEditWidget();
+    const stop = this.tour.stops[stopIdx];
+    const route = stop.getting_here?.route;
+
     const widget = document.createElement('div');
     widget.className = 'route-edit-widget';
     widget.innerHTML = `
       <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${stopIdx + 1}</span>
-      <span class="route-edit-hint">Click map to add points. Drag to move. Delete to remove.</span>
+      <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
     `;
     const doneBtn = document.createElement('button');
     doneBtn.className = 'btn btn-sm btn-primary';
@@ -372,6 +382,19 @@ export class TourEditor {
       this.setStatus('Route editing finished.');
     };
     widget.appendChild(doneBtn);
+
+    // Position near the north-most point of the route
+    if (route && route.length > 0) {
+      let northMost = route[0];
+      for (const pt of route) {
+        if (pt[0] > northMost[0]) northMost = pt;
+      }
+      const px = this.map.latLngToContainerPoint([northMost[0], northMost[1]]);
+      widget.style.left = px.x + 'px';
+      widget.style.top = Math.max(10, px.y - 50) + 'px';
+      widget.style.transform = 'translateX(-50%)';
+    }
+
     this.mapContainer.appendChild(widget);
   }
 
@@ -1046,10 +1069,13 @@ export class TourEditor {
         genBtn.className = 'btn btn-sm';
         genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
         genBtn.onclick = async () => {
+          // Confirm if overwriting existing route
+          if (gh.route && gh.route.length > 0) {
+            if (!confirm(`Replace existing route (${gh.route.length} points) with auto-generated route?`)) return;
+          }
           const apiKey = getOrsApiKey();
           if (!apiKey) {
             this.showOrsKeyModal(() => {
-              // Retry after key is set
               genBtn.click();
             });
             return;
@@ -1062,6 +1088,7 @@ export class TourEditor {
             this.withUndo(() => {
               gh.route = route;
             });
+            this.stopEditingRoute();
             this.refreshRoutePolylines();
             this.renderPanel();
             this.setStatus(`Route generated: ${route.length} points.`);
