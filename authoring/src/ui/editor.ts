@@ -119,7 +119,7 @@ export class TourEditor {
   }
 
   private initMap(): void {
-    this.map = L.map(this.mapContainer, { zoomControl: true }).setView([52.845, -8.985], 15);
+    this.map = L.map(this.mapContainer, { zoomControl: true, keyboard: false }).setView([52.845, -8.985], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 20,
@@ -818,23 +818,23 @@ export class TourEditor {
   }
 
   private setupKeyboard(): void {
-    const handler = (e: KeyboardEvent) => {
-      // Don't capture undo/redo when typing in an input or textarea
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // Use capture phase on window to intercept before Leaflet or other handlers
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      const isUndo = e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey;
+      const isRedo = (e.key === 'y' && (e.ctrlKey || e.metaKey)) ||
+                     (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey);
 
-      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
-        e.preventDefault();
-        this.performUndo();
-      } else if (
-        (e.key === 'y' && (e.ctrlKey || e.metaKey)) ||
-        (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey)
-      ) {
-        e.preventDefault();
-        this.performRedo();
-      }
-    };
-    document.addEventListener('keydown', handler);
+      if (!isUndo && !isRedo) return;
+
+      // Allow native undo/redo in text inputs
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (isUndo) this.performUndo();
+      else this.performRedo();
+    }, true); // capture phase
   }
 
   private setStatus(msg: string): void {
