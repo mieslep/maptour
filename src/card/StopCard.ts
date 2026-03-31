@@ -257,24 +257,33 @@ export class StopCard {
     tip.textContent = t('tip');
     this.container.appendChild(tip);
 
-    // Direction toggle (only if more than one stop)
-    if (options.stopCount > 1 && options.onReverseToggle) {
-      let reversed = options.reversed ?? false;
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'maptour-card__direction-toggle';
-      toggleBtn.textContent = reversed ? t('direction_forward') : t('direction_reverse');
-      toggleBtn.addEventListener('click', () => {
-        reversed = !reversed;
-        toggleBtn.textContent = reversed ? t('direction_forward') : t('direction_reverse');
-        options.onReverseToggle!(reversed);
-      });
-      this.container.appendChild(toggleBtn);
-    }
-
     // Stop picker (right under tip)
     this.welcomeSelectionEl = document.createElement('div');
     this.welcomeSelectionEl.className = 'maptour-card__start-from';
     this.container.appendChild(this.welcomeSelectionEl);
+
+    // Direction toggle: "1 → 16" / "16 → 1" (only if more than one stop)
+    if (options.stopCount > 1 && options.onReverseToggle) {
+      let reversed = options.reversed ?? false;
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'maptour-card__direction-toggle';
+      toggleBtn.setAttribute('aria-label', t('direction_forward'));
+
+      function updateToggleLabel(): void {
+        const first = reversed ? options.stopCount : 1;
+        const last = reversed ? 1 : options.stopCount;
+        toggleBtn.innerHTML = `<i class="fa-solid fa-route" aria-hidden="true"></i> ${first} → ${last}`;
+        toggleBtn.setAttribute('aria-label', reversed ? t('direction_reverse') : t('direction_forward'));
+      }
+      updateToggleLabel();
+
+      toggleBtn.addEventListener('click', () => {
+        reversed = !reversed;
+        updateToggleLabel();
+        options.onReverseToggle!(reversed);
+      });
+      this.welcomeSelectionEl.after(toggleBtn);
+    }
 
     // Tour title
     const title = document.createElement('h1');
