@@ -56,6 +56,7 @@ export class TourEditor {
   private preEditView: { center: L.LatLng; zoom: number } | null = null;
   private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
+  private selectedCard: 'welcome' | 'goodbye' | null = null;
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
   private mapContainer!: HTMLElement;
@@ -230,6 +231,7 @@ export class TourEditor {
 
   private selectStop(idx: number): void {
     this.selectedStopIdx = idx;
+    this.selectedCard = null;
     this.renderPanel();
     this.highlightMarker(idx);
     if (idx >= 0 && idx < this.tour.stops.length) {
@@ -632,7 +634,7 @@ export class TourEditor {
     scrollable.className = 'panel-scrollable';
 
     scrollable.appendChild(this.renderMetadataSection());
-    scrollable.appendChild(this.renderStopList());
+    scrollable.appendChild(this.renderCardsList());
     scrollable.appendChild(this.renderStringsSection());
 
     // Export button at the bottom
@@ -662,48 +664,51 @@ export class TourEditor {
   private renderDetailPanel(): void {
     this.detailPanel.innerHTML = '';
 
-    if (this.selectedStopIdx >= 0 && this.selectedStopIdx < this.tour.stops.length) {
-      // Show stop editor
+    const makeToolbar = (title: string) => {
       const toolbar = document.createElement('div');
       toolbar.className = 'panel-toolbar';
       const label = document.createElement('span');
       label.style.cssText = 'font-weight:600; font-size:14px; flex:1;';
-      label.textContent = `Stop ${this.selectedStopIdx + 1}: ${this.tour.stops[this.selectedStopIdx].title || 'Untitled'}`;
+      label.textContent = title;
       toolbar.appendChild(label);
-
       const closeBtn = document.createElement('button');
       closeBtn.className = 'btn btn-icon';
       closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
       closeBtn.title = 'Close';
       closeBtn.onclick = () => {
         this.selectedStopIdx = -1;
+        this.selectedCard = null;
         this.refreshMap();
-        this.renderDetailPanel();
+        this.renderPanel();
       };
       toolbar.appendChild(closeBtn);
-      this.detailPanel.appendChild(toolbar);
+      return toolbar;
+    };
 
+    if (this.selectedStopIdx >= 0 && this.selectedStopIdx < this.tour.stops.length) {
+      const stop = this.tour.stops[this.selectedStopIdx];
+      this.detailPanel.appendChild(makeToolbar(`Stop ${this.selectedStopIdx + 1}: ${stop.title || 'Untitled'}`));
       const scrollable = document.createElement('div');
       scrollable.className = 'panel-scrollable';
-      scrollable.appendChild(this.renderStopEditor(this.tour.stops[this.selectedStopIdx]));
+      scrollable.appendChild(this.renderStopEditor(stop));
+      this.detailPanel.appendChild(scrollable);
+    } else if (this.selectedCard === 'welcome') {
+      this.detailPanel.appendChild(makeToolbar('Welcome Screen'));
+      const scrollable = document.createElement('div');
+      scrollable.className = 'panel-scrollable';
       scrollable.appendChild(this.renderWelcomeSection());
+      this.detailPanel.appendChild(scrollable);
+    } else if (this.selectedCard === 'goodbye') {
+      this.detailPanel.appendChild(makeToolbar('Goodbye Screen'));
+      const scrollable = document.createElement('div');
+      scrollable.className = 'panel-scrollable';
       scrollable.appendChild(this.renderGoodbyeSection());
       this.detailPanel.appendChild(scrollable);
     } else {
-      // Show empty state with welcome/goodbye/strings
-      const toolbar = document.createElement('div');
-      toolbar.className = 'panel-toolbar';
-      const label = document.createElement('span');
-      label.style.cssText = 'font-weight:500; font-size:13px; color:#94a3b8;';
-      label.textContent = 'Select a stop to edit, or expand sections below';
-      toolbar.appendChild(label);
-      this.detailPanel.appendChild(toolbar);
-
-      const scrollable = document.createElement('div');
-      scrollable.className = 'panel-scrollable';
-      scrollable.appendChild(this.renderWelcomeSection());
-      scrollable.appendChild(this.renderGoodbyeSection());
-      this.detailPanel.appendChild(scrollable);
+      const empty = document.createElement('div');
+      empty.className = 'editor-detail-empty';
+      empty.textContent = 'Select a card to edit';
+      this.detailPanel.appendChild(empty);
     }
   }
 
@@ -825,14 +830,27 @@ export class TourEditor {
     return this.renderCollapsible('Tour Metadata', content, false);
   }
 
-  private renderStopList(): HTMLElement {
+  private renderCardsList(): HTMLElement {
     const content = document.createElement('div');
     content.className = 'section-content';
 
-    // Stop list with drag reordering
     const list = document.createElement('div');
     list.className = 'stop-list';
 
+    // Welcome card (pinned at top)
+    const welcomeItem = document.createElement('div');
+    welcomeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'welcome' ? 'selected' : ''}`;
+    welcomeItem.innerHTML = `<span class="stop-list-info"><i class="fa-solid fa-door-open" aria-hidden="true" style="color:#16a34a;margin-right:4px;"></i> Welcome Screen</span>`;
+    welcomeItem.onclick = () => {
+      this.selectedStopIdx = -1;
+      this.selectedCard = 'welcome';
+      this.clearRadiusCircle();
+      this.highlightMarker(-1);
+      this.renderPanel();
+    };
+    list.appendChild(welcomeItem);
+
+    // Stop list with drag reordering
     let dragIdx: number | null = null;
 
     this.tour.stops.forEach((stop, idx) => {
@@ -896,6 +914,19 @@ export class TourEditor {
       list.appendChild(empty);
     }
 
+    // Goodbye card (pinned at bottom)
+    const goodbyeItem = document.createElement('div');
+    goodbyeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'goodbye' ? 'selected' : ''}`;
+    goodbyeItem.innerHTML = `<span class="stop-list-info"><i class="fa-solid fa-flag-checkered" aria-hidden="true" style="color:#dc2626;margin-right:4px;"></i> Goodbye Screen</span>`;
+    goodbyeItem.onclick = () => {
+      this.selectedStopIdx = -1;
+      this.selectedCard = 'goodbye';
+      this.clearRadiusCircle();
+      this.highlightMarker(-1);
+      this.renderPanel();
+    };
+    list.appendChild(goodbyeItem);
+
     content.appendChild(list);
 
     // Add Stop button
@@ -949,7 +980,7 @@ export class TourEditor {
       content.appendChild(genAllBtn);
     }
 
-    return this.renderCollapsible(`Stops (${this.tour.stops.length})`, content, true);
+    return this.renderCollapsible(`Cards (${this.tour.stops.length} stops)`, content, true);
   }
 
   private renderStopEditor(stop: Stop): HTMLElement {
@@ -1155,9 +1186,9 @@ export class TourEditor {
     const content = document.createElement('div');
     content.className = 'section-content';
     content.appendChild(renderContentBlockEditor(
-      this.tour.tour.welcome, () => this.changed(), 'Welcome Content',
+      this.tour.tour.welcome, () => this.changed(), 'Content Blocks',
     ));
-    return this.renderCollapsible('Welcome Screen', content, false);
+    return content;
   }
 
   private renderGoodbyeSection(): HTMLElement {
@@ -1165,9 +1196,9 @@ export class TourEditor {
     const content = document.createElement('div');
     content.className = 'section-content';
     content.appendChild(renderContentBlockEditor(
-      this.tour.tour.goodbye, () => this.changed(), 'Goodbye Content',
+      this.tour.tour.goodbye, () => this.changed(), 'Content Blocks',
     ));
-    return this.renderCollapsible('Goodbye Screen', content, false);
+    return content;
   }
 
   private renderStringsSection(): HTMLElement {

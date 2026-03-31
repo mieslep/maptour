@@ -322,6 +322,7 @@ textarea.input {
 }
 .stop-list-item:hover { background: #e2e8f0; }
 .stop-list-item.selected { background: #dbeafe; }
+.stop-list-item--special { border-top: 1px solid #e2e8f0; font-size: 13px; }
 
 .stop-list-info {
   flex: 1;
