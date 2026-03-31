@@ -47,9 +47,8 @@ const DEFAULTS: Record<string, string> = {
   picker_title:  'Open directions in:',
   picker_cancel: 'Cancel',
 
-  // Direction toggle
-  direction_forward: 'Start at beginning',
-  direction_reverse: 'Start at end',
+  // Stop order toggle
+  stop_order:        'Stop order:',
 
   // Transit bar
   im_here:           "I'm here",

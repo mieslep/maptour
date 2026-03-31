@@ -262,27 +262,36 @@ export class StopCard {
     this.welcomeSelectionEl.className = 'maptour-card__start-from';
     this.container.appendChild(this.welcomeSelectionEl);
 
-    // Direction toggle: "1 → 16" / "16 → 1" (only if more than one stop)
+    // Stop order toggle: compact inline "Stop order: 1 → 16 [tap to flip]"
     if (options.stopCount > 1 && options.onReverseToggle) {
       let reversed = options.reversed ?? false;
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'maptour-card__direction-toggle';
-      toggleBtn.setAttribute('aria-label', t('direction_forward'));
+      const row = document.createElement('div');
+      row.className = 'maptour-card__stop-order';
 
-      function updateToggleLabel(): void {
+      const label = document.createElement('span');
+      label.className = 'maptour-card__stop-order-label';
+      label.textContent = t('stop_order');
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'maptour-card__stop-order-btn';
+
+      function updateToggle(): void {
         const first = reversed ? options.stopCount : 1;
         const last = reversed ? 1 : options.stopCount;
-        toggleBtn.innerHTML = `<i class="fa-solid fa-route" aria-hidden="true"></i> ${first} → ${last}`;
-        toggleBtn.setAttribute('aria-label', reversed ? t('direction_reverse') : t('direction_forward'));
+        toggleBtn.innerHTML = `${first} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${last}`;
+        toggleBtn.setAttribute('aria-label', `Stop order: ${first} to ${last}. Tap to reverse.`);
       }
-      updateToggleLabel();
+      updateToggle();
 
       toggleBtn.addEventListener('click', () => {
         reversed = !reversed;
-        updateToggleLabel();
+        updateToggle();
         options.onReverseToggle!(reversed);
       });
-      this.welcomeSelectionEl.after(toggleBtn);
+
+      row.appendChild(label);
+      row.appendChild(toggleBtn);
+      this.welcomeSelectionEl.after(row);
     }
 
     // Tour title
