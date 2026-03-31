@@ -30,7 +30,8 @@ export class TourEditor {
   private routePolylines: L.Polyline[] = [];
   private radiusCircle: L.Circle | null = null;
   private routePointMarkers: L.CircleMarker[] = [];
-  private editingRouteSegment: number = -1; // index of stop whose getting_here.route is being edited
+  private editingRouteSegment: number = -1;
+  private preEditView: { center: L.LatLng; zoom: number } | null = null;
   private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
   private sidePanel!: HTMLElement;
@@ -148,6 +149,13 @@ export class TourEditor {
       }
     });
 
+    // Reposition route edit widget when map moves
+    this.map.on('moveend zoomend', () => {
+      if (this.editingRouteSegment >= 0 && this.routeEditWidgetMarker) {
+        this.updateRouteEditWidgetPosition();
+      }
+    });
+
     // Fit to stops if we have any
     if (this.tour.stops.length > 0) {
       const bounds = L.latLngBounds(this.tour.stops.map(s => [s.coords[0], s.coords[1]] as L.LatLngTuple));
@@ -262,9 +270,23 @@ export class TourEditor {
     const stop = this.tour.stops[stopIdx];
     if (!stop.getting_here?.route || stop.getting_here.route.length === 0) return;
 
+    // Save current view to restore on Done
+    if (!this.preEditView) {
+      this.preEditView = { center: this.map.getCenter(), zoom: this.map.getZoom() };
+    }
+
     this.editingRouteSegment = stopIdx;
     const route = stop.getting_here.route;
     let justDragged = false;
+
+    // Fit map to show the full segment with padding
+    const prevStop = this.tour.stops[stopIdx - 1];
+    const allPts: L.LatLngTuple[] = [
+      [prevStop.coords[0], prevStop.coords[1]],
+      ...route.map(p => [p[0], p[1]] as L.LatLngTuple),
+      [stop.coords[0], stop.coords[1]],
+    ];
+    this.map.fitBounds(L.latLngBounds(allPts), { padding: [60, 60], animate: true });
 
     const rebuildMarkers = () => {
       this.routePointMarkers.forEach(m => m.remove());
@@ -376,21 +398,14 @@ export class TourEditor {
   private updateRouteEditWidgetPosition(stopIdx?: number): void {
     const segIdx = stopIdx ?? this.editingRouteSegment;
     if (segIdx < 0 || segIdx >= this.tour.stops.length) return;
-    const stop = this.tour.stops[segIdx];
-    const route = stop.getting_here?.route;
-    if (!route || route.length === 0) return;
 
-    // Find north-most point
-    let northLat = -Infinity, northLng = 0;
-    for (const pt of route) {
-      if (pt[0] > northLat) { northLat = pt[0]; northLng = pt[1]; }
-    }
-
-    // Offset north by ~80px worth of latitude at current zoom
-    const offsetPx = 80;
-    const northPoint = this.map.latLngToLayerPoint([northLat, northLng]);
-    northPoint.y -= offsetPx;
-    const offsetLatLng = this.map.layerPointToLatLng(northPoint);
+    // Position at the top-center of the visible map area
+    const mapBounds = this.map.getBounds();
+    const topCenter = L.latLng(mapBounds.getNorth(), mapBounds.getCenter().lng);
+    // Nudge south by 20px so the widget is inside the map
+    const topPx = this.map.latLngToLayerPoint(topCenter);
+    topPx.y += 20;
+    const offsetLatLng = this.map.layerPointToLatLng(topPx);
 
     const html = `
       <div class="route-edit-widget">
@@ -447,6 +462,11 @@ export class TourEditor {
     this.routePointMarkers = [];
     this.editingRouteSegment = -1;
     this.hideRouteEditWidget();
+    // Restore the map view from before editing
+    if (this.preEditView) {
+      this.map.flyTo(this.preEditView.center, this.preEditView.zoom, { animate: true, duration: 0.5 });
+      this.preEditView = null;
+    }
   }
 
   private addRoutePointAtClick(latlng: L.LatLng): void {
