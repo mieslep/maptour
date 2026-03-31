@@ -18,7 +18,7 @@ export class InTransitBar {
 
     const label = document.createElement('span');
     label.className = 'maptour-transit-bar__label';
-    label.textContent = `Stop ${stopNumber}: ${title}`;
+    label.textContent = t('transit_label', { n: stopNumber, stop: title });
 
     const btn = document.createElement('button');
     btn.className = 'maptour-transit-bar__arrived';

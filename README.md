@@ -234,6 +234,10 @@ All UI labels can be overridden via `tour.strings`. Keys use named placeholders.
 | `direction_forward` | Start at beginning | |
 | `direction_reverse` | Start at end | |
 | `im_here` | I'm here | |
+| `transit_label` | Stop {n}: {stop} | `{n}`, `{stop}` |
+| `nearest_to_you` | Nearest to you: | |
+| `stop_label` | Stop {n} - {stop} | `{n}`, `{stop}` |
+| `gallery_counter` | {n} / {total} | `{n}`, `{total}` |
 | `all_stops_title` | All stops | |
 | `tour_load_error` | Tour could not load | |
 | `image_error` | Image could not be loaded | |

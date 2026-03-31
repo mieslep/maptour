@@ -36,6 +36,10 @@ const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   tour_load_error: { default: 'Tour could not load', desc: 'Error screen heading' },
   image_error:     { default: 'Image could not be loaded', desc: 'Image fallback text' },
   audio_error:     { default: 'Audio could not be loaded.', desc: 'Audio fallback text' },
+  transit_label:   { default: 'Stop {n}: {stop}', desc: 'Transit bar label. Placeholders: {n}, {stop}' },
+  nearest_to_you:  { default: 'Nearest to you: ', desc: 'GPS nearest stop indicator prefix' },
+  stop_label:      { default: 'Stop {n} — {stop}', desc: 'Stop reference in nearest indicator. Placeholders: {n}, {stop}' },
+  gallery_counter: { default: '{n} / {total}', desc: 'Gallery image counter. Placeholders: {n}, {total}' },
   minimize:        { default: 'Minimize', desc: 'Minimize button tooltip' },
 };
 

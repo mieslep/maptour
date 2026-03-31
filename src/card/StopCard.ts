@@ -388,12 +388,12 @@ export class StopCard {
     icon.className = 'fa-solid fa-location-dot';
     icon.setAttribute('aria-hidden', 'true');
     indicator.appendChild(icon);
-    indicator.appendChild(document.createTextNode(' Nearest to you: '));
+    indicator.appendChild(document.createTextNode(' ' + t('nearest_to_you')));
 
     const link = document.createElement('a');
     link.className = 'maptour-card__nearest-link';
     link.href = '#';
-    link.textContent = `Stop ${stopIndex + 1} — ${stopName}`;
+    link.textContent = t('stop_label', { n: stopIndex + 1, stop: stopName });
     if (onSelect) {
       link.addEventListener('click', (e) => {
         e.preventDefault();

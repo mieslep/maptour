@@ -46,14 +46,14 @@ export function renderGalleryBlock(block: GalleryBlockType): HTMLElement {
     const counter = document.createElement('div');
     counter.className = 'maptour-gallery__counter';
     counter.setAttribute('aria-live', 'polite');
-    counter.textContent = `1 / ${block.images.length}`;
+    counter.textContent = t('gallery_counter', { n: 1, total: block.images.length });
 
     // Update counter on scroll
     track.addEventListener('scroll', () => {
       const slideWidth = track.clientWidth;
       if (slideWidth > 0) {
         const current = Math.round(track.scrollLeft / slideWidth) + 1;
-        counter.textContent = `${current} / ${block.images.length}`;
+        counter.textContent = t('gallery_counter', { n: current, total: block.images.length });
       }
     });
 

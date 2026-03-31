@@ -52,6 +52,14 @@ const DEFAULTS: Record<string, string> = {
 
   // Transit bar
   im_here:           "I'm here",
+  transit_label:     'Stop {n}: {stop}',
+
+  // Nearest indicator
+  nearest_to_you:    'Nearest to you: ',
+  stop_label:        'Stop {n} — {stop}',
+
+  // Gallery
+  gallery_counter:   '{n} / {total}',
 
   // Stop list overlay
   all_stops_title:   'All stops',
@@ -73,6 +81,9 @@ const PLACEHOLDERS: Record<string, string[]> = {
   next_stop:     ['stop'],
   stops_visited: ['n', 'total'],
   arrived:       ['stop'],
+  transit_label: ['n', 'stop'],
+  stop_label:    ['n', 'stop'],
+  gallery_counter: ['n', 'total'],
 };
 
 let strings: Record<string, string> = { ...DEFAULTS };
