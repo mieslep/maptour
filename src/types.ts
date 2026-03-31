@@ -3,6 +3,7 @@
 export interface GpsConfig {
   max_distance?: number;   // max metres from nearest stop for GPS pre-selection (default: 5000)
   max_accuracy?: number;   // max GPS accuracy in metres to trust the reading (default: 500)
+  arrival_radius?: number; // metres — proximity arrival detection radius (default: 50)
 }
 
 export interface TourMeta {
@@ -70,6 +71,7 @@ export interface Stop {
   coords: [number, number]; // [lat, lng]
   content: ContentBlock[];
   getting_here?: Leg;
+  arrival_radius?: number;  // per-stop override for proximity arrival radius (metres)
 }
 
 export interface Tour {

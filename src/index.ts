@@ -6,6 +6,7 @@ import { StopCard } from './card/StopCard';
 import { NavController } from './navigation/NavController';
 import { GpsTracker } from './gps/GpsTracker';
 import { nearestStop } from './gps/nearestStop';
+import { ProximityDetector } from './gps/proximityDetector';
 import { Breadcrumb } from './breadcrumb/Breadcrumb';
 import { showError } from './errors/ErrorDisplay';
 import { JourneyStateManager } from './journey/JourneyStateManager';
@@ -234,12 +235,16 @@ async function init(options: MapTourInitOptions): Promise<void> {
       updateStopLabel(t('stop_n', { n: stopIndex + 1, total: tour.stops.length }));
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
+      // Update proximity detector to monitor the next stop from this one
+      proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'in_transit') {
       sheet.setPosition('collapsed', true);
       const nextIndex = Math.min(stopIndex + 1, tour.stops.length - 1);
       const nextStop = tour.stops[nextIndex];
       transitBar.show(nextIndex + 1, nextStop.title);
       mapView.setPulsingPin(nextStop.id);
+      // Keep proximity detector monitoring from the current stop
+      proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'tour_complete') {
       arrowMode = 'nav';
       sheet.setPosition('expanded', true);
@@ -329,10 +334,22 @@ async function init(options: MapTourInitOptions): Promise<void> {
   );
 
   // === GPS ===
+  let proximityDetector: ProximityDetector | null = null;
+
   if (gpsTracker.isAvailable()) {
+    // Create proximity detector for arrival detection
+    proximityDetector = new ProximityDetector(tour.stops, 0, tour.tour.gps);
+    proximityDetector.onArrival((stopIndex) => {
+      journeyState.transition('at_stop', stopIndex);
+    });
+
     gpsTracker.onPosition((pos) => {
       if (pos) {
         mapView.updateGpsPosition(pos.lat, pos.lng);
+
+        // Proximity arrival detection
+        proximityDetector?.checkPosition(pos);
+
         // Show nearest stop indicator on welcome screen (once, if accuracy and distance acceptable)
         if (!gpsPickerApplied && arrowMode === 'picker') {
           const maxAccuracy = tour.tour.gps?.max_accuracy ?? 500;
