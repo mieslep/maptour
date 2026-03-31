@@ -21,7 +21,7 @@ export async function generateRoute(
     ],
   };
 
-  const response = await fetch('https://api.openrouteservice.org/v2/directions/foot-walking/json', {
+  const response = await fetch('https://api.openrouteservice.org/v2/directions/foot-walking/geojson', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -40,15 +40,13 @@ export async function generateRoute(
   }
 
   const data = await response.json();
-  const geometry = data.routes?.[0]?.geometry;
-  if (!geometry) {
+  const coords = data.features?.[0]?.geometry?.coordinates;
+  if (!coords || coords.length === 0) {
     throw new Error('ORS returned no route geometry');
   }
 
-  // Decode polyline (ORS returns encoded polyline by default in JSON response)
-  // Actually, ORS JSON response returns geometry as encoded polyline
-  // We need to decode it
-  return decodePolyline(geometry);
+  // GeoJSON returns [lng, lat], convert to [lat, lng]
+  return coords.map((c: number[]) => [c[1], c[0]] as [number, number]);
 }
 
 /** Decode Google-style encoded polyline (used by ORS). Returns [lat, lng][] */
