@@ -2,6 +2,12 @@ import * as yaml from 'js-yaml';
 import type { Tour, Stop, ContentBlock, TourLoadResult } from './types';
 import { validateStrings } from './i18n';
 
+/** Current schema version. Bump when the YAML format changes. */
+export const SCHEMA_VERSION = '1.0';
+
+/** Schema versions this player can read. */
+const SUPPORTED_VERSIONS = new Set(['1.0']);
+
 const VALID_BLOCK_TYPES = new Set(['text', 'image', 'gallery', 'video', 'audio']);
 const VALID_LEG_MODES = new Set(['walk', 'drive', 'transit', 'cycle']);
 
@@ -114,6 +120,16 @@ function validateTour(data: unknown): string | null {
     return 'Missing required top-level "tour" object';
   }
   const meta = d.tour as Record<string, unknown>;
+
+  // Schema version check
+  if (meta.schema_version !== undefined) {
+    const version = String(meta.schema_version);
+    if (!SUPPORTED_VERSIONS.has(version)) {
+      return `Unsupported schema version "${version}". This player supports: ${[...SUPPORTED_VERSIONS].join(', ')}. Please update the player or downgrade the tour file.`;
+    }
+  }
+  // If no schema_version, treat as v1.0 (backwards compatible with pre-versioned files)
+
   if (typeof meta.id !== 'string' || meta.id.trim() === '') {
     return 'Missing required field "tour.id"';
   }

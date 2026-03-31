@@ -16,6 +16,7 @@ export interface GpsConfig {
 }
 
 export interface TourMeta {
+  schema_version?: string;   // YAML schema version (e.g. "1.0")
   id: string;
   title: string;
   description?: string;

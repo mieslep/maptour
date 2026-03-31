@@ -62,6 +62,7 @@ export interface Stop {
 }
 
 export interface TourMeta {
+  schema_version?: string;
   id: string;
   title: string;
   description?: string;

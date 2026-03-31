@@ -1,5 +1,6 @@
 # Ennis Sculpture Trail — Self-Guided Walking Tour
 tour:
+  schema_version: "1.0"
   id: ennis-sculpture-trail
   title: Ennis Sculpture Trail
   description: >

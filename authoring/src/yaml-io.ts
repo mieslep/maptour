@@ -59,8 +59,12 @@ function cleanStop(stop: Stop): Record<string, unknown> {
   return result;
 }
 
+/** Current schema version written by the authoring tool. */
+const SCHEMA_VERSION = '1.0';
+
 function cleanTourMeta(meta: TourMeta): Record<string, unknown> {
   const result: Record<string, unknown> = {
+    schema_version: SCHEMA_VERSION,
     id: meta.id,
     title: meta.title,
   };
