@@ -15,6 +15,7 @@ export class NavController {
   private tour: Tour;
   private currentIndex: number;
   private startIndex = 0;
+  private reversed = false;
   private inJourney = false;
   private journeyDestIndex = -1;
   private mapView: MapView;
@@ -56,15 +57,27 @@ export class NavController {
     this.startIndex = index;
   }
 
+  /** Set reversed navigation mode. */
+  setReversed(reversed: boolean): void {
+    this.reversed = reversed;
+  }
+
   /** True if advancing from this stop would return to the starting stop (tour complete). */
   private isLastTourStop(index: number): boolean {
+    if (this.reversed) {
+      const prevInSequence = (index - 1 + this.tour.stops.length) % this.tour.stops.length;
+      return prevInSequence === this.startIndex;
+    }
     const nextInSequence = (index + 1) % this.tour.stops.length;
     return nextInSequence === this.startIndex;
   }
 
-  /** Get the next stop in circular order, or undefined if this is the last tour stop. */
+  /** Get the next stop in sequence (forward or reverse), or undefined if this is the last tour stop. */
   private getNextStop(index: number): Stop | undefined {
     if (this.isLastTourStop(index)) return undefined;
+    if (this.reversed) {
+      return this.tour.stops[(index - 1 + this.tour.stops.length) % this.tour.stops.length];
+    }
     return this.tour.stops[(index + 1) % this.tour.stops.length];
   }
 
@@ -178,14 +191,21 @@ export class NavController {
       return;
     }
 
-    const nextIndex = (this.currentIndex + 1) % this.tour.stops.length;
+    const nextIndex = this.reversed
+      ? (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length
+      : (this.currentIndex + 1) % this.tour.stops.length;
     const nextStop = this.tour.stops[nextIndex];
 
-    // Check for journey content on the destination stop
-    if (nextStop.getting_here?.journey && nextStop.getting_here.journey.length > 0) {
+    // Journey content sourcing: for the segment between stops A and B (A < B),
+    // always use stops[B].getting_here.journey regardless of direction.
+    const journeySourceStop = this.reversed
+      ? this.tour.stops[this.currentIndex]  // current is the higher-numbered stop
+      : nextStop;                           // destination is the higher-numbered stop
+
+    if (journeySourceStop.getting_here?.journey && journeySourceStop.getting_here.journey.length > 0) {
       this.inJourney = true;
       this.journeyDestIndex = nextIndex;
-      this.stopCard.renderJourney(nextStop, () => {
+      this.stopCard.renderJourney(journeySourceStop, () => {
         // "I've arrived" — advance to the destination stop, hiding redundant getting_here note
         this.stopCard.setSuppressGettingHereNote(true);
         this.goTo(nextIndex);
@@ -204,7 +224,10 @@ export class NavController {
     }
     // Don't go before the starting stop
     if (this.currentIndex === this.startIndex) return;
-    const prevIndex = (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length;
+    // In reverse mode, "prev" goes toward higher indices (back toward original last stop)
+    const prevIndex = this.reversed
+      ? (this.currentIndex + 1) % this.tour.stops.length
+      : (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length;
     this.goTo(prevIndex);
   }
 

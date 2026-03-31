@@ -158,7 +158,18 @@ async function init(options: MapTourInitOptions): Promise<void> {
   let pickerIndex = 0;
   let tourStartIndex = 0;
   let gpsPickerApplied = false;
+  let tourReversed = false;
   const returning = breadcrumb.getVisited().size > 0;
+
+  /** Build a pin number mapping for reversed mode (original index -> display number). */
+  function buildReversedPinMap(): Map<number, number> {
+    const map = new Map<number, number>();
+    const total = tour.stops.length;
+    for (let i = 0; i < total; i++) {
+      map.set(i, total - i);
+    }
+    return map;
+  }
 
   function setMobileMapPadding(): void {
     if (window.innerWidth < 768) {
@@ -173,9 +184,16 @@ async function init(options: MapTourInitOptions): Promise<void> {
     const stop = tour.stops[index];
     stopCard.updateWelcomeSelection(stop, index, tour.stops.length, returning);
     mapView.flyToStop(stop, 16);
-    updateStopLabel(t('stop_n', { n: index + 1, total: tour.stops.length }));
-    prevArrow.disabled = index === 0;
-    nextArrow.disabled = index === tour.stops.length - 1;
+    const displayNum = tourReversed ? (tour.stops.length - index) : (index + 1);
+    updateStopLabel(t('stop_n', { n: displayNum, total: tour.stops.length }));
+    if (tourReversed) {
+      // In reversed picker, left arrow goes to higher index, right to lower
+      prevArrow.disabled = index === tour.stops.length - 1;
+      nextArrow.disabled = index === 0;
+    } else {
+      prevArrow.disabled = index === 0;
+      nextArrow.disabled = index === tour.stops.length - 1;
+    }
   }
 
   function updateStopLabel(text: string): void {
@@ -203,6 +221,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
       const toggleIcon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
       if (toggleIcon) toggleIcon.style.display = 'none';
 
+      // Reset reverse state on fresh tour start
+      tourReversed = false;
+      mapView.setPinNumberMap(null);
       pickerIndex = 0;
       stopCard.renderWelcome({
         title: tour.tour.title,
@@ -213,6 +234,20 @@ async function init(options: MapTourInitOptions): Promise<void> {
         returning,
         stops: tour.stops,
         selectedIndex: 0,
+        reversed: false,
+        onReverseToggle: (reversed) => {
+          tourReversed = reversed;
+          navController.setReversed(reversed);
+          if (reversed) {
+            mapView.setPinNumberMap(buildReversedPinMap());
+            // Move picker to last stop (first in reversed order)
+            updatePickerSelection(tour.stops.length - 1);
+          } else {
+            mapView.setPinNumberMap(null);
+            // Move picker back to first stop
+            updatePickerSelection(0);
+          }
+        },
         onBegin: (idx) => {
           tourStartIndex = idx;
           stopCard.setStartingStop(idx);
@@ -232,16 +267,20 @@ async function init(options: MapTourInitOptions): Promise<void> {
       sheet.setPosition('expanded', true);
       if (window.innerWidth < 768) setStopListOpen(false);
       setMobileMapPadding();
-      updateStopLabel(t('stop_n', { n: stopIndex + 1, total: tour.stops.length }));
+      const displayNum = tourReversed ? (tour.stops.length - stopIndex) : (stopIndex + 1);
+      updateStopLabel(t('stop_n', { n: displayNum, total: tour.stops.length }));
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
       // Update proximity detector to monitor the next stop from this one
       proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'in_transit') {
       sheet.setPosition('collapsed', true);
-      const nextIndex = Math.min(stopIndex + 1, tour.stops.length - 1);
+      const nextIndex = tourReversed
+        ? Math.max(stopIndex - 1, 0)
+        : Math.min(stopIndex + 1, tour.stops.length - 1);
       const nextStop = tour.stops[nextIndex];
-      transitBar.show(nextIndex + 1, nextStop.title);
+      const nextDisplayNum = tourReversed ? (tour.stops.length - nextIndex) : (nextIndex + 1);
+      transitBar.show(nextDisplayNum, nextStop.title);
       mapView.setPulsingPin(nextStop.id);
       // Keep proximity detector monitoring from the current stop
       proximityDetector?.setCurrentStop(stopIndex);
@@ -266,10 +305,13 @@ async function init(options: MapTourInitOptions): Promise<void> {
     }
   });
 
-  // Transit bar "I'm here" → advance to next stop
+  // Transit bar "I'm here" -> advance to next stop
   transitBar.onArrived(() => {
-    const next = journeyState.getActiveStopIndex() + 1;
-    journeyState.transition('at_stop', Math.min(next, tour.stops.length - 1));
+    const current = journeyState.getActiveStopIndex();
+    const next = tourReversed
+      ? Math.max(current - 1, 0)
+      : Math.min(current + 1, tour.stops.length - 1);
+    journeyState.transition('at_stop', next);
   });
 
   // Stop list overlay selection
@@ -281,14 +323,22 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // Arrow buttons: 'picker' mode cycles stops on welcome, 'nav' mode advances tour
   prevArrow.addEventListener('click', () => {
     if (arrowMode === 'picker') {
-      if (pickerIndex > 0) updatePickerSelection(pickerIndex - 1);
+      if (tourReversed) {
+        if (pickerIndex < tour.stops.length - 1) updatePickerSelection(pickerIndex + 1);
+      } else {
+        if (pickerIndex > 0) updatePickerSelection(pickerIndex - 1);
+      }
     } else {
       navController.prev();
     }
   });
   nextArrow.addEventListener('click', () => {
     if (arrowMode === 'picker') {
-      if (pickerIndex < tour.stops.length - 1) updatePickerSelection(pickerIndex + 1);
+      if (tourReversed) {
+        if (pickerIndex > 0) updatePickerSelection(pickerIndex - 1);
+      } else {
+        if (pickerIndex < tour.stops.length - 1) updatePickerSelection(pickerIndex + 1);
+      }
     } else {
       navController.next();
     }
@@ -314,14 +364,17 @@ async function init(options: MapTourInitOptions): Promise<void> {
         if (window.innerWidth < 768) {
           setStopListOpen(false);
         }
-        updateStopLabel(t('stop_n', { n: index + 1, total: tour.stops.length }));
+        const displayNum = tourReversed ? (tour.stops.length - index) : (index + 1);
+        updateStopLabel(t('stop_n', { n: displayNum, total: tour.stops.length }));
         prevArrow.disabled = index === tourStartIndex;
         // Next always enabled — wraps around or triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
       },
       onNextFromLast: () => {
-        breadcrumb.markVisited(tour.stops[tour.stops.length - 1].id);
+        // Mark the final stop visited — in reversed mode, the last stop in sequence is stop[0]
+        const lastStopIndex = tourReversed ? 0 : tour.stops.length - 1;
+        breadcrumb.markVisited(tour.stops[lastStopIndex].id);
         journeyState.transition('tour_complete');
       },
       onJourneyChange: (inJourney) => {
@@ -343,9 +396,23 @@ async function init(options: MapTourInitOptions): Promise<void> {
       journeyState.transition('at_stop', stopIndex);
     });
 
+    // Enable battery saver if configured
+    const batterySaverConfig = tour.tour.gps?.battery_saver;
+    if (batterySaverConfig !== false && batterySaverConfig !== undefined) {
+      gpsTracker.enableBatterySaver(
+        typeof batterySaverConfig === 'object' ? batterySaverConfig : undefined
+      );
+    }
+
     gpsTracker.onPosition((pos) => {
       if (pos) {
         mapView.updateGpsPosition(pos.lat, pos.lng);
+
+        // Update distance to next stop for battery saver mode transitions
+        const distToNext = proximityDetector?.getDistanceToNextStop(pos);
+        if (distToNext !== null && distToNext !== undefined) {
+          gpsTracker.setNextStopDistance(distToNext);
+        }
 
         // Proximity arrival detection
         proximityDetector?.checkPosition(pos);

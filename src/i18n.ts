@@ -47,6 +47,11 @@ const DEFAULTS: Record<string, string> = {
   picker_title:  'Open directions in:',
   picker_cancel: 'Cancel',
 
+  // Direction toggle
+  direction_forward: 'Walking forward',
+  direction_reverse: 'Walking in reverse',
+  reverse_toggle:    'Reverse direction',
+
   // Misc
   minimize:      'Minimize',
 };

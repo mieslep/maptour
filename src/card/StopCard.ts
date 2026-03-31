@@ -241,6 +241,8 @@ export class StopCard {
     stops: Stop[];
     selectedIndex: number;
     onBegin: (index: number) => void;
+    reversed?: boolean;
+    onReverseToggle?: (reversed: boolean) => void;
   }): void {
     this.container.innerHTML = '';
     this.container.scrollTop = 0;
@@ -254,6 +256,20 @@ export class StopCard {
     tip.className = 'maptour-card__tip';
     tip.textContent = t('tip');
     this.container.appendChild(tip);
+
+    // Direction toggle (only if more than one stop)
+    if (options.stopCount > 1 && options.onReverseToggle) {
+      let reversed = options.reversed ?? false;
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'maptour-card__direction-toggle';
+      toggleBtn.textContent = reversed ? t('direction_reverse') : t('direction_forward');
+      toggleBtn.addEventListener('click', () => {
+        reversed = !reversed;
+        toggleBtn.textContent = reversed ? t('direction_reverse') : t('direction_forward');
+        options.onReverseToggle!(reversed);
+      });
+      this.container.appendChild(toggleBtn);
+    }
 
     // Stop picker (right under tip)
     this.welcomeSelectionEl = document.createElement('div');

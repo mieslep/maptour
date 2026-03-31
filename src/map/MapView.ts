@@ -14,6 +14,7 @@ export class MapView {
   private visitedStopIds: Set<number> = new Set();
   private paddingBottom = 0;
   private pinClickCallbacks: Array<(index: number) => void> = [];
+  private pinNumberMap: Map<number, number> | null = null;
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -51,15 +52,16 @@ export class MapView {
     this.markers.clear();
 
     this.tour.stops.forEach((stop, index) => {
+      const displayNumber = this.pinNumberMap?.get(index) ?? (index + 1);
       const marker = L.marker(stop.coords, {
         icon: createPinIcon({
-          number: index + 1,
+          number: displayNumber,
           active: stop.id === this.activeStopId,
           visited: this.visitedStopIds.has(stop.id),
           pulsing: stop.id === this.pulsingStopId,
         }),
         title: stop.title,
-        alt: `Stop ${index + 1}: ${stop.title}`,
+        alt: `Stop ${displayNumber}: ${stop.title}`,
       });
 
       marker.on('click', () => {
@@ -188,6 +190,12 @@ export class MapView {
     } else {
       this.map.flyTo(stop.coords, zoom, { animate: true, duration: 0.8 });
     }
+  }
+
+  /** Set custom display numbers for pins (index → display number). Pass null to reset. */
+  setPinNumberMap(mapping: Map<number, number> | null): void {
+    this.pinNumberMap = mapping;
+    this.renderPins();
   }
 
   onPinClick(cb: (index: number) => void): void {
