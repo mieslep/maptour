@@ -987,11 +987,25 @@ export class TourEditor {
     return this.renderCollapsible(`Cards (${this.tour.stops.length} stops)`, content, true);
   }
 
+  private makeCardSection(title: string): { wrapper: HTMLElement; body: HTMLElement } {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card-section';
+    const header = document.createElement('div');
+    header.className = 'card-section-title';
+    header.textContent = title;
+    wrapper.appendChild(header);
+    const body = document.createElement('div');
+    body.className = 'card-section-body';
+    wrapper.appendChild(body);
+    return { wrapper, body };
+  }
+
   private renderStopEditor(stop: Stop): HTMLElement {
     const content = document.createElement('div');
     content.className = 'section-content';
 
-    // Title
+    // Title section
+    const titleSection = this.makeCardSection('Title');
     const titleRow = document.createElement('div');
     titleRow.className = 'input-row';
     titleRow.innerHTML = '<label class="input-label">Title</label>';
@@ -1007,7 +1021,7 @@ export class TourEditor {
       if (marker) marker.setTooltipContent(stop.title);
     };
     titleRow.appendChild(titleInput);
-    content.appendChild(titleRow);
+    titleSection.body.appendChild(titleRow);
 
     // Coords (readonly)
     const coordsRow = document.createElement('div');
@@ -1019,7 +1033,7 @@ export class TourEditor {
     coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
     coordsInput.readOnly = true;
     coordsRow.appendChild(coordsInput);
-    content.appendChild(coordsRow);
+    titleSection.body.appendChild(coordsRow);
 
     // Arrival radius override
     const radiusRow = document.createElement('div');
@@ -1036,16 +1050,16 @@ export class TourEditor {
       this.updateRadiusCircle();
     };
     radiusRow.appendChild(radiusInput);
-    content.appendChild(radiusRow);
+    titleSection.body.appendChild(radiusRow);
+    content.appendChild(titleSection.wrapper);
 
     // Getting here section (for non-first stops)
     if (this.selectedStopIdx > 0) {
       if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
       const gh = stop.getting_here;
 
-      const ghDiv = document.createElement('div');
-      ghDiv.className = 'subsection';
-      ghDiv.innerHTML = '<div class="subsection-title">Getting Here</div>';
+      const ghSection = this.makeCardSection('Getting Here');
+      const ghDiv = ghSection.body;
 
       // Mode
       const modeRow = document.createElement('div');
@@ -1176,11 +1190,13 @@ export class TourEditor {
       if (!gh.journey) gh.journey = [];
       ghDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), 'Journey Content'));
 
-      content.appendChild(ghDiv);
+      content.appendChild(ghSection.wrapper);
     }
 
     // Stop content blocks
-    content.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), 'Stop Content'));
+    const contentSection = this.makeCardSection('Stop Content');
+    contentSection.body.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), ''));
+    content.appendChild(contentSection.wrapper);
 
     return content;
   }

@@ -18,28 +18,32 @@ export function renderContentBlockEditor(
   function rebuild(): void {
     container.innerHTML = '';
 
-    const headerLabel = document.createElement('div');
-    headerLabel.className = 'cb-label';
-    headerLabel.textContent = label;
-    container.appendChild(headerLabel);
+    if (label) {
+      const headerLabel = document.createElement('div');
+      headerLabel.className = 'cb-label';
+      headerLabel.textContent = label;
+      container.appendChild(headerLabel);
+    }
 
     blocks.forEach((block, idx) => {
       const blockEl = renderPreviewBlock(block, idx, blocks, onChange, rebuild);
       container.appendChild(blockEl);
     });
 
-    // "+ Add Block" button at bottom
-    const addBtn = document.createElement('button');
-    addBtn.className = 'cb-add-btn';
-    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Block';
-    addBtn.onclick = () => showTypePicker(addBtn, (type) => {
-      const newBlock = createEmptyBlock(type);
-      blocks.push(newBlock);
-      onChange();
-      rebuild();
-      openEditModal(newBlock, blocks.length - 1, blocks, onChange, rebuild);
-    });
-    container.appendChild(addBtn);
+    // "+ Add Block" only when empty
+    if (blocks.length === 0) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'cb-add-btn';
+      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Block';
+      addBtn.onclick = () => showTypePicker(addBtn, (type) => {
+        const newBlock = createEmptyBlock(type);
+        blocks.push(newBlock);
+        onChange();
+        rebuild();
+        openEditModal(newBlock, blocks.length - 1, blocks, onChange, rebuild);
+      });
+      container.appendChild(addBtn);
+    }
   }
 
   rebuild();
@@ -58,16 +62,18 @@ function renderPreviewBlock(
   const wrapper = document.createElement('div');
   wrapper.className = 'cb-preview-block';
 
-  // Kebab button (upper-left, visible on hover)
-  const kebab = document.createElement('button');
-  kebab.className = 'cb-kebab';
-  kebab.innerHTML = '&#8942;'; // vertical ellipsis
-  kebab.title = 'Block options';
-  kebab.onclick = (e) => {
+  // "Change" overlay button (centered, visible on hover, greys out content)
+  const overlay = document.createElement('div');
+  overlay.className = 'cb-change-overlay';
+  const changeBtn = document.createElement('button');
+  changeBtn.className = 'cb-change-btn';
+  changeBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Change';
+  changeBtn.onclick = (e) => {
     e.stopPropagation();
-    showKebabMenu(kebab, idx, blocks, onChange, rebuild);
+    showKebabMenu(changeBtn, idx, blocks, onChange, rebuild);
   };
-  wrapper.appendChild(kebab);
+  overlay.appendChild(changeBtn);
+  wrapper.appendChild(overlay);
 
   // Render content preview
   const content = document.createElement('div');
@@ -114,7 +120,7 @@ function renderImagePreview(container: HTMLElement, block: { type: 'image'; url:
     img.alt = block.alt || '';
     img.style.maxWidth = '100%';
     img.style.borderRadius = '4px';
-    img.onerror = () => { img.replaceWith(makePlaceholderImg('Image not found')); };
+    img.onerror = () => { img.replaceWith(makePlaceholderImg(`📷 ${block.url}`)); };
     container.appendChild(img);
     if (block.caption) {
       const cap = document.createElement('div');
