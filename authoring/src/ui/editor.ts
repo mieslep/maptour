@@ -789,29 +789,49 @@ export class TourEditor {
     return this.renderCollapsible('String Overrides', content, false);
   }
 
+  private performUndo(): void {
+    const prev = undo(this.tour);
+    if (prev) {
+      this.tour = prev;
+      if (this.selectedStopIdx >= this.tour.stops.length) {
+        this.selectedStopIdx = this.tour.stops.length - 1;
+      }
+      this.refreshMap();
+      this.renderPanel();
+      this.changed();
+      this.setStatus('Undone.');
+    }
+  }
+
+  private performRedo(): void {
+    const next = redo(this.tour);
+    if (next) {
+      this.tour = next;
+      if (this.selectedStopIdx >= this.tour.stops.length) {
+        this.selectedStopIdx = this.tour.stops.length - 1;
+      }
+      this.refreshMap();
+      this.renderPanel();
+      this.changed();
+      this.setStatus('Redone.');
+    }
+  }
+
   private setupKeyboard(): void {
     const handler = (e: KeyboardEvent) => {
+      // Don't capture undo/redo when typing in an input or textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
       if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
         e.preventDefault();
-        const prev = undo(this.tour);
-        if (prev) {
-          this.tour = prev;
-          this.refreshMap();
-          this.renderPanel();
-          this.setStatus('Undone.');
-        }
+        this.performUndo();
       } else if (
         (e.key === 'y' && (e.ctrlKey || e.metaKey)) ||
         (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey)
       ) {
         e.preventDefault();
-        const next = redo(this.tour);
-        if (next) {
-          this.tour = next;
-          this.refreshMap();
-          this.renderPanel();
-          this.setStatus('Redone.');
-        }
+        this.performRedo();
       }
     };
     document.addEventListener('keydown', handler);
