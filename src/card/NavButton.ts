@@ -53,9 +53,9 @@ export function resolveMode(stop: Stop, tourNavMode?: LegMode): LegMode {
   return stop.getting_here?.mode ?? tourNavMode ?? 'walk';
 }
 
-// SVG icons
-const PIN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>';
-const ARROW_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>';
+// Font Awesome icons
+const PIN_ICON = '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>';
+const ARROW_ICON = '<i class="fa-solid fa-diamond-turn-right" aria-hidden="true"></i>';
 
 export type NavButtonVariant = 'pin' | 'arrow' | 'full';
 
@@ -87,12 +87,12 @@ export class NavButton {
     const label = t(BUTTON_LABEL_KEYS[this.legMode]);
     if (this.variant === 'pin') {
       btn.className = 'maptour-nav-btn maptour-nav-btn--pin';
-      btn.innerHTML = PIN_SVG;
+      btn.innerHTML = PIN_ICON;
       btn.title = t('directions_to');
       btn.setAttribute('aria-label', `${t('directions_to')}: ${this.stop.title}`);
     } else if (this.variant === 'arrow') {
       btn.className = 'maptour-nav-btn maptour-nav-btn--arrow';
-      btn.innerHTML = ARROW_SVG;
+      btn.innerHTML = ARROW_ICON;
       btn.title = label;
       btn.setAttribute('aria-label', `${label}: ${this.stop.title}`);
     } else {

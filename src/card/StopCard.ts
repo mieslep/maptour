@@ -9,10 +9,10 @@ import { NavButton } from './NavButton';
 import { NavAppPreference } from '../navigation/NavAppPreference';
 
 const MODE_ICON: Record<LegMode, string> = {
-  walk:    '🚶',
-  drive:   '🚗',
-  transit: '🚌',
-  cycle:   '🚲',
+  walk:    '<i class="fa-solid fa-person-walking" aria-hidden="true"></i>',
+  drive:   '<i class="fa-solid fa-car" aria-hidden="true"></i>',
+  transit: '<i class="fa-solid fa-bus" aria-hidden="true"></i>',
+  cycle:   '<i class="fa-solid fa-bicycle" aria-hidden="true"></i>',
 };
 
 function renderBlock(block: ContentBlock, active: boolean): HTMLElement {
@@ -86,8 +86,8 @@ export class StopCard {
     if (stop.getting_here?.note && (stopNumber - 1) !== this.startingStopIndex && !this.suppressGettingHereNote) {
       const note = document.createElement('div');
       note.className = 'maptour-card__getting-here-note';
-      const icon = MODE_ICON[stop.getting_here.mode] ?? '→';
-      note.textContent = `${icon} ${stop.getting_here.note}`;
+      const icon = MODE_ICON[stop.getting_here.mode] ?? '<i class="fa-solid fa-route" aria-hidden="true"></i>';
+      note.innerHTML = `${icon} ${stop.getting_here.note}`;
       headerText.appendChild(note);
     }
 
@@ -175,8 +175,8 @@ export class StopCard {
     if (gettingHere.note) {
       const note = document.createElement('div');
       note.className = 'maptour-card__getting-here-note';
-      const icon = MODE_ICON[gettingHere.mode] ?? '→';
-      note.textContent = `${icon} ${gettingHere.note}`;
+      const icon = MODE_ICON[gettingHere.mode] ?? '<i class="fa-solid fa-route" aria-hidden="true"></i>';
+      note.innerHTML = `${icon} ${gettingHere.note}`;
       headerText.appendChild(note);
     }
 
@@ -345,7 +345,7 @@ export class StopCard {
 
     const indicator = document.createElement('div');
     indicator.className = 'maptour-card__nearest';
-    indicator.textContent = `📍 Nearest to you: Stop ${stopIndex + 1} — ${stopName}`;
+    indicator.innerHTML = `<i class="fa-solid fa-location-dot" aria-hidden="true"></i> Nearest to you: Stop ${stopIndex + 1} — ${stopName}`;
     tip.after(indicator);
   }
 

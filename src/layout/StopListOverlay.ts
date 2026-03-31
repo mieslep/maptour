@@ -14,11 +14,7 @@ export class StopListOverlay {
     this.fab = document.createElement('button');
     this.fab.className = 'maptour-stop-list-fab';
     this.fab.setAttribute('aria-label', 'Show all stops');
-    this.fab.innerHTML = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect x="3" y="4" width="14" height="2" rx="1" fill="currentColor"/>
-      <rect x="3" y="9" width="14" height="2" rx="1" fill="currentColor"/>
-      <rect x="3" y="14" width="14" height="2" rx="1" fill="currentColor"/>
-    </svg>`;
+    this.fab.innerHTML = '<i class="fa-solid fa-list" aria-hidden="true"></i>';
     this.fab.addEventListener('click', () => this.open());
     container.appendChild(this.fab);
 

@@ -1,3 +1,4 @@
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import '../styles/maptour.css';
 import { loadTour } from './loader';
 import { MapView } from './map/MapView';
@@ -92,13 +93,13 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // Prev/Next arrow buttons (inline in the header bar)
   const prevArrow = document.createElement('button');
   prevArrow.className = 'maptour-nav-arrow';
-  prevArrow.innerHTML = '&#8249;';
+  prevArrow.innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>';
   prevArrow.setAttribute('aria-label', 'Previous stop');
   prevArrow.disabled = true;
 
   const nextArrow = document.createElement('button');
   nextArrow.className = 'maptour-nav-arrow';
-  nextArrow.innerHTML = '&#8250;';
+  nextArrow.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
   nextArrow.setAttribute('aria-label', 'Next stop');
 
   // Minimize button — collapses the sheet, tour stays active
