@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import type { Tour, Stop, ContentBlock, LegMode } from '../types';
-import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey } from '../store';
+import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey } from '../store';
 import { downloadYaml } from '../yaml-io';
 import { generateRoute, generateAllRoutes } from '../ors';
 import { renderContentBlockEditor } from './content-blocks';
@@ -899,20 +899,23 @@ export class TourEditor {
       noteRow.appendChild(noteInput);
       ghDiv.appendChild(noteRow);
 
-      // Route info and editing
+      // Route controls (always shown)
+      const stopIdx = this.tour.stops.indexOf(stop);
+      const routeDiv = document.createElement('div');
+      routeDiv.className = 'route-info';
+      routeDiv.style.cssText = 'flex-wrap:wrap; gap:4px;';
+
       if (gh.route && gh.route.length > 0) {
-        const routeInfo = document.createElement('div');
-        routeInfo.className = 'route-info';
-        routeInfo.textContent = `Route: ${gh.route.length} points`;
+        const label = document.createElement('span');
+        label.textContent = `Route: ${gh.route.length} pts`;
+        label.style.marginRight = '4px';
+        routeDiv.appendChild(label);
 
         const editBtn = document.createElement('button');
         editBtn.className = 'btn btn-sm';
         editBtn.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i> Edit';
-        const stopIdx = this.tour.stops.indexOf(stop);
-        editBtn.onclick = () => {
-          this.startEditingRoute(stopIdx);
-        };
-        routeInfo.appendChild(editBtn);
+        editBtn.onclick = () => this.startEditingRoute(stopIdx);
+        routeDiv.appendChild(editBtn);
 
         const clearBtn = document.createElement('button');
         clearBtn.className = 'btn btn-sm btn-danger';
@@ -923,9 +926,69 @@ export class TourEditor {
           this.refreshRoutePolylines();
           this.renderPanel();
         };
-        routeInfo.appendChild(clearBtn);
-        ghDiv.appendChild(routeInfo);
+        routeDiv.appendChild(clearBtn);
+      } else {
+        const label = document.createElement('span');
+        label.textContent = 'No route';
+        label.style.cssText = 'color:#94a3b8; margin-right:4px;';
+        routeDiv.appendChild(label);
+
+        // Create manual route (straight line between prev stop and this one, editable)
+        if (stopIdx > 0) {
+          const manualBtn = document.createElement('button');
+          manualBtn.className = 'btn btn-sm';
+          manualBtn.innerHTML = '<i class="fa-solid fa-draw-polygon" aria-hidden="true"></i> Draw Route';
+          manualBtn.onclick = () => {
+            const prevStop = this.tour.stops[stopIdx - 1];
+            this.withUndo(() => {
+              gh.route = [
+                [...prevStop.coords] as [number, number],
+                [...stop.coords] as [number, number],
+              ];
+            });
+            this.refreshRoutePolylines();
+            this.startEditingRoute(stopIdx);
+            this.renderPanel();
+          };
+          routeDiv.appendChild(manualBtn);
+        }
       }
+
+      // Auto-generate route button (always available if there's a previous stop)
+      if (stopIdx > 0) {
+        const genBtn = document.createElement('button');
+        genBtn.className = 'btn btn-sm';
+        genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
+        genBtn.onclick = async () => {
+          const apiKey = getOrsApiKey();
+          if (!apiKey) {
+            this.showOrsKeyModal(() => {
+              // Retry after key is set
+              genBtn.click();
+            });
+            return;
+          }
+          const prevStop = this.tour.stops[stopIdx - 1];
+          genBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+          genBtn.disabled = true;
+          try {
+            const route = await generateRoute(prevStop.coords, stop.coords);
+            this.withUndo(() => {
+              gh.route = route;
+            });
+            this.refreshRoutePolylines();
+            this.renderPanel();
+            this.setStatus(`Route generated: ${route.length} points.`);
+          } catch (err) {
+            this.setStatus(`Route failed: ${(err as Error).message}`);
+          }
+          genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
+          genBtn.disabled = false;
+        };
+        routeDiv.appendChild(genBtn);
+      }
+
+      ghDiv.appendChild(routeDiv);
 
       // Journey content blocks
       if (!gh.journey) gh.journey = [];
@@ -1050,6 +1113,63 @@ export class TourEditor {
         this.deleteSelectedRoutePoint();
       }
     });
+  }
+
+  private showOrsKeyModal(onSaved?: () => void): void {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:white;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);';
+
+    modal.innerHTML = `
+      <h3 style="margin:0 0 12px; font-size:16px;">OpenRouteService API Key</h3>
+      <p style="font-size:13px; color:#64748b; margin:0 0 12px; line-height:1.5;">
+        Auto-routing uses <a href="https://openrouteservice.org" target="_blank" style="color:#2563eb;">OpenRouteService</a>
+        for foot-walking directions along real paths and footways.
+      </p>
+      <ol style="font-size:13px; color:#64748b; margin:0 0 16px; padding-left:20px; line-height:1.7;">
+        <li>Go to <a href="https://openrouteservice.org/dev/#/signup" target="_blank" style="color:#2563eb;">openrouteservice.org/dev</a></li>
+        <li>Sign up for a free account (2,000 requests/day)</li>
+        <li>Copy your API key and paste it below</li>
+      </ol>
+    `;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'input';
+    input.placeholder = 'Paste your API key here...';
+    input.value = getOrsApiKey();
+    input.style.marginBottom = '16px';
+    modal.appendChild(input);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => overlay.remove();
+    btnRow.appendChild(cancelBtn);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.textContent = 'Save Key';
+    saveBtn.onclick = () => {
+      const key = input.value.trim();
+      if (!key) return;
+      setOrsApiKey(key);
+      overlay.remove();
+      this.setStatus('ORS API key saved.');
+      onSaved?.();
+    };
+    btnRow.appendChild(saveBtn);
+    modal.appendChild(btnRow);
+
+    overlay.appendChild(modal);
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+    input.focus();
   }
 
   private setStatus(msg: string): void {

@@ -8,12 +8,9 @@ export async function generateRoute(
   from: [number, number],
   to: [number, number],
 ): Promise<[number, number][]> {
-  let apiKey = getOrsApiKey();
+  const apiKey = getOrsApiKey();
   if (!apiKey) {
-    const input = prompt('Enter your OpenRouteService API key:');
-    if (!input) throw new Error('ORS API key is required for route generation');
-    apiKey = input.trim();
-    setOrsApiKey(apiKey);
+    throw new Error('ORS API key is required. Set it via the API key dialog.');
   }
 
   // ORS expects [lng, lat] not [lat, lng]
