@@ -1,496 +1,678 @@
 # Ennis Sculpture Trail — Self-Guided Walking Tour
-# Waypoint order taken directly from Sculpture Trail.gpx (s13 → s14 → … → s1)
-# Coordinates: Ennis, Co. Clare, Ireland (~52.844°N, 8.985°W)
-
 tour:
   id: ennis-sculpture-trail
   title: Ennis Sculpture Trail
   description: >
     A self-guided walking tour of the Ennis Sculpture Trail. Discover public artworks
     placed throughout the town and its riverside paths, each with its own story.
-  duration: "Approx. 90 minutes on foot"
+  duration: "2.5 km / approx. 45 minutes"
   nav_mode: walk
   close_url: "https://visitennis.ie"
   welcome:
     - type: text
       body: |
-        Welcome to the Ennis Sculpture Trail!
+        Welcome to the **Ennis Sculpture Trail** - a short walking tour
+        through the heart of Ennis, County Clare.
 
-        This self-guided tour takes you to each sculpture in the order of the
-        signed trail. Each stop includes information about the artwork and the
-        artist.
+        In 1997, sculptor Carmel Doherty spearheaded the first public
+        sculpture trail in her native town. Five artists - Doherty,
+        Fiona O'Dwyer, Shane Gilmore, Barry Wrafter, and Colin Grehan -
+        carved, cast, and shaped the works you are about to see. Several
+        had never worked in stone before; they learned together.
 
-        **Tips for your walk:**
-        - Wear comfortable shoes — some sections follow riverside paths
-        - Allow about 90 minutes at a relaxed pace
-        - Use the navigation button at each stop for walking directions
-    - type: image
-      url: https://placehold.co/800x400/1d4ed8/ffffff?text=Ennis+Sculpture+Trail
-      caption: Ennis town centre and the River Fergus
+        Today the trail weaves along the River Fergus, through medieval
+        laneways, and across the town's main streets. The sculptures
+        celebrate Clare's culture, history, sport, and the bond between
+        people and nature.
+
+        **Before you start:**
+        - There is one set of stairs between stops 5 and 6 (a step-free
+          alternative is noted at that stop)
+
   goodbye:
     - type: text
       body: |
-        You have completed the Ennis Sculpture Trail — well done!
+        You have completed the Ennis Sculpture Trail - well done!
 
-        We hope you enjoyed discovering the artworks woven into the fabric of
-        Ennis. For more information about the artists and the trail, visit
-        visitennis.ie.
+        You have walked 2.5 km through the heart of Ennis, passing works
+        of public art spanning almost three decades - from the original
+        1997 trail to the Centurial Sphere unveiled in 2016.
+
+        The trail was the vision of sculptor Carmel Doherty, who believed
+        that contemporary art belonged in everyday public spaces, not just
+        galleries. The artists who created these works have left a lasting
+        mark on the town.
+
+        For more about Ennis and what else to see, visit
+        [visitennis.ie](https://visitennis.ie).
 
 stops:
-  # GPX waypoint s13
   - id: 1
-    title: Sculpture S13
-    coords: [52.846412, -8.982536]
+    title: Trinity
+    coords: [52.846411, -8.982617]
     content:
       - type: text
         body: |
-          ## Sculpture S13
+          Your tour begins at Club Bridge with one of the original trail
+          sculptures. Trinity is a triangular piece where each of the three
+          corners is formed into a human figure, but look closely - each
+          head features animal elements too. The sculptors sought to express
+          the bond between nature and man.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          This was part of the first Ennis Sculpture Trail, a project
+          spearheaded by sculptor Carmel Doherty in 1997. Five artists
+          created the trail together, several of them carving stone for
+          the first time.
+
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S13
-        caption: Sculpture S13 on the Ennis Sculpture Trail
+        url: images/stop1-sculpture.jpg
+        caption: '"Trinity" by Diarmuid Twohig & Marcel Twohig'
 
-  # GPX waypoint s14
   - id: 2
-    title: Sculpture S14
+    title: The Centurial Sphere & Easter Rising Memorial
     getting_here:
       mode: walk
       note: "Continue along the path, ~2 min"
       route:
-        - [52.846389, -8.982382]
-        - [52.846379, -8.982386]
-        - [52.846319, -8.982427]
-        - [52.8463, -8.982315]
-        - [52.846296, -8.982289]
-        - [52.846242, -8.981979]
-        - [52.846209, -8.981932]
-        - [52.846137, -8.981884]
-    coords: [52.846117, -8.981968]
+        - [52.846411, -8.982617]
+        - [52.846386, -8.982567]
+        - [52.846308, -8.982578]
+        - [52.846264, -8.982557]
+        - [52.846284, -8.982426]
+        - [52.846267, -8.982286]
+        - [52.846233, -8.982080]
+        - [52.846212, -8.981994]
+        - [52.846175, -8.981960]
+        - [52.846129, -8.981962]
+    coords: [52.846129, -8.981962]
     content:
       - type: text
         body: |
-          ## Sculpture S14
+          Located at Club Bridge, this stop features two commemorative pieces
+          marking the Easter Rising.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          The **Easter Rising Memorial Stone** was erected in 1966 to mark
+          the 50th anniversary of the 1916 Rising.
+
+          **The Centurial Sphere** (2016), designed and crafted by Paddy and
+          Conor Murray of Kilkee Forge, was commissioned by Clare County
+          Council as the centrepiece of its Centenary Programme in Clare.
+          The illuminated steel sphere carries lines from poems and songs
+          about and from different parts of Clare, celebrating the county's
+          cultural tradition - a tradition cherished by the men and women
+          of 1916.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S14
-        caption: Sculpture S14 on the Ennis Sculpture Trail
+        url: images/stop2-sphere.jpg
+        caption: The Centurial Sphere (2016) by Paddy Murray
+      - type: image
+        url: images/stop2-memorial.jpg
+        caption: Easter Rising Memorial Stone (1966)
 
-  # GPX waypoint s15
   - id: 3
-    title: Sculpture S15
+    title: "Bl\xE1th na h\xCDnse"
     getting_here:
       mode: walk
       note: "Continue along the path, ~3 min"
       route:
-        - [52.846137, -8.981884]
-        - [52.846076, -8.981844]
-        - [52.845847, -8.981796]
-        - [52.845646, -8.981797]
-        - [52.845458, -8.981847]
-        - [52.845503, -8.982406]
-        - [52.845421, -8.98255]
-        - [52.845288, -8.982672]
-        - [52.845143, -8.982789]
-        - [52.845113, -8.982854]
-        - [52.844981, -8.983142]
+        - [52.846129, -8.981962]
+        - [52.846084, -8.981928]
+        - [52.845981, -8.981879]
+        - [52.845867, -8.981850]
+        - [52.845647, -8.981852]
+        - [52.845509, -8.981893]
+        - [52.845430, -8.981917]
+        - [52.845449, -8.982212]
+        - [52.845467, -8.982343]
+        - [52.845326, -8.982464]
+        - [52.845128, -8.982663]
+        - [52.845120, -8.982898]
+        - [52.845062, -8.983044]
 
-    coords: [52.844996, -8.983160]
+    coords: [52.845062, -8.983044]
     content:
       - type: text
         body: |
-          ## Sculpture S15
+          This striking sculpture was unveiled to celebrate Ennis topping the
+          IBAL Anti-Litter League. Located in Abbey Street car park, the
+          centrepiece is a giant Yellow Iris - a wildflower associated with
+          riverbanks and wet ground, hinting at the blooming of Ennis from a
+          business, community and cultural perspective.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Three steel benches surround the Iris, which rises from a flowerbed
+          filled with wildflowers and is illuminated at night.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S15
-        caption: Sculpture S15 on the Ennis Sculpture Trail
+        url: images/stop3-sculpture.jpg
+        caption: '"Bláth na hÍnse" by Conor & Paddy Murray, Kilkee Forge'
 
-  # GPX waypoint s2
   - id: 4
-    title: Sculpture S2
+    title: Contentment is Wealth
     getting_here:
       mode: walk
       note: "Continue along the path, ~6 min"
       route:
-        - [52.844981, -8.983142]
-        - [52.844891, -8.983341]
-        - [52.844619, -8.983624]
-        - [52.84455, -8.983464]
-    coords: [52.844527, -8.983491]
+        - [52.845062, -8.983044]
+        - [52.844894, -8.983421]
+        - [52.844792, -8.983520]
+        - [52.844669, -8.983639]
+        - [52.844623, -8.983547]
+        - [52.844580, -8.983599]
+        - [52.844562, -8.983567]
+    coords: [52.844562, -8.983567]
     content:
       - type: text
         body: |
-          ## Sculpture S2
+          Named after the traditional Irish jig **Contentment is Wealth**,
+          this pair of limestone sculptures plays on the idea of music made
+          visible. One sculpture shows a fiddler mid-performance, while the
+          other is a carved stone chair, inviting you to pause, sit, and
+          imagine the tune.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Together, the two pieces celebrate Ennis's strong tradition of
+          music, performance, and informal gathering.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S2
-        caption: Sculpture S2 on the Ennis Sculpture Trail
+        url: images/stop4-fiddler.jpg
+        caption: The fiddler - "Contentment is Wealth" by Fiona O'Dwyer (1998)
+      - type: image
+        url: images/stop4-chair.jpg
+        caption: The stone chair - "Contentment is Wealth" by Fiona O'Dwyer (1998)
 
-  # GPX waypoint s16
   - id: 5
-    title: Sculpture S16
+    title: Sleepy Head - Helping Hands
     getting_here:
       mode: walk
       note: "Continue along the path, ~3 min"
       route:
-        - [52.84455, -8.983464]
-        - [52.844619, -8.983624]
-        - [52.844502, -8.983764]
-        - [52.844419, -8.983949]
-        - [52.844399, -8.984059]
-        - [52.844421, -8.984075]
-        - [52.844451, -8.984177]
-        - [52.844496, -8.984223]
-    coords: [52.844488, -8.984245]
+        - [52.844562, -8.983567]
+        - [52.844604, -8.983666]
+        - [52.844506, -8.983792]
+        - [52.844426, -8.983977]
+        - [52.844426, -8.984103]
+        - [52.844442, -8.984188]
+        - [52.844473, -8.984257]
+    coords: [52.844473, -8.984257]
     content:
       - type: text
         body: |
-          ## Sculpture S16
-
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          These two limestone pieces in Parnell Street car park reflect what
+          Shane Gilmore described as the laid-back and friendly side of life
+          in Ennis - a town where there is always time to stop, chat, and
+          lend a hand.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S16
-        caption: Sculpture S16 on the Ennis Sculpture Trail
+        url: images/stop5-sleepyhead.jpg
+        caption: '"Sleepy Head" by Shane Gilmore (1998)'
+      - type: image
+        url: images/stop5-helpinghands.jpg
+        caption: '"Helping Hands" by Shane Gilmore (1998)'
 
-
-  # GPX waypoint s11
   - id: 6
-    title: Sculpture S11
+    title: Clara
     getting_here:
       mode: walk
-      note: "Continue along the path, ~4 min"
+      note: |
+          Up the stairs past AIB to Bindon Street, ~4 min.
+          Step-free alternative: double back and turn left at the road.
+      journey:
+        - type: text
+          body: |
+            As you head up the steps from Bank Place, look around at the
+            red-brick Georgian terraces. Ennis grew rapidly in the 18th and
+            early 19th centuries as a market town and parliamentary borough.
+            Many of these terraced houses date from that period, built for
+            the merchants and professionals who served the town's thriving
+            economy. Bindon Street is one of Clare's best surviving
+            Georgian streetscapes.
+        - type: image
+          url: images/journey-5to6-georgian.jpg
+          caption: Georgian terraced houses on the route between stops 5 and 6
       route:
-        - [52.844496, -8.984223]
-        - [52.844451, -8.984177]
-        - [52.844421, -8.984075]
-        - [52.844399, -8.984059]
-        - [52.844419, -8.983949]
-        - [52.844502, -8.983764]
-        - [52.844619, -8.983624]
-        - [52.844717, -8.983883]
-        - [52.844792, -8.984017]
-        - [52.844876, -8.984188]
-        - [52.845141, -8.984822]
-        - [52.845196, -8.985005]
-        - [52.845383, -8.98575]
-        - [52.845412, -8.985806]
-        - [52.84546, -8.985825]
-        - [52.84547, -8.985821]
-    coords: [52.845464, -8.985778]
+        - [52.844473, -8.984257]
+        - [52.844568, -8.984331]
+        - [52.844589, -8.984261]
+        - [52.844634, -8.984049]
+        - [52.844672, -8.983958]
+        - [52.844691, -8.983918]
+        - [52.844751, -8.984017]
+        - [52.844842, -8.984202]
+        - [52.845114, -8.984859]
+        - [52.845174, -8.985049]
+        - [52.845235, -8.985009]
+        - [52.845268, -8.985135]
+        - [52.845399, -8.985650]
+        - [52.845447, -8.985658]
+    coords: [52.845447, -8.985658]
     content:
       - type: text
         body: |
-          ## Sculpture S11
+          On the corner of Bindon Street, "Clara" is a limestone lady
+          reclining gracefully and resting on her elbows. Carmel used
+          diamond-tipped tools to achieve the smooth, glossy finish -
+          the same technique she applied to "A Fishy Tale" at stop 8.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Carmel Doherty was the driving force behind the entire Ennis
+          Sculpture Trail. In 1997 she organised the first trail, bringing
+          together five artists to create permanent public art in Ennis.
+          Before that, she had run a temporary sculpture trail in Dromore
+          Woods in 1996, which proved so popular that thousands of brochures
+          were picked up in the first month.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S11
-        caption: Sculpture S11 on the Ennis Sculpture Trail
+        url: images/stop6-clara.jpg
+        caption: '"Clara" by Carmel Doherty'
 
-  # GPX waypoint s12
   - id: 7
-    title: Sculpture S12
+    title: Figurative Sculptures, Harmony Row
     getting_here:
       mode: walk
       note: "Continue along the path, ~3 min"
       route:
-        - [52.84547, -8.985821]
-        - [52.845542, -8.985794]
-        - [52.846265, -8.985304]
-        - [52.846229, -8.984828]
-        - [52.846251, -8.984511]
-    coords: [52.846138, -8.984489]
+        - [52.845447, -8.985658]
+        - [52.845469, -8.985685]
+        - [52.845556, -8.985610]
+        - [52.845879, -8.985390]
+        - [52.846015, -8.985301]
+        - [52.846224, -8.985184]
+        - [52.846206, -8.984953]
+        - [52.846198, -8.984816]
+        - [52.846211, -8.984575]
+        - [52.846169, -8.984563]
+        - [52.846172, -8.984500]
+        - [52.846143, -8.984485]
+    coords: [52.846143, -8.984485]
     content:
       - type: text
         body: |
-          ## Sculpture S12
+          A small group of figurative sculptures stands on the lawn near the
+          Local Studies Centre on Harmony Row.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          These expressive human forms add another layer to Ennis's public
+          art landscape. Untitled and modest in scale, they reward a closer
+          look and invite different interpretations - identity, presence,
+          community, and conversation.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S12
-        caption: Sculpture S12 on the Ennis Sculpture Trail
+        url: images/stop7-lawn.jpg
+      - type: image
+        url: images/stop7-figures.jpg
 
-  # GPX waypoint s7 (first occurrence, lat 52.846933)
   - id: 8
-    title: Sculpture S7
+    title: A Fishy Tail
     getting_here:
       mode: walk
       note: "Continue along the path, ~5 min"
       route:
-        - [52.846251, -8.984511]
-        - [52.846229, -8.984828]
-        - [52.846265, -8.985304]
-        - [52.846279, -8.985409]
-        - [52.846401, -8.98589]
-        - [52.846471, -8.986203]
-        - [52.846611, -8.986793]
-        - [52.846763, -8.987569]
-        - [52.846877, -8.988067]
-        - [52.847015, -8.988398]
-        - [52.846999, -8.988508]
-        - [52.84702, -8.988612]
-        - [52.847025, -8.988619]
-    coords: [52.846933, -8.988790]
+        - [52.846143, -8.984485]
+        - [52.846180, -8.984497]
+        - [52.846172, -8.984564]
+        - [52.846212, -8.984578]
+        - [52.846199, -8.984827]
+        - [52.846216, -8.985117]
+        - [52.846237, -8.985264]
+        - [52.846250, -8.985417]
+        - [52.846411, -8.986066]
+        - [52.846473, -8.986358]
+        - [52.846598, -8.986886]
+        - [52.846723, -8.987551]
+        - [52.846847, -8.988098]
+        - [52.846949, -8.988385]
+        - [52.846941, -8.988565]
+        - [52.846979, -8.988706]
+    coords: [52.846979, -8.988706]
     content:
       - type: text
         body: |
-          ## Sculpture S7
-
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          This limestone sculpture suggests a fish leaping out of the water.
+          Its position inside the fountain at the Maid of Erin roundabout
+          highlights the aquatic theme perfectly.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S7
-        caption: Sculpture S7 on the Ennis Sculpture Trail
+        url: images/stop8-fishtail.jpg
+        caption: '"A Fishy Tail" by Carmel Doherty'
+      - type: text
+        body: |
+          Opposite the fountain stands the **Maid of Erin**, a monument
+          erected in 1897 to commemorate the Manchester Martyrs - three
+          Fenians executed in 1867. The Maid of Erin figure, representing
+          Ireland, stands atop a tall limestone column. These monuments
+          were popular across Ireland in the late 19th century as symbols
+          of Irish nationalism, and the Ennis example remains one of the
+          best preserved.
+      - type: image
+        url: images/stop8-maidoferin.jpg
+        caption: The Maid of Erin monument (1897)
 
-  # GPX waypoint s9
   - id: 9
-    title: Sculpture S9
+    title: Memory of Meaning
     getting_here:
       mode: walk
       note: "Continue along the path, ~2 min"
       route:
-        - [52.847025, -8.988619]
-        - [52.847069, -8.988684]
-        - [52.847112, -8.988704]
-        - [52.847114, -8.988836]
-        - [52.847072, -8.989117]
-        - [52.847046, -8.989192]
-        - [52.846923, -8.989312]
-        - [52.846937, -8.989405]
-        - [52.846918, -8.98941]
-        - [52.846678, -8.989466]
-        - [52.846653, -8.989469]
-        - [52.84665, -8.989669]
-        - [52.846641, -8.989754]
-    coords: [52.846625, -8.989749]
+        - [52.846979, -8.988706]
+        - [52.847058, -8.988874]
+        - [52.847059, -8.988976]
+        - [52.847025, -8.989144]
+        - [52.846920, -8.989252]
+        - [52.846651, -8.989313]
+        - [52.846541, -8.989327]
+        - [52.846549, -8.989488]
+        - [52.846525, -8.989496]
+        - [52.846535, -8.989678]
+        - [52.846547, -8.989682]
+    coords: [52.846547, -8.989682]
     content:
       - type: text
         body: |
-          ## Sculpture S9
+          This piece celebrates Clare's historic win in the All-Ireland
+          Senior Hurling Championship final of 1995. It consists of three
+          over-lifesize stones, with the central figure reaching skyward
+          in triumph.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Clare had not won an All-Ireland hurling title since its first in 
+          1914 - an 81-year wait. When Ger Loughnane's team defeated Offaly 
+          in the final, the county erupted. This sculpture by the River 
+          Fergus stands as a tribute to that victory and to the generations 
+          of supporters who waited for it.
+
+          Clare has gone on to win the Liam McCarthy cup three more times 
+          since then (1997, 2013, and 2024) — Hon the Banner!
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S9
-        caption: Sculpture S9 on the Ennis Sculpture Trail
+        url: images/stop9-memory.jpg
+        caption: '"Memory of Meaning" by Colin Grehan & Barry Wrafter'
 
-  # GPX waypoint s7 (second occurrence, lat 52.846472)
-  # NOTE: this waypoint is also named "s7" in the source GPX — may be a labelling
-  # error in the original file. Verify against the physical trail markers.
   - id: 10
-    title: Sculpture S7 (East)
+    title: Four Minds
     getting_here:
       mode: walk
       note: "Continue along the path, ~1 min"
       route:
-        - [52.846641, -8.989754]
-        - [52.84665, -8.989669]
-        - [52.846653, -8.989469]
-        - [52.846547, -8.989493]
-        - [52.84654, -8.989397]
-        - [52.846539, -8.989292]
-        - [52.846538, -8.989146]
-    coords: [52.846472, -8.989148]
+        - [52.846547, -8.989682]
+        - [52.846531, -8.989691]
+        - [52.846522, -8.989504]
+        - [52.846546, -8.989496]
+        - [52.846538, -8.989262]
+        - [52.846537, -8.989154]
+        - [52.846520, -8.989155]
+    coords: [52.846520, -8.989155]
     content:
       - type: text
         body: |
-          ## Sculpture S7 (East)
+          Four Minds combines Christian and early Greek philosophies.
+          Walk around the sculpture and study each face - the four heads
+          each represent a different state of mind:
 
-          **Note:** this stop is recorded as "S7" in the source GPX data, the same
-          label as Stop 7. Please verify the correct sculpture number against the
-          physical trail markers and update this entry accordingly.
+          1. **Care** - attentive concern
+          2. **Tranquility and Harmony** - inner peace
+          3. **Anxiety or Angst** - the restless mind
+          4. **Sensuality and Totality of Being** - fully present
+
+          The Twohigs also created "Trinity" and the two works share a 
+          similar style - human forms blended with symbolic and natural 
+          elements.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S7+East
-        caption: Second S7-labelled waypoint on the Ennis Sculpture Trail
+        url: images/stop10-fourminds.jpg
+        caption: '"Four Minds" by Diarmuid Twohig & Marcel Twohig'
 
-  # GPX waypoint s8
   - id: 11
-    title: Sculpture S8
+    title: Dreamboat
     getting_here:
       mode: walk
       note: "Continue along the path, ~2 min"
       route:
-        - [52.846538, -8.989146]
-        - [52.846536, -8.989029]
-        - [52.846497, -8.988961]
-        - [52.846499, -8.988938]
-        - [52.84655, -8.988465]
-        - [52.846488, -8.988487]
-    coords: [52.846475, -8.988385]
+        - [52.846520, -8.989155]
+        - [52.846538, -8.989150]
+        - [52.846540, -8.989030]
+        - [52.846496, -8.988960]
+        - [52.846465, -8.988949]
+        - [52.846400, -8.988890]
+        - [52.846379, -8.988804]
+        - [52.846368, -8.988654]
+        - [52.846425, -8.988569]
+        - [52.846404, -8.988386]
+    coords: [52.846404, -8.988386]
     content:
       - type: text
         body: |
-          ## Sculpture S8
+          Carved from Kilkenny limestone, Dreamboat consists of a boat
+          with a cross above it. Look closely and you will find little
+          drawings carved into the stone - a star map, a dress, a heart.
+          Everyone can interpret the symbols in their own way.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          O'Dwyer also created "Contentment is Wealth". Her work
+          on the trail combines figurative imagery with symbols that invite
+          personal interpretation.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S8
-        caption: Sculpture S8 on the Ennis Sculpture Trail
+        url: images/stop11-dreamboat.jpg
+        caption: '"Dreamboat" by Fiona Dwyer'
 
-
-  # GPX waypoint s6
   - id: 12
-    title: Sculpture S6
+    title: Embrace Nature
     getting_here:
       mode: walk
-      note: "Continue along the path, ~4 min"
+      note: "Along the riverside path, ~4 min"
+      journey:
+        - type: text
+          body: |
+            As you walk along the River Fergus, you are following the
+            waterway that gave Ennis its name. "Inis" in Irish means
+            island - the town grew up around a small island in the river
+            where a Franciscan friary was founded in the 13th century.
+
+            The Fergus has shaped the town for centuries.
+
+            Across the water you can see Post Office Field, an important
+            part of the flood plain and a valuable green space for birds 
+            and other wildlife within the town.
+        - type: image
+          url: images/journey-11to12-fergus.jpg
+          caption: The River Fergus and Post Office Field
       route:
-        - [52.846488, -8.988487]
-        - [52.846417, -8.988513]
-        - [52.846344, -8.987858]
-        - [52.846275, -8.987814]
-        - [52.845975, -8.987738]
-        - [52.845582, -8.9879]
-        - [52.845277, -8.988092]
-        - [52.844928, -8.988098]
-        - [52.8448, -8.988056]
-        - [52.844567, -8.987918]
-        - [52.844345, -8.987579]
-        - [52.844304, -8.987492]
-        - [52.844286, -8.987427]
-    coords: [52.844262, -8.987445]
+        - [52.846404, -8.988386]
+        - [52.846395, -8.988330]
+        - [52.846360, -8.987976]
+        - [52.846340, -8.987860]
+        - [52.846274, -8.987812]
+        - [52.845974, -8.987737]
+        - [52.845854, -8.987785]
+        - [52.845582, -8.987903]
+        - [52.845276, -8.988091]
+        - [52.845164, -8.988102]
+        - [52.844926, -8.988087]
+        - [52.844722, -8.988021]
+        - [52.844583, -8.987923]
+        - [52.844301, -8.987508]
+    coords: [52.844301, -8.987508]
     content:
       - type: text
         body: |
-          ## Sculpture S6
-
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          This limestone sculpture shows the relationship between mankind
+          and nature. It was Shane's first attempt at stone carving. Look
+          closely and see if you can spot a frog, a fish, an otter and a
+          bird hidden in the embrace.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S6
-        caption: Sculpture S6 on the Ennis Sculpture Trail
+        url: images/stop12-embrace.jpg
+        caption: '"Embrace Nature" by Shane Gilmore (1997)'
 
-  # GPX waypoint s5
   - id: 13
-    title: Sculpture S5
+    title: Market Day
     getting_here:
       mode: walk
-      note: "Continue along the path, ~4 min"
+      note: "Through Enright's Bow and along the laneways, ~4 min"
+      journey:
+        - type: text
+          body: |
+            You are passing through Enright's Bow, one of Ennis's 
+            characteristic "bowways" - arched passageways that connect
+            the town's main streets to the lanes and yards behind. 
+            These medieval passages originally gave access to the long 
+            narrow plots of land(burgage plots) that ran behind the 
+            street-front buildings, where merchants kept workshops, stores, 
+            and kitchen gardens.
+
+            Ennis restored and reopened many of these laneways
+            and bowways as part of a town renewal initiative, turning
+            forgotten back passages into attractive pedestrian routes that
+            reveal the town's historic street pattern.
+        - type: image
+          url: images/journey-12to13-bowway.jpg
+          caption: Enright's Bow - one of Ennis's restored bowways
       route:
-        - [52.844286, -8.987427]
-        - [52.844169, -8.987008]
-        - [52.844165, -8.986814]
-        - [52.844339, -8.985848]
-        - [52.844282, -8.985763]
-        - [52.844268, -8.985738]
-        - [52.844217, -8.985741]
-        - [52.844023, -8.98569]
-        - [52.843927, -8.98566]
-        - [52.843849, -8.985639]
-        - [52.843824, -8.985632]
-        - [52.843897, -8.985142]
-        - [52.843581, -8.984967]
-        - [52.843323, -8.984898]
-        - [52.843241, -8.984935]
-        - [52.843203, -8.984899]
-        - [52.843151, -8.984906]
-        - [52.843102, -8.985003]
-        - [52.8431, -8.985046]
-        - [52.843112, -8.98509]
-    coords: [52.843162, -8.985052]
+        - [52.844301, -8.987508]
+        - [52.844281, -8.987391]
+        - [52.844246, -8.987243]
+        - [52.844210, -8.987163]
+        - [52.844168, -8.987021]
+        - [52.844166, -8.986819]
+        - [52.844270, -8.986264]
+        - [52.844341, -8.985835]
+        - [52.844268, -8.985744]
+        - [52.844237, -8.985736]
+        - [52.844182, -8.985704]
+        - [52.844086, -8.985676]
+        - [52.844016, -8.985677]
+        - [52.843889, -8.985648]
+        - [52.843703, -8.985534]
+        - [52.843381, -8.985323]
+        - [52.843328, -8.984958]
+        - [52.843280, -8.984838]
+        - [52.843217, -8.984778]
+        - [52.843121, -8.984797]
+    coords: [52.843121, -8.984797]
     content:
       - type: text
         body: |
-          ## Sculpture S5
+          In Ennis Market Square, this scene shows two farmers negotiating
+          the sale of a cow, with a faithful dog alongside. It captures the
+          old market trading culture that was central to Ennis life for
+          centuries. The town held its charter market here, and cattle fairs
+          were a regular feature well into the 20th century.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          This sculpture replaced the older Icarus statue on the roundabout
+          and has become one of the most recognisable pieces in Ennis.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S5
-        caption: Sculpture S5 on the Ennis Sculpture Trail
+        url: images/stop13-marketday.jpg
+        caption: '"Market Day" by Barry Wrafter (c. 2012)'
 
-  # GPX waypoint s4
   - id: 14
-    title: Sculpture S4
+    title: Weathered Woman
     getting_here:
       mode: walk
       note: "Continue along the path, ~4 min"
       route:
-        - [52.843112, -8.98509]
-        - [52.8431, -8.985046]
-        - [52.842981, -8.985111]
-        - [52.842596, -8.98529]
-        - [52.842271, -8.985277]
-        - [52.842186, -8.9853]
-        - [52.842051, -8.984592]
-        - [52.84199, -8.984472]
-        - [52.842042, -8.984234]
-    coords: [52.842022, -8.984177]
+        - [52.843121, -8.984797]
+        - [52.843063, -8.984819]
+        - [52.842892, -8.984942]
+        - [52.842752, -8.985073]
+        - [52.842582, -8.985183]
+        - [52.842327, -8.985190]
+        - [52.842204, -8.985135]
+        - [52.842173, -8.985087]
+        - [52.842067, -8.984443]
+    coords: [52.842067, -8.984443]
     content:
       - type: text
         body: |
-          ## Sculpture S4
+          This limestone lady on Barrack Street represents all of us
+          "weathered" by life. She provides a spot where you can sit, read,
+          or just relax - take a moment if you need one.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Jose Croft was educated in Australia and finds great inspiration
+          in Ireland's rich heritage of ancient stonework. The worn,
+          textured surface of this piece is deliberate - the weathering
+          is part of the meaning, a reminder that time leaves its mark
+          on all of us.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S4
-        caption: Sculpture S4 on the Ennis Sculpture Trail
+        url: images/stop14-weathered.jpg
+        caption: '"Weathered Woman" by Jose Croft (1998)'
 
-  # GPX waypoint s3
   - id: 15
-    title: Sculpture S3
+    title: Hands
     getting_here:
       mode: walk
       note: "Continue along the path, ~1 min"
       route:
-        - [52.842042, -8.984234]
-        - [52.842128, -8.984162]
-        - [52.842166, -8.984013]
-        - [52.842147, -8.983546]
-        - [52.842108, -8.983578]
-        - [52.842043, -8.983306]
-    coords: [52.841974, -8.983351]
+        - [52.842067, -8.984443]
+        - [52.842094, -8.984303]
+        - [52.842149, -8.984180]
+        - [52.842172, -8.984049]
+        - [52.842159, -8.983791]
+        - [52.842148, -8.983620]
+        - [52.842119, -8.983486]
+        - [52.842065, -8.983518]
+        - [52.842026, -8.983380]
+        - [52.842014, -8.983296]
+    coords: [52.842014, -8.983296]
     content:
       - type: text
         body: |
-          ## Sculpture S3
+          Positioned outside the Cathedral of Saints Peter and Paul, this
+          sculpture takes the form of two large clasped hands that also
+          serve as a seat. The work suggests welcome, care, reflection,
+          and support - fitting themes for its setting beside one of
+          Ennis's most important buildings.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Added to the trail in 2008, it shows how Ennis's public art
+          story continued to grow beyond the original sculptures of the
+          late 1990s.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S3
-        caption: Sculpture S3 on the Ennis Sculpture Trail
+        url: images/stop15-hands.jpg
+        caption: '"Hands" by Shane Gilmore (2008)'
 
-  # Stop 16 — GPX waypoint s1
   - id: 16
-    title: Sculpture S1
+    title: Celtic Rest
     getting_here:
       mode: walk
-      note: "Continue along the path, ~4 min"
+      note: "Up O'Connell Street to The Height, ~4 min"
+      journey:
+        - type: text
+          body: |
+            You are walking up O'Connell Street, the main street of Ennis.
+            Lined with colourful shopfronts and pubs, this pedestrianised
+            street is the commercial heart of the town. On your right you
+            will pass the Old Ground Hotel, one of Clare's oldest hotels.
+
+            At the top of the street stands the **O'Connell Monument**, a
+            tall column erected in 1867 to honour Daniel O'Connell, "The
+            Liberator". O'Connell was elected MP for Clare in 1828 in a
+            landmark by-election held in Ennis - his victory forced the
+            British government to pass Catholic Emancipation the following
+            year, allowing Catholics to sit in Parliament for the first
+            time. The connection between O'Connell and Ennis is one of the
+            most significant in Irish political history.
+
+            The square at the top of the street is known locally as
+            "The Height".
+        - type: image
+          url: images/journey-15to16-oconnell-st.jpg
+          caption: O'Connell Street, Ennis - the pedestrianised main street
+        - type: image
+          url: images/journey-15to16-oconnell-column.jpg
+          caption: The O'Connell Monument at The Height
       route:
-        - [52.842043, -8.983306]
-        - [52.842108, -8.983578]
-        - [52.842147, -8.983546]
-        - [52.842796, -8.983043]
-        - [52.843128, -8.982897]
-        - [52.843405, -8.982794]
-        - [52.843587, -8.982746]
-        - [52.843877, -8.982709]
-        - [52.844219, -8.982603]
-        - [52.844116, -8.982085]
-        - [52.844046, -8.98198]
-        - [52.844007, -8.981847]
-        - [52.844008, -8.98177]
-    coords: [52.844051, -8.981772]
+        - [52.842014, -8.983296]
+        - [52.842064, -8.983555]
+        - [52.842127, -8.983510]
+        - [52.842148, -8.983542]
+        - [52.842248, -8.983460]
+        - [52.842444, -8.983317]
+        - [52.842642, -8.983149]
+        - [52.842781, -8.983048]
+        - [52.843217, -8.982869]
+        - [52.843461, -8.982775]
+        - [52.843620, -8.982743]
+        - [52.843863, -8.982711]
+        - [52.844085, -8.982649]
+        - [52.844180, -8.982593]
+        - [52.844198, -8.982496]
+        - [52.844124, -8.982099]
+        - [52.844051, -8.981995]
+        - [52.844034, -8.981866]
+    coords: [52.844034, -8.981866]
     content:
       - type: text
         body: |
-          ## Sculpture S1
+          The final stop on the trail is this striking chair constructed
+          from oak and limestone. It brings together sculptural design and
+          practical function - a work of art that also invites you to sit.
 
-          Add description of this sculpture here — artist, title, year, and
-          any interpretive notes about the work and its location.
+          Take a seat if you like - it is, after all, a place of rest.
+          From here you are just a short walk back to O'Connell Street
+          and the centre of town.
       - type: image
-        url: https://placehold.co/800x500/1d4ed8/ffffff?text=Sculpture+S1
-        caption: Sculpture S1 on the Ennis Sculpture Trail
+        url: images/stop16-celticrest.jpg
+        caption: '"Celtic Rest" by Rory McNamara (2004)'

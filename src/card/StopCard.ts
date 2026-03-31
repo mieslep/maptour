@@ -324,6 +324,21 @@ export class StopCard {
     }
   }
 
+  showNearestIndicator(stopIndex: number, stopName: string): void {
+    // Insert after the tip element
+    const tip = this.container.querySelector('.maptour-card__tip');
+    if (!tip) return;
+
+    // Remove any existing indicator
+    const existing = this.container.querySelector('.maptour-card__nearest');
+    if (existing) existing.remove();
+
+    const indicator = document.createElement('div');
+    indicator.className = 'maptour-card__nearest';
+    indicator.textContent = `📍 Nearest to you: Stop ${stopIndex + 1} — ${stopName}`;
+    tip.after(indicator);
+  }
+
   // === Goodbye card ===
 
   renderGoodbye(options: {

@@ -332,7 +332,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     gpsTracker.onPosition((pos) => {
       if (pos) {
         mapView.updateGpsPosition(pos.lat, pos.lng);
-        // Pre-select nearest stop on welcome screen (once, if accuracy and distance acceptable)
+        // Show nearest stop indicator on welcome screen (once, if accuracy and distance acceptable)
         if (!gpsPickerApplied && arrowMode === 'picker') {
           const maxAccuracy = tour.tour.gps?.max_accuracy ?? 500;
           const maxDistance = tour.tour.gps?.max_distance ?? 5000;
@@ -340,7 +340,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
             const result = nearestStop(pos.lat, pos.lng, tour.stops);
             if (result.distance <= maxDistance) {
               gpsPickerApplied = true;
-              updatePickerSelection(result.index);
+              stopCard.showNearestIndicator(result.index, tour.stops[result.index].title);
             }
           }
         }

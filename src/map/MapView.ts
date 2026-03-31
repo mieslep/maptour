@@ -7,7 +7,7 @@ export class MapView {
   private map: L.Map;
   private markers: Map<number, L.Marker> = new Map();
   private polylines: L.Polyline[] = [];
-  private gpsDot: L.CircleMarker | null = null;
+  private gpsDot: L.Marker | null = null;
   private tour: Tour;
   private activeStopId: number;
   private pulsingStopId: number | null = null;
@@ -143,14 +143,13 @@ export class MapView {
     if (this.gpsDot) {
       this.gpsDot.setLatLng(latlng);
     } else {
-      this.gpsDot = L.circleMarker(latlng, {
-        radius: 8,
-        fillColor: '#2563eb',
-        color: '#ffffff',
-        weight: 2,
-        fillOpacity: 1,
-        className: 'maptour-gps-dot',
+      const icon = L.divIcon({
+        className: 'maptour-gps-icon',
+        html: '<span class="maptour-gps-icon__person">🧍</span>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
       });
+      this.gpsDot = L.marker(latlng, { icon, interactive: false, zIndexOffset: 1000 });
       this.gpsDot.addTo(this.map);
     }
   }
