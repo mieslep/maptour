@@ -126,7 +126,8 @@ export class TourEditor {
     this.map = L.map(this.mapContainer, { zoomControl: true, keyboard: false }).setView([52.845, -8.985], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 20,
+      maxZoom: 22,
+      maxNativeZoom: 19, // OSM tiles only go to 19; beyond that Leaflet upscales
     }).addTo(this.map);
 
     // Create a pane for route edit points that sits above markers
@@ -210,7 +211,7 @@ export class TourEditor {
     this.highlightMarker(idx);
     if (idx >= 0 && idx < this.tour.stops.length) {
       const stop = this.tour.stops[idx];
-      this.map.flyTo([stop.coords[0], stop.coords[1]], 17, { animate: true, duration: 0.6 });
+      this.map.flyTo([stop.coords[0], stop.coords[1]], 19, { animate: true, duration: 0.6 });
       this.showRadiusCircle(stop);
     } else {
       this.clearRadiusCircle();
@@ -349,13 +350,39 @@ export class TourEditor {
     };
 
     buildMarkers();
-    this.setStatus(`Editing route to stop ${stopIdx + 1}. Drag points, click line to insert, Delete to remove selected. Press Esc to finish.`);
+    this.showRouteEditWidget(stopIdx);
+    this.setStatus(`Editing route to stop ${stopIdx + 1}.`);
+  }
+
+  private showRouteEditWidget(stopIdx: number): void {
+    this.hideRouteEditWidget();
+    const widget = document.createElement('div');
+    widget.className = 'route-edit-widget';
+    widget.innerHTML = `
+      <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${stopIdx + 1}</span>
+      <span class="route-edit-hint">Click map to add points. Drag to move. Delete to remove.</span>
+    `;
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'btn btn-sm btn-primary';
+    doneBtn.textContent = 'Done';
+    doneBtn.onclick = () => {
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+      this.setStatus('Route editing finished.');
+    };
+    widget.appendChild(doneBtn);
+    this.mapContainer.appendChild(widget);
+  }
+
+  private hideRouteEditWidget(): void {
+    this.mapContainer.querySelector('.route-edit-widget')?.remove();
   }
 
   private stopEditingRoute(): void {
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
     this.editingRouteSegment = -1;
+    this.hideRouteEditWidget();
   }
 
   private addRoutePointAtClick(latlng: L.LatLng): void {
@@ -1116,6 +1143,7 @@ export class TourEditor {
   }
 
   private performUndo(): void {
+    const wasEditingRoute = this.editingRouteSegment;
     const prev = undo(this.tour);
     if (prev) {
       this.tour = prev;
@@ -1125,11 +1153,19 @@ export class TourEditor {
       this.refreshMap();
       this.renderPanel();
       this.changed();
+      // Re-enter route editing if we were editing before
+      if (wasEditingRoute >= 0 && wasEditingRoute < this.tour.stops.length) {
+        const stop = this.tour.stops[wasEditingRoute];
+        if (stop.getting_here?.route && stop.getting_here.route.length > 0) {
+          this.startEditingRoute(wasEditingRoute);
+        }
+      }
       this.setStatus('Undone.');
     }
   }
 
   private performRedo(): void {
+    const wasEditingRoute = this.editingRouteSegment;
     const next = redo(this.tour);
     if (next) {
       this.tour = next;
@@ -1139,6 +1175,12 @@ export class TourEditor {
       this.refreshMap();
       this.renderPanel();
       this.changed();
+      if (wasEditingRoute >= 0 && wasEditingRoute < this.tour.stops.length) {
+        const stop = this.tour.stops[wasEditingRoute];
+        if (stop.getting_here?.route && stop.getting_here.route.length > 0) {
+          this.startEditingRoute(wasEditingRoute);
+        }
+      }
       this.setStatus('Redone.');
     }
   }
