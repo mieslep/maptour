@@ -136,6 +136,11 @@ export class TourEditor {
         this.setMapMode('default');
         return;
       }
+      // In route edit mode, click on map adds a point
+      if (this.editingRouteSegment >= 0) {
+        this.addRoutePointAtClick(e.latlng);
+        return;
+      }
     });
 
     // Fit to stops if we have any
@@ -345,6 +350,48 @@ export class TourEditor {
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
     this.editingRouteSegment = -1;
+  }
+
+  private addRoutePointAtClick(latlng: L.LatLng): void {
+    if (this.editingRouteSegment < 0) return;
+    const stop = this.tour.stops[this.editingRouteSegment];
+    if (!stop.getting_here?.route) return;
+    const route = stop.getting_here.route;
+    const pt: [number, number] = [latlng.lat, latlng.lng];
+
+    if (route.length < 2) {
+      this.withUndo(() => { route.push(pt); });
+    } else {
+      // Find nearest segment or endpoint
+      const distToFirst = Math.sqrt((pt[0] - route[0][0]) ** 2 + (pt[1] - route[0][1]) ** 2);
+      const distToLast = Math.sqrt((pt[0] - route[route.length - 1][0]) ** 2 + (pt[1] - route[route.length - 1][1]) ** 2);
+
+      // Find nearest interior segment
+      let bestSegIdx = 0;
+      let bestSegDist = Infinity;
+      for (let i = 0; i < route.length - 1; i++) {
+        const d = this.distToSegment(latlng, route[i], route[i + 1]);
+        if (d < bestSegDist) { bestSegDist = d; bestSegIdx = i; }
+      }
+
+      // Compare: prepend, append, or insert?
+      // Use a threshold: if closer to an endpoint than to any segment, extend
+      const endThreshold = bestSegDist * 1.5; // bias toward inserting within segments
+      if (distToFirst < distToLast && distToFirst < endThreshold) {
+        this.withUndo(() => { route.unshift(pt); });
+      } else if (distToLast < distToFirst && distToLast < endThreshold) {
+        this.withUndo(() => { route.push(pt); });
+      } else {
+        this.withUndo(() => { route.splice(bestSegIdx + 1, 0, pt); });
+      }
+    }
+
+    this.refreshRoutePolylines();
+    // Rebuild markers to include the new point
+    this.routePointMarkers.forEach(m => m.remove());
+    this.routePointMarkers = [];
+    this.startEditingRoute(this.editingRouteSegment);
+    this.setStatus(`Added point. ${route.length} points.`);
   }
 
   private deleteSelectedRoutePoint(): void {
