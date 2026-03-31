@@ -22,7 +22,7 @@ const DEFAULTS: Record<string, string> = {
   // Welcome card
   start_at:      'Start at Stop {n} / {total}:',
   start_from:    'Start from {stop}',
-  tip:           'Use the arrows above to change your starting point',
+  tip:           'Select a stop on the map or use the arrows above to change your starting point',
 
   // Stop card footer
   next_stop:     'Next: {stop}',

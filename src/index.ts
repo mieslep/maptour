@@ -396,7 +396,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
             const result = nearestStop(pos.lat, pos.lng, tour.stops);
             if (result.distance <= maxDistance) {
               gpsPickerApplied = true;
-              stopCard.showNearestIndicator(result.index, tour.stops[result.index].title);
+              stopCard.showNearestIndicator(result.index, tour.stops[result.index].title, (idx) => {
+                updatePickerSelection(idx);
+              });
             }
           }
         }

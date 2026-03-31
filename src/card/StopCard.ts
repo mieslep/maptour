@@ -373,10 +373,10 @@ export class StopCard {
     }
   }
 
-  showNearestIndicator(stopIndex: number, stopName: string): void {
-    // Insert after the tip element
-    const tip = this.container.querySelector('.maptour-card__tip');
-    if (!tip) return;
+  showNearestIndicator(stopIndex: number, stopName: string, onSelect?: (index: number) => void): void {
+    // Insert after the picker row
+    const pickerRow = this.container.querySelector('.maptour-card__picker-row');
+    if (!pickerRow) return;
 
     // Remove any existing indicator
     const existing = this.container.querySelector('.maptour-card__nearest');
@@ -384,8 +384,26 @@ export class StopCard {
 
     const indicator = document.createElement('div');
     indicator.className = 'maptour-card__nearest';
-    indicator.innerHTML = `<i class="fa-solid fa-location-dot" aria-hidden="true"></i> Nearest to you: Stop ${stopIndex + 1} — ${stopName}`;
-    tip.after(indicator);
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-location-dot';
+    icon.setAttribute('aria-hidden', 'true');
+    indicator.appendChild(icon);
+    indicator.appendChild(document.createTextNode(' Nearest to you: '));
+
+    const link = document.createElement('a');
+    link.className = 'maptour-card__nearest-link';
+    link.href = '#';
+    link.textContent = `Stop ${stopIndex + 1} — ${stopName}`;
+    if (onSelect) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        onSelect(stopIndex);
+      });
+    }
+    indicator.appendChild(link);
+
+    pickerRow.after(indicator);
   }
 
   // === Goodbye card ===
