@@ -129,6 +129,10 @@ export class TourEditor {
       maxZoom: 20,
     }).addTo(this.map);
 
+    // Create a pane for route edit points that sits above markers
+    const routePane = this.map.createPane('routeEditPoints');
+    routePane.style.zIndex = '650'; // above markerPane (600)
+
     // Map click: behaviour depends on mode
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       if (this.mapMode === 'addStop') {
@@ -275,6 +279,8 @@ export class TourEditor {
           color: '#fff',
           weight: 2,
           fillOpacity: 0.8,
+          pane: 'routeEditPoints',
+          bubblingMouseEvents: false,
         }).addTo(this.map);
 
         // Drag support
@@ -396,7 +402,8 @@ export class TourEditor {
 
   private deleteSelectedRoutePoint(): void {
     if (this.editingRouteSegment < 0) return;
-    const stop = this.tour.stops[this.editingRouteSegment];
+    const segIdx = this.editingRouteSegment;
+    const stop = this.tour.stops[segIdx];
     if (!stop.getting_here?.route) return;
     const route = stop.getting_here.route;
 
@@ -407,9 +414,11 @@ export class TourEditor {
     this.withUndo(() => {
       route.splice(selectedIdx, 1);
     });
-    this.stopEditingRoute();
-    this.startEditingRoute(this.editingRouteSegment);
+    // Rebuild markers in place (don't reset editingRouteSegment)
+    this.routePointMarkers.forEach(m => m.remove());
+    this.routePointMarkers = [];
     this.refreshRoutePolylines();
+    this.startEditingRoute(segIdx);
     this.setStatus(`Deleted point. ${route.length} points remaining.`);
   }
 
