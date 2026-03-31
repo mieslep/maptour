@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "lint": "eslint src",
     "dev:authoring": "vite --config vite.authoring.config.ts",
-    "build:authoring": "vite build --config vite.authoring.config.ts"
+    "build:authoring": "vite build --config vite.authoring.config.ts",
+    "build:site": "npm run build && npm run build:authoring && node scripts/build-site.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
