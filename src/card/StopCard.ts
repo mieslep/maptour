@@ -213,8 +213,11 @@ export class StopCard {
 
     const btn = document.createElement('button');
     btn.className = 'maptour-card__arrived-btn';
-    btn.textContent = t('arrived');
-    btn.setAttribute('aria-label', t('arrived'));
+    const arrivedText = destinationStop.title
+      ? t('arrived', { stop: destinationStop.title })
+      : "I've arrived →";
+    btn.textContent = arrivedText;
+    btn.setAttribute('aria-label', arrivedText);
     btn.addEventListener('click', onArrived);
     footer.appendChild(btn);
 

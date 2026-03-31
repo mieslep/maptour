@@ -30,7 +30,7 @@ const DEFAULTS: Record<string, string> = {
   finish_tour:   'Finish Tour',
 
   // Journey card
-  arrived:       "I've arrived →",
+  arrived:       "I've arrived at {stop} →",
 
   // Goodbye card
   tour_complete: 'Tour complete!',
@@ -58,6 +58,7 @@ const PLACEHOLDERS: Record<string, string[]> = {
   start_from:    ['stop'],
   next_stop:     ['stop'],
   stops_visited: ['n', 'total'],
+  arrived:       ['stop'],
 };
 
 let strings: Record<string, string> = { ...DEFAULTS };
