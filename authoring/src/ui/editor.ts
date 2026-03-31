@@ -265,10 +265,10 @@ export class TourEditor {
     const buildMarkers = () => {
       route.forEach((pt, ptIdx) => {
         const m = L.circleMarker([pt[0], pt[1]], {
-          radius: 5,
+          radius: 8,
           fillColor: '#2563eb',
           color: '#fff',
-          weight: 1.5,
+          weight: 2,
           fillOpacity: 0.8,
         }).addTo(this.map);
 
@@ -300,14 +300,14 @@ export class TourEditor {
           L.DomEvent.stopPropagation(e);
           if (justDragged) return; // ignore click after drag
           if ((m.options as any)._selected) {
-            m.setStyle({ fillColor: '#2563eb', radius: 5 });
+            m.setStyle({ fillColor: '#2563eb', radius: 8 });
             (m.options as any)._selected = false;
           } else {
             this.routePointMarkers.forEach(rm => {
-              rm.setStyle({ fillColor: '#2563eb', radius: 5 });
+              rm.setStyle({ fillColor: '#2563eb', radius: 8 });
               (rm.options as any)._selected = false;
             });
-            m.setStyle({ fillColor: '#dc2626', radius: 7 });
+            m.setStyle({ fillColor: '#dc2626', radius: 10 });
             (m.options as any)._selected = true;
           }
         });
