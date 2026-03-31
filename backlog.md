@@ -220,12 +220,20 @@ When GPS is available and accurate, pre-selects the nearest tour stop on the wel
 
 ## Backlog (post-v1.2, unsequenced)
 
-- Authoring UI — web-based tour builder, no YAML editing required
-- npm package publication
-- Offline / PWA / service worker caching
-- Multiple tours on one page
-- Audio commentary auto-play on stop entry (with user opt-in)
-- Cluster rendering for tours with many closely-spaced stops
-- Tour analytics (opt-in, privacy-preserving)
-- GPS proximity arrival detection — auto-reveal stop card when user enters detection radius; `arrival_radius` configurable in YAML at tour level (default 50m) and per-stop override; requires accuracy guard (only trigger if `accuracy < radius * 2`) and re-trigger protection (must exit radius before re-entry counts); only triggers for next unvisited stop in sequence
-- Battery preservation — reduce GPS polling frequency when user has been stationary at a stop for a while, or when next stop is >500m away; pause high-accuracy mode in the background
+### Player UX
+
+- **Reverse tour direction** — allow the user to walk the tour in reverse. Journey cards must be sequenced correctly (the journey content and getting_here notes flip to describe the reverse direction)
+- **Font Awesome icons** — replace emoji icons (person, nav arrows, etc.) with Font Awesome for consistency and rendering reliability
+- **Show user position during tour** — GPS person icon visible on the map throughout the tour, not just on the welcome screen. User can see where they are relative to the next stop
+- **Journey card CTA** — update the "I've arrived" button text to "I've arrived at [stop name]" so the user knows which stop they are arriving at
+- **Map zoom on welcome picker** — zoom in and centre the map to the selected starting position when the user picks a stop on the welcome card
+- **Hide getting_here note after journey card** — if the user has just seen a journey card with transit content, the getting_here note on the stop card is redundant and should be hidden
+
+### Platform / GPS
+
+- **GPS proximity arrival detection** — auto-reveal stop card when user enters detection radius; `arrival_radius` configurable in YAML at tour level (default 50m) and per-stop override; requires accuracy guard (only trigger if `accuracy < radius * 2`) and re-trigger protection (must exit radius before re-entry counts); only triggers for next unvisited stop in sequence
+- **Battery preservation** — reduce GPS polling frequency when user has been stationary at a stop for a while, or when next stop is >500m away; pause high-accuracy mode in the background
+
+### Authoring
+
+- **Tour authoring UI** — web-based visual editor for creating and editing tours. Place stops on a map, configure stop content, provide an OpenRouteService API key for automatic foot-walking route generation, edit route points visually (drag, delete, insert, smooth, reduce). Outputs valid tour YAML. Replaces the need for hand-editing YAML or using the standalone route-editor
