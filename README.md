@@ -219,7 +219,7 @@ All UI labels can be overridden via `tour.strings`. Keys use named placeholders.
 | `next_stop` | Next: {stop} | `{stop}` |
 | `next_btn` | Next -> | |
 | `finish_tour` | Finish Tour | |
-| `arrived` | I've arrived -> | |
+| `arrived` | I've arrived at {stop} -> | `{stop}` |
 | `tour_complete` | Tour complete! | |
 | `stops_visited` | {n} / {total} stops visited | `{n}`, `{total}` |
 | `revisit` | Revisit tour | |
@@ -231,6 +231,13 @@ All UI labels can be overridden via `tour.strings`. Keys use named placeholders.
 | `directions_to` | Directions to this stop | |
 | `picker_title` | Open directions in: | |
 | `picker_cancel` | Cancel | |
+| `direction_forward` | Start at beginning | |
+| `direction_reverse` | Start at end | |
+| `im_here` | I'm here | |
+| `all_stops_title` | All stops | |
+| `tour_load_error` | Tour could not load | |
+| `image_error` | Image could not be loaded | |
+| `audio_error` | Audio could not be loaded. | |
 | `minimize` | Minimize | |
 
 **Example - Irish language tour:**
@@ -241,8 +248,11 @@ tour:
     welcome: "Failte"
     next_btn: "Ar aghaidh ->"
     finish_tour: "Criochnaigh an turas"
-    arrived: "Taim tagtha ->"
+    arrived: "Taim tagtha ag {stop} ->"
     revisit: "Tabhair cuairt aris"
+    direction_forward: "Tosaigh ag an tus"
+    direction_reverse: "Tosaigh ag an deireadh"
+    im_here: "Taim anseo"
 ```
 
 ---

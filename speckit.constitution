@@ -76,7 +76,10 @@ Core tour data (YAML) and the player JS/CSS are served as static files — they 
 - Playwright E2E tests for the visitor flow on a local static server
 - No test mocks for the YAML parser — use real fixture files
 
-### VIII. Open Source
+### VIII. Localisation (i18n)
+All user-visible UI text must go through the `t()` function in `src/i18n.ts`. No hardcoded strings in components. Default strings are English. Tour authors can override any label via `tour.strings` in the YAML file. Placeholders use named tokens (`{stop}`, `{n}`, `{total}`). New UI text requires: adding a default to `DEFAULTS`, adding placeholders to `PLACEHOLDERS` if applicable, and updating the README localisation table.
+
+### IX. Open Source
 MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency immediately.
 
 ## Development Workflow
@@ -92,4 +95,4 @@ MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency imm
 
 This constitution governs all MapTour development. Amendments require a spec change approved by Phil before implementation. All architectural decisions must trace to a requirement in the spec or an explicit constitution principle.
 
-**Version**: 1.2.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-30
+**Version**: 1.3.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-31
