@@ -29,6 +29,9 @@ export class TourEditor {
   private stopMarkers: L.Marker[] = [];
   private routePolylines: L.Polyline[] = [];
   private radiusCircle: L.Circle | null = null;
+  private routePointMarkers: L.CircleMarker[] = [];
+  private editingRouteSegment: number = -1; // index of stop whose getting_here.route is being edited
+  private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
@@ -126,9 +129,16 @@ export class TourEditor {
       maxZoom: 20,
     }).addTo(this.map);
 
-    // Click to add stop
+    // Map click: behaviour depends on mode
     this.map.on('click', (e: L.LeafletMouseEvent) => {
-      this.addStop(e.latlng.lat, e.latlng.lng);
+      if (this.mapMode === 'addStop') {
+        this.addStop(e.latlng.lat, e.latlng.lng);
+        this.setMapMode('default');
+      }
+      // In default mode, clicking the map deselects route editing
+      if (this.editingRouteSegment >= 0) {
+        this.stopEditingRoute();
+      }
     });
 
     // Fit to stops if we have any
@@ -228,12 +238,148 @@ export class TourEditor {
     }
   }
 
+  private setMapMode(mode: 'default' | 'addStop'): void {
+    this.mapMode = mode;
+    this.mapContainer.style.cursor = mode === 'addStop' ? 'crosshair' : '';
+    // Update the add stop button state
+    const addBtn = this.sidePanel.querySelector('.add-stop-btn') as HTMLButtonElement | null;
+    if (addBtn) {
+      addBtn.classList.toggle('btn-primary', mode === 'addStop');
+      addBtn.textContent = mode === 'addStop' ? 'Click map to place stop...' : '+ Add Stop';
+    }
+  }
+
+  private startEditingRoute(stopIdx: number): void {
+    this.stopEditingRoute();
+    if (stopIdx <= 0 || stopIdx >= this.tour.stops.length) return;
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.route || stop.getting_here.route.length === 0) return;
+
+    this.editingRouteSegment = stopIdx;
+    const route = stop.getting_here.route;
+
+    // Draw draggable point markers for each route waypoint
+    route.forEach((pt, ptIdx) => {
+      const m = L.circleMarker([pt[0], pt[1]], {
+        radius: 5,
+        fillColor: '#2563eb',
+        color: '#fff',
+        weight: 1.5,
+        fillOpacity: 0.8,
+      }).addTo(this.map);
+
+      // Drag support
+      let dragging = false;
+      m.on('mousedown', (e) => {
+        dragging = true;
+        this.map.dragging.disable();
+        L.DomEvent.stopPropagation(e);
+        const onMove = (ev: L.LeafletMouseEvent) => {
+          m.setLatLng(ev.latlng);
+          route[ptIdx] = [ev.latlng.lat, ev.latlng.lng];
+          this.refreshRoutePolylines();
+        };
+        const onUp = () => {
+          dragging = false;
+          this.map.dragging.enable();
+          this.map.off('mousemove', onMove);
+          this.map.off('mouseup', onUp);
+          this.changed();
+        };
+        this.map.on('mousemove', onMove);
+        this.map.on('mouseup', onUp);
+      });
+
+      // Click to select (for deletion)
+      m.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        // Toggle selection
+        if ((m.options as any)._selected) {
+          m.setStyle({ fillColor: '#2563eb', radius: 5 });
+          (m.options as any)._selected = false;
+        } else {
+          // Deselect others
+          this.routePointMarkers.forEach(rm => {
+            rm.setStyle({ fillColor: '#2563eb', radius: 5 });
+            (rm.options as any)._selected = false;
+          });
+          m.setStyle({ fillColor: '#dc2626', radius: 7 });
+          (m.options as any)._selected = true;
+        }
+      });
+
+      this.routePointMarkers.push(m);
+    });
+
+    // Allow clicking polyline to insert a point
+    this.routePolylines.forEach(pl => {
+      pl.off('click');
+    });
+    // Find the polyline for this segment
+    if (stopIdx - 1 < this.routePolylines.length) {
+      const pl = this.routePolylines[stopIdx - 1];
+      pl.on('click', (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e);
+        // Find nearest segment to insert after
+        let bestIdx = 0, bestDist = Infinity;
+        for (let i = 0; i < route.length - 1; i++) {
+          const d = this.distToSegment(e.latlng, route[i], route[i + 1]);
+          if (d < bestDist) { bestDist = d; bestIdx = i; }
+        }
+        this.withUndo(() => {
+          route.splice(bestIdx + 1, 0, [e.latlng.lat, e.latlng.lng]);
+        });
+        this.stopEditingRoute();
+        this.startEditingRoute(stopIdx);
+        this.refreshRoutePolylines();
+        this.setStatus(`Inserted route point. ${route.length} points.`);
+      });
+    }
+
+    this.setStatus(`Editing route to stop ${stopIdx + 1}. Drag points, click line to insert, Delete to remove selected.`);
+  }
+
+  private stopEditingRoute(): void {
+    this.routePointMarkers.forEach(m => m.remove());
+    this.routePointMarkers = [];
+    this.editingRouteSegment = -1;
+  }
+
+  private deleteSelectedRoutePoint(): void {
+    if (this.editingRouteSegment < 0) return;
+    const stop = this.tour.stops[this.editingRouteSegment];
+    if (!stop.getting_here?.route) return;
+    const route = stop.getting_here.route;
+
+    const selectedIdx = this.routePointMarkers.findIndex(m => (m.options as any)._selected);
+    if (selectedIdx < 0) return;
+    if (route.length <= 2) { this.setStatus('Cannot delete - minimum 2 points.'); return; }
+
+    this.withUndo(() => {
+      route.splice(selectedIdx, 1);
+    });
+    this.stopEditingRoute();
+    this.startEditingRoute(this.editingRouteSegment);
+    this.refreshRoutePolylines();
+    this.setStatus(`Deleted point. ${route.length} points remaining.`);
+  }
+
+  private distToSegment(latlng: L.LatLng, p1: [number, number], p2: [number, number]): number {
+    const x = latlng.lat, y = latlng.lng;
+    const dx = p2[0] - p1[0], dy = p2[1] - p1[1];
+    if (dx === 0 && dy === 0) return Math.sqrt((x - p1[0]) ** 2 + (y - p1[1]) ** 2);
+    let t = ((x - p1[0]) * dx + (y - p1[1]) * dy) / (dx * dx + dy * dy);
+    t = Math.max(0, Math.min(1, t));
+    return Math.sqrt((x - (p1[0] + t * dx)) ** 2 + (y - (p1[1] + t * dy)) ** 2);
+  }
+
   private refreshMap(): void {
-    // Clear existing markers and polylines
+    // Clear existing markers, polylines, and route edit points
     this.stopMarkers.forEach(m => m.remove());
     this.stopMarkers = [];
     this.routePolylines.forEach(p => p.remove());
     this.routePolylines = [];
+    this.stopEditingRoute();
 
     // Add stop markers
     this.tour.stops.forEach((stop, idx) => {
@@ -640,11 +786,25 @@ export class TourEditor {
     if (this.tour.stops.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty-msg';
-      empty.textContent = 'Click the map to add your first stop.';
+      empty.textContent = 'No stops yet. Click "Add Stop" then click the map.';
       list.appendChild(empty);
     }
 
     content.appendChild(list);
+
+    // Add Stop button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn add-stop-btn';
+    addBtn.style.cssText = 'width:100%; margin-top:8px;';
+    addBtn.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Stop';
+    addBtn.onclick = () => {
+      if (this.mapMode === 'addStop') {
+        this.setMapMode('default');
+      } else {
+        this.setMapMode('addStop');
+      }
+    };
+    content.appendChild(addBtn);
 
     return this.renderCollapsible(`Stops (${this.tour.stops.length})`, content, true);
   }
@@ -739,16 +899,27 @@ export class TourEditor {
       noteRow.appendChild(noteInput);
       ghDiv.appendChild(noteRow);
 
-      // Route info
+      // Route info and editing
       if (gh.route && gh.route.length > 0) {
         const routeInfo = document.createElement('div');
         routeInfo.className = 'route-info';
         routeInfo.textContent = `Route: ${gh.route.length} points`;
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i> Edit';
+        const stopIdx = this.tour.stops.indexOf(stop);
+        editBtn.onclick = () => {
+          this.startEditingRoute(stopIdx);
+        };
+        routeInfo.appendChild(editBtn);
+
         const clearBtn = document.createElement('button');
         clearBtn.className = 'btn btn-sm btn-danger';
-        clearBtn.textContent = 'Clear Route';
+        clearBtn.textContent = 'Clear';
         clearBtn.onclick = () => {
           this.withUndo(() => { gh.route = undefined; });
+          this.stopEditingRoute();
           this.refreshRoutePolylines();
           this.renderPanel();
         };
@@ -869,6 +1040,16 @@ export class TourEditor {
       if (isUndo) this.performUndo();
       else this.performRedo();
     }, true); // capture phase
+
+    // Delete key for route points
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this.editingRouteSegment >= 0) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        this.deleteSelectedRoutePoint();
+      }
+    });
   }
 
   private setStatus(msg: string): void {
