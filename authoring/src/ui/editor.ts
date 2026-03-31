@@ -318,18 +318,21 @@ export class TourEditor {
           this.map.on('mouseup', onUp);
         });
 
-        // Click to select (for deletion) - only if not just dragged
+        // Click to select/deselect - only if not just dragged
         m.on('click', (e) => {
           L.DomEvent.stopPropagation(e);
           if (justDragged) return;
-          // Always select this point (don't toggle - mousedown already selected it,
-          // and we want click-without-drag to also select)
+          const wasSelected = (m.options as any)._selected;
+          // Deselect all
           this.routePointMarkers.forEach(rm => {
             rm.setStyle({ fillColor: '#2563eb', radius: 8 });
             (rm.options as any)._selected = false;
           });
-          m.setStyle({ fillColor: '#dc2626', radius: 10 });
-          (m.options as any)._selected = true;
+          // Toggle: if it wasn't selected, select it. If it was, leave deselected.
+          if (!wasSelected) {
+            m.setStyle({ fillColor: '#dc2626', radius: 10 });
+            (m.options as any)._selected = true;
+          }
         });
 
         this.routePointMarkers.push(m);
@@ -408,8 +411,8 @@ export class TourEditor {
       const icon = L.divIcon({
         className: 'route-edit-widget-wrapper',
         html,
-        iconSize: [300, 50],
-        iconAnchor: [150, 50],
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
       });
       this.routeEditWidgetMarker = L.marker(offsetLatLng, {
         icon,

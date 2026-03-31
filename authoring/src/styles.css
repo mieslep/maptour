@@ -488,9 +488,11 @@ textarea.input {
 .route-edit-widget-wrapper {
   background: none !important;
   border: none !important;
+  overflow: visible !important;
 }
 
 .route-edit-widget {
+  transform: translateX(-50%);
   z-index: 1000;
   background: white;
   border: 1px solid #e2e8f0;
