@@ -287,7 +287,12 @@ function showKebabMenu(
     menu.appendChild(btn);
   }
 
-  anchor.parentElement!.appendChild(menu);
+  // Position below the Change button
+  anchor.style.position = 'relative';
+  menu.style.top = '100%';
+  menu.style.left = '50%';
+  menu.style.transform = 'translateX(-50%)';
+  anchor.appendChild(menu);
 
   // Close on click outside
   const closeHandler = (e: MouseEvent) => {
@@ -321,7 +326,11 @@ function showTypePicker(anchor: HTMLElement, onPick: (type: ContentBlock['type']
     };
     menu.appendChild(btn);
   }
-  anchor.parentElement!.appendChild(menu);
+  anchor.style.position = 'relative';
+  menu.style.top = '100%';
+  menu.style.left = '50%';
+  menu.style.transform = 'translateX(-50%)';
+  anchor.appendChild(menu);
 
   const closeHandler = (e: MouseEvent) => {
     if (!menu.contains(e.target as Node)) {
