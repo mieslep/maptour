@@ -1187,17 +1187,14 @@ export class TourEditor {
     for (const [key, info] of Object.entries(I18N_DEFAULTS)) {
       const row = document.createElement('div');
       row.className = 'input-row';
-      row.title = info.desc;
       const label = document.createElement('label');
       label.className = 'input-label input-label-sm';
-      label.textContent = key;
-      label.title = info.desc;
+      label.innerHTML = `${key} <span class="info-icon" title="${info.desc}"><i class="fa-solid fa-circle-info"></i></span>`;
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'input input-sm';
       input.placeholder = info.default;
       input.value = strings[key] ?? '';
-      input.title = info.desc;
       input.oninput = () => {
         if (input.value.trim()) {
           strings[key] = input.value;

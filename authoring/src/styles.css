@@ -77,6 +77,16 @@ body {
   font-size: 11px;
 }
 
+.info-icon {
+  color: #94a3b8;
+  cursor: help;
+  font-size: 11px;
+  margin-left: 2px;
+}
+.info-icon:hover {
+  color: #2563eb;
+}
+
 select.input {
   cursor: pointer;
 }
