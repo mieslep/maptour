@@ -161,6 +161,21 @@ export class MapView {
     }
   }
 
+  /** Fly to a stop at a specific zoom level (used for welcome picker preview). */
+  flyToStop(stop: Stop, zoom = 16): void {
+    this.activeStopId = stop.id;
+    this.renderPins();
+
+    if (this.paddingBottom > 0) {
+      const point = this.map.project(stop.coords, zoom);
+      point.y += this.paddingBottom / 2;
+      const offsetLatLng = this.map.unproject(point, zoom);
+      this.map.flyTo(offsetLatLng, zoom, { animate: true, duration: 0.8 });
+    } else {
+      this.map.flyTo(stop.coords, zoom, { animate: true, duration: 0.8 });
+    }
+  }
+
   onPinClick(cb: (index: number) => void): void {
     this.pinClickCallbacks.push(cb);
   }

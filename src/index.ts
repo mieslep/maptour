@@ -170,7 +170,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     pickerIndex = index;
     const stop = tour.stops[index];
     stopCard.updateWelcomeSelection(stop, index, tour.stops.length, returning);
-    mapView.setActiveStop(stop);
+    mapView.flyToStop(stop, 16);
     updateStopLabel(t('stop_n', { n: index + 1, total: tour.stops.length }));
     prevArrow.disabled = index === 0;
     nextArrow.disabled = index === tour.stops.length - 1;
