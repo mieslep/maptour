@@ -257,20 +257,20 @@ export class StopCard {
     tip.textContent = t('tip');
     this.container.appendChild(tip);
 
-    // Stop picker (right under tip)
-    this.welcomeSelectionEl = document.createElement('div');
-    this.welcomeSelectionEl.className = 'maptour-card__start-from';
-    this.container.appendChild(this.welcomeSelectionEl);
+    // Picker row: [stop order (left)] [start-from selection (right)]
+    const pickerRow = document.createElement('div');
+    pickerRow.className = 'maptour-card__picker-row';
 
-    // Stop order toggle: compact inline "Stop order: 1 → 16 [tap to flip]"
+    // Stop order toggle (left column, stacked label + button)
     if (options.stopCount > 1 && options.onReverseToggle) {
       let reversed = options.reversed ?? false;
-      const row = document.createElement('div');
-      row.className = 'maptour-card__stop-order';
+      const orderCol = document.createElement('div');
+      orderCol.className = 'maptour-card__stop-order';
 
-      const label = document.createElement('span');
+      const label = document.createElement('div');
       label.className = 'maptour-card__stop-order-label';
       label.textContent = t('stop_order');
+      orderCol.appendChild(label);
 
       const toggleBtn = document.createElement('button');
       toggleBtn.className = 'maptour-card__stop-order-btn';
@@ -279,7 +279,7 @@ export class StopCard {
         const first = reversed ? options.stopCount : 1;
         const last = reversed ? 1 : options.stopCount;
         toggleBtn.innerHTML = `${first} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${last}`;
-        toggleBtn.setAttribute('aria-label', `Stop order: ${first} to ${last}. Tap to reverse.`);
+        toggleBtn.setAttribute('aria-label', `${t('stop_order')} ${first} to ${last}. Tap to reverse.`);
       }
       updateToggle();
 
@@ -288,11 +288,16 @@ export class StopCard {
         updateToggle();
         options.onReverseToggle!(reversed);
       });
-
-      row.appendChild(label);
-      row.appendChild(toggleBtn);
-      this.welcomeSelectionEl.after(row);
+      orderCol.appendChild(toggleBtn);
+      pickerRow.appendChild(orderCol);
     }
+
+    // Start-from selection (right column, spans both rows)
+    this.welcomeSelectionEl = document.createElement('div');
+    this.welcomeSelectionEl.className = 'maptour-card__start-from';
+    pickerRow.appendChild(this.welcomeSelectionEl);
+
+    this.container.appendChild(pickerRow);
 
     // Tour title
     const title = document.createElement('h1');
