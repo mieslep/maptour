@@ -4,7 +4,7 @@ import type { ContentBlock, GalleryImage } from '../types';
 type OnChange = () => void;
 
 /**
- * Render a content block editor for an array of content blocks.
+ * Render a WYSIWYG-style content block editor with preview mode and edit-on-click.
  * Returns the container element.
  */
 export function renderContentBlockEditor(
@@ -18,31 +18,37 @@ export function renderContentBlockEditor(
   function rebuild(): void {
     container.innerHTML = '';
 
-    const header = document.createElement('div');
-    header.className = 'cb-header';
-    header.innerHTML = `<span class="cb-label">${label}</span>`;
-    const addBtn = document.createElement('button');
-    addBtn.className = 'btn btn-sm';
-    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Block';
-    addBtn.onclick = () => {
-      blocks.push({ type: 'text', body: '' });
-      onChange();
-      rebuild();
-    };
-    header.appendChild(addBtn);
-    container.appendChild(header);
+    const headerLabel = document.createElement('div');
+    headerLabel.className = 'cb-label';
+    headerLabel.textContent = label;
+    container.appendChild(headerLabel);
 
     blocks.forEach((block, idx) => {
-      const blockEl = renderSingleBlock(block, idx, blocks, onChange, rebuild);
+      const blockEl = renderPreviewBlock(block, idx, blocks, onChange, rebuild);
       container.appendChild(blockEl);
     });
+
+    // "+ Add Block" button at bottom
+    const addBtn = document.createElement('button');
+    addBtn.className = 'cb-add-btn';
+    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Block';
+    addBtn.onclick = () => showTypePicker(addBtn, (type) => {
+      const newBlock = createEmptyBlock(type);
+      blocks.push(newBlock);
+      onChange();
+      rebuild();
+      openEditModal(newBlock, blocks.length - 1, blocks, onChange, rebuild);
+    });
+    container.appendChild(addBtn);
   }
 
   rebuild();
   return container;
 }
 
-function renderSingleBlock(
+/* ---------- Preview Block ---------- */
+
+function renderPreviewBlock(
   block: ContentBlock,
   idx: number,
   blocks: ContentBlock[],
@@ -50,21 +56,329 @@ function renderSingleBlock(
   rebuild: () => void,
 ): HTMLElement {
   const wrapper = document.createElement('div');
-  wrapper.className = 'cb-block';
-  wrapper.draggable = true;
-  wrapper.dataset.idx = String(idx);
+  wrapper.className = 'cb-preview-block';
 
-  // Block header: [drag handle] [type selector] [delete]
+  // Kebab button (upper-left, visible on hover)
+  const kebab = document.createElement('button');
+  kebab.className = 'cb-kebab';
+  kebab.innerHTML = '&#8942;'; // vertical ellipsis
+  kebab.title = 'Block options';
+  kebab.onclick = (e) => {
+    e.stopPropagation();
+    showKebabMenu(kebab, idx, blocks, onChange, rebuild);
+  };
+  wrapper.appendChild(kebab);
+
+  // Render content preview
+  const content = document.createElement('div');
+  content.className = 'cb-preview-content';
+
+  if (isBlockEmpty(block)) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'cb-placeholder';
+    placeholder.textContent = `${block.type.charAt(0).toUpperCase() + block.type.slice(1)} block \u2014 Click \u22ee to edit`;
+    content.appendChild(placeholder);
+  } else if (block.type === 'text') {
+    const html = marked.parse(block.body || '') as string;
+    const preview = document.createElement('div');
+    preview.className = 'markdown-preview';
+    preview.innerHTML = html;
+    content.appendChild(preview);
+  } else if (block.type === 'image') {
+    renderImagePreview(content, block);
+  } else if (block.type === 'gallery') {
+    renderGalleryPreview(content, block);
+  } else if (block.type === 'video') {
+    renderVideoPreview(content, block);
+  } else if (block.type === 'audio') {
+    renderAudioPreview(content, block);
+  }
+
+  wrapper.appendChild(content);
+  return wrapper;
+}
+
+function isBlockEmpty(block: ContentBlock): boolean {
+  if (block.type === 'text') return !block.body.trim();
+  if (block.type === 'image') return !block.url.trim();
+  if (block.type === 'gallery') return block.images.length === 0 || block.images.every(i => !i.url.trim());
+  if (block.type === 'video') return !block.url.trim();
+  if (block.type === 'audio') return !block.url.trim();
+  return true;
+}
+
+function renderImagePreview(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; alt?: string }): void {
+  if (block.url) {
+    const img = document.createElement('img');
+    img.src = block.url;
+    img.alt = block.alt || '';
+    img.style.maxWidth = '100%';
+    img.style.borderRadius = '4px';
+    img.onerror = () => { img.replaceWith(makePlaceholderImg('Image not found')); };
+    container.appendChild(img);
+    if (block.caption) {
+      const cap = document.createElement('div');
+      cap.className = 'cb-preview-caption';
+      cap.textContent = block.caption;
+      container.appendChild(cap);
+    }
+  } else {
+    container.appendChild(makePlaceholderImg('No image URL'));
+  }
+}
+
+function renderGalleryPreview(container: HTMLElement, block: { type: 'gallery'; images: GalleryImage[] }): void {
+  const row = document.createElement('div');
+  row.className = 'cb-gallery-row';
+  for (const img of block.images) {
+    if (!img.url) continue;
+    const thumb = document.createElement('img');
+    thumb.src = img.url;
+    thumb.alt = img.alt || '';
+    thumb.className = 'cb-gallery-thumb';
+    thumb.onerror = () => { thumb.replaceWith(makePlaceholderImg('?')); };
+    row.appendChild(thumb);
+  }
+  if (row.children.length === 0) {
+    container.appendChild(makePlaceholderImg('No gallery images'));
+  } else {
+    container.appendChild(row);
+  }
+}
+
+function renderVideoPreview(container: HTMLElement, block: { type: 'video'; url: string; caption?: string }): void {
+  const videoId = extractYouTubeId(block.url);
+  if (videoId) {
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'cb-video-thumb-wrap';
+    const thumb = document.createElement('img');
+    thumb.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    thumb.alt = 'Video thumbnail';
+    thumb.className = 'cb-video-thumb';
+    const playIcon = document.createElement('div');
+    playIcon.className = 'cb-video-play';
+    playIcon.innerHTML = '<i class="fa-solid fa-play"></i>';
+    thumbWrap.appendChild(thumb);
+    thumbWrap.appendChild(playIcon);
+    container.appendChild(thumbWrap);
+    if (block.caption) {
+      const cap = document.createElement('div');
+      cap.className = 'cb-preview-caption';
+      cap.textContent = block.caption;
+      container.appendChild(cap);
+    }
+  } else if (block.url) {
+    const link = document.createElement('div');
+    link.className = 'cb-preview-caption';
+    link.textContent = `Video: ${block.url}`;
+    container.appendChild(link);
+  } else {
+    container.appendChild(makePlaceholderImg('No video URL'));
+  }
+}
+
+function renderAudioPreview(container: HTMLElement, block: { type: 'audio'; url: string; label?: string }): void {
+  if (block.url) {
+    if (block.label) {
+      const lbl = document.createElement('div');
+      lbl.className = 'cb-preview-caption';
+      lbl.style.marginBottom = '4px';
+      lbl.textContent = block.label;
+      container.appendChild(lbl);
+    }
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = block.url;
+    audio.style.width = '100%';
+    container.appendChild(audio);
+  } else {
+    container.appendChild(makePlaceholderImg('No audio URL'));
+  }
+}
+
+function makePlaceholderImg(text: string): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'cb-placeholder';
+  el.textContent = text;
+  return el;
+}
+
+function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+/* ---------- Kebab Menu ---------- */
+
+function showKebabMenu(
+  anchor: HTMLElement,
+  idx: number,
+  blocks: ContentBlock[],
+  onChange: OnChange,
+  rebuild: () => void,
+): void {
+  // Remove any existing menu
+  closeAllMenus();
+
+  const menu = document.createElement('div');
+  menu.className = 'cb-menu';
+
+  const items: { label: string; icon: string; cls?: string; disabled?: boolean; action: () => void }[] = [
+    {
+      label: 'Edit', icon: 'fa-pen', action: () => {
+        openEditModal(blocks[idx], idx, blocks, onChange, rebuild);
+      },
+    },
+    {
+      label: 'Move Up', icon: 'fa-arrow-up', disabled: idx === 0, action: () => {
+        [blocks[idx - 1], blocks[idx]] = [blocks[idx], blocks[idx - 1]];
+        onChange(); rebuild();
+      },
+    },
+    {
+      label: 'Move Down', icon: 'fa-arrow-down', disabled: idx === blocks.length - 1, action: () => {
+        [blocks[idx], blocks[idx + 1]] = [blocks[idx + 1], blocks[idx]];
+        onChange(); rebuild();
+      },
+    },
+    {
+      label: 'Insert Above', icon: 'fa-plus', action: () => {
+        showTypePicker(anchor, (type) => {
+          const newBlock = createEmptyBlock(type);
+          blocks.splice(idx, 0, newBlock);
+          onChange(); rebuild();
+          openEditModal(newBlock, idx, blocks, onChange, rebuild);
+        });
+      },
+    },
+    {
+      label: 'Insert Below', icon: 'fa-plus', action: () => {
+        showTypePicker(anchor, (type) => {
+          const newBlock = createEmptyBlock(type);
+          blocks.splice(idx + 1, 0, newBlock);
+          onChange(); rebuild();
+          openEditModal(newBlock, idx + 1, blocks, onChange, rebuild);
+        });
+      },
+    },
+    {
+      label: 'Delete', icon: 'fa-trash', cls: 'cb-menu-item--danger', action: () => {
+        blocks.splice(idx, 1); onChange(); rebuild();
+      },
+    },
+  ];
+
+  for (const item of items) {
+    const btn = document.createElement('button');
+    btn.className = 'cb-menu-item' + (item.cls ? ` ${item.cls}` : '');
+    btn.disabled = !!item.disabled;
+    btn.innerHTML = `<i class="fa-solid ${item.icon}"></i> ${item.label}`;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      closeAllMenus();
+      item.action();
+    };
+    menu.appendChild(btn);
+  }
+
+  anchor.parentElement!.appendChild(menu);
+
+  // Close on click outside
+  const closeHandler = (e: MouseEvent) => {
+    if (!menu.contains(e.target as Node)) {
+      menu.remove();
+      document.removeEventListener('click', closeHandler, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeHandler, true), 0);
+}
+
+function closeAllMenus(): void {
+  document.querySelectorAll('.cb-menu').forEach(m => m.remove());
+}
+
+/* ---------- Type Picker ---------- */
+
+function showTypePicker(anchor: HTMLElement, onPick: (type: ContentBlock['type']) => void): void {
+  closeAllMenus();
+  const menu = document.createElement('div');
+  menu.className = 'cb-menu';
+  const types: ContentBlock['type'][] = ['text', 'image', 'gallery', 'video', 'audio'];
+  for (const t of types) {
+    const btn = document.createElement('button');
+    btn.className = 'cb-menu-item';
+    btn.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      menu.remove();
+      onPick(t);
+    };
+    menu.appendChild(btn);
+  }
+  anchor.parentElement!.appendChild(menu);
+
+  const closeHandler = (e: MouseEvent) => {
+    if (!menu.contains(e.target as Node)) {
+      menu.remove();
+      document.removeEventListener('click', closeHandler, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeHandler, true), 0);
+}
+
+/* ---------- Create Empty Block ---------- */
+
+function createEmptyBlock(type: ContentBlock['type']): ContentBlock {
+  if (type === 'text') return { type: 'text', body: '' };
+  if (type === 'image') return { type: 'image', url: '' };
+  if (type === 'gallery') return { type: 'gallery', images: [{ url: '' }] };
+  if (type === 'video') return { type: 'video', url: '' };
+  return { type: 'audio', url: '' };
+}
+
+/* ---------- Edit Modal ---------- */
+
+function openEditModal(
+  block: ContentBlock,
+  idx: number,
+  blocks: ContentBlock[],
+  onChange: OnChange,
+  rebuild: () => void,
+): void {
+  // Overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'cb-modal-overlay';
+
+  // Modal card
+  const modal = document.createElement('div');
+  modal.className = 'cb-modal';
+
+  // Header
   const header = document.createElement('div');
-  header.className = 'cb-block-header';
+  header.className = 'cb-modal-header';
+  const title = document.createElement('span');
+  title.textContent = `Edit ${block.type.charAt(0).toUpperCase() + block.type.slice(1)} Block`;
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'btn-icon';
+  closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+  closeBtn.onclick = () => closeModal();
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  modal.appendChild(header);
 
-  const handle = document.createElement('span');
-  handle.className = 'stop-drag-handle';
-  handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
-  header.appendChild(handle);
+  // Body
+  const body = document.createElement('div');
+  body.className = 'cb-modal-body';
 
+  // Type selector
+  const typeRow = document.createElement('div');
+  typeRow.className = 'input-row';
+  const typeLbl = document.createElement('label');
+  typeLbl.className = 'input-label';
+  typeLbl.textContent = 'Type';
   const typeSelect = document.createElement('select');
-  typeSelect.className = 'input-sm';
+  typeSelect.className = 'input';
   for (const t of ['text', 'image', 'gallery', 'video', 'audio']) {
     const opt = document.createElement('option');
     opt.value = t;
@@ -75,86 +389,65 @@ function renderSingleBlock(
   typeSelect.onchange = () => {
     const newType = typeSelect.value as ContentBlock['type'];
     if (newType === block.type) return;
-    if (newType === 'text') blocks[idx] = { type: 'text', body: '' };
-    else if (newType === 'image') blocks[idx] = { type: 'image', url: '' };
-    else if (newType === 'gallery') blocks[idx] = { type: 'gallery', images: [{ url: '' }] };
-    else if (newType === 'video') blocks[idx] = { type: 'video', url: '' };
-    else if (newType === 'audio') blocks[idx] = { type: 'audio', url: '' };
+    const newBlock = createEmptyBlock(newType);
+    blocks[idx] = newBlock;
     onChange();
-    rebuild();
+    overlay.remove();
+    openEditModal(newBlock, idx, blocks, onChange, rebuild);
   };
-  header.appendChild(typeSelect);
+  typeRow.appendChild(typeLbl);
+  typeRow.appendChild(typeSelect);
+  body.appendChild(typeRow);
 
-  const delBtn = document.createElement('button');
-  delBtn.className = 'btn btn-icon btn-danger';
-  delBtn.title = 'Remove block';
-  delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-  delBtn.onclick = () => { blocks.splice(idx, 1); onChange(); rebuild(); };
-  header.appendChild(delBtn);
-
-  // Drag events for reordering
-  let dragBlockIdx: number | null = null;
-  wrapper.ondragstart = (e) => {
-    dragBlockIdx = idx;
-    wrapper.classList.add('dragging');
-    e.dataTransfer!.effectAllowed = 'move';
-  };
-  wrapper.ondragend = () => {
-    wrapper.classList.remove('dragging');
-    dragBlockIdx = null;
-  };
-  wrapper.ondragover = (e) => {
-    e.preventDefault();
-    e.dataTransfer!.dropEffect = 'move';
-    wrapper.classList.add('drag-over');
-  };
-  wrapper.ondragleave = () => {
-    wrapper.classList.remove('drag-over');
-  };
-  wrapper.ondrop = (e) => {
-    e.preventDefault();
-    wrapper.classList.remove('drag-over');
-    // Find the source index from the dragged element
-    const srcIdx = parseInt((e.dataTransfer!.getData('text/plain') || String(dragBlockIdx)) || '-1');
-    if (srcIdx >= 0 && srcIdx !== idx && srcIdx < blocks.length) {
-      const [moved] = blocks.splice(srcIdx, 1);
-      blocks.splice(idx, 0, moved);
-      onChange();
-      rebuild();
-    }
-  };
-  wrapper.ondragstart = (e) => {
-    e.dataTransfer!.setData('text/plain', String(idx));
-    e.dataTransfer!.effectAllowed = 'move';
-    wrapper.classList.add('dragging');
-  };
-
-  wrapper.appendChild(header);
-
-  // Block body based on type
-  const body = document.createElement('div');
-  body.className = 'cb-block-body';
-
+  // Fields per type
   if (block.type === 'text') {
-    renderTextBlock(body, block, onChange);
+    renderTextModalFields(body, block, onChange);
   } else if (block.type === 'image') {
-    renderImageBlock(body, block, onChange);
+    renderImageModalFields(body, block, onChange);
   } else if (block.type === 'gallery') {
-    renderGalleryBlock(body, block, onChange, rebuild);
+    renderGalleryModalFields(body, block, onChange);
   } else if (block.type === 'video') {
-    renderVideoBlock(body, block, onChange);
+    renderVideoModalFields(body, block, onChange);
   } else if (block.type === 'audio') {
-    renderAudioBlock(body, block, onChange);
+    renderAudioModalFields(body, block, onChange);
   }
 
-  wrapper.appendChild(body);
-  return wrapper;
+  modal.appendChild(body);
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.className = 'cb-modal-footer';
+  const doneBtn = document.createElement('button');
+  doneBtn.className = 'btn btn-primary';
+  doneBtn.textContent = 'Done';
+  doneBtn.onclick = () => closeModal();
+  footer.appendChild(doneBtn);
+  modal.appendChild(footer);
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Close on backdrop click
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeModal();
+  };
+
+  // Close on Escape
+  const escHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closeModal();
+  };
+  document.addEventListener('keydown', escHandler);
+
+  function closeModal(): void {
+    document.removeEventListener('keydown', escHandler);
+    overlay.remove();
+    rebuild();
+  }
 }
 
-function renderTextBlock(container: HTMLElement, block: { type: 'text'; body: string }, onChange: OnChange): void {
-  const wrap = document.createElement('div');
-  wrap.className = 'text-block-wrap';
+/* ---------- Modal Field Renderers ---------- */
 
+function renderTextModalFields(container: HTMLElement, block: { type: 'text'; body: string }, onChange: OnChange): void {
   const textarea = document.createElement('textarea');
   textarea.className = 'input cb-textarea';
   textarea.placeholder = 'Markdown content...';
@@ -162,7 +455,7 @@ function renderTextBlock(container: HTMLElement, block: { type: 'text'; body: st
   textarea.rows = 6;
 
   const preview = document.createElement('div');
-  preview.className = 'cb-preview markdown-preview';
+  preview.className = 'cb-modal-md-preview markdown-preview';
   preview.innerHTML = marked.parse(block.body || '') as string;
 
   textarea.oninput = () => {
@@ -171,61 +464,81 @@ function renderTextBlock(container: HTMLElement, block: { type: 'text'; body: st
     onChange();
   };
 
-  wrap.appendChild(textarea);
-  wrap.appendChild(preview);
-  container.appendChild(wrap);
+  container.appendChild(textarea);
+  container.appendChild(preview);
 }
 
-function renderImageBlock(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; alt?: string }, onChange: OnChange): void {
-  container.appendChild(makeInput('URL', block.url, v => { block.url = v; onChange(); }));
-  container.appendChild(makeInput('Caption', block.caption ?? '', v => { block.caption = v || undefined; onChange(); }));
-  container.appendChild(makeInput('Alt text', block.alt ?? '', v => { block.alt = v || undefined; onChange(); }));
-}
+function renderImageModalFields(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; alt?: string }, onChange: OnChange): void {
+  const imgPreview = document.createElement('div');
+  imgPreview.className = 'cb-modal-img-preview';
 
-function renderGalleryBlock(
-  container: HTMLElement,
-  block: { type: 'gallery'; images: GalleryImage[] },
-  onChange: OnChange,
-  rebuild: () => void,
-): void {
-  block.images.forEach((img, i) => {
-    const imgDiv = document.createElement('div');
-    imgDiv.className = 'gallery-image-item';
-    const label = document.createElement('span');
-    label.className = 'gallery-image-label';
-    label.textContent = `Image ${i + 1}`;
-    imgDiv.appendChild(label);
-    imgDiv.appendChild(makeInput('URL', img.url, v => { img.url = v; onChange(); }));
-    imgDiv.appendChild(makeInput('Caption', img.caption ?? '', v => { img.caption = v || undefined; onChange(); }));
-    imgDiv.appendChild(makeInput('Alt text', img.alt ?? '', v => { img.alt = v || undefined; onChange(); }));
-    if (block.images.length > 1) {
-      const rmBtn = document.createElement('button');
-      rmBtn.className = 'btn btn-sm btn-danger';
-      rmBtn.textContent = 'Remove';
-      rmBtn.onclick = () => { block.images.splice(i, 1); onChange(); rebuild(); };
-      imgDiv.appendChild(rmBtn);
+  const updatePreview = () => {
+    imgPreview.innerHTML = '';
+    if (block.url) {
+      const img = document.createElement('img');
+      img.src = block.url;
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '200px';
+      img.style.borderRadius = '4px';
+      img.onerror = () => { imgPreview.textContent = 'Image not found'; };
+      imgPreview.appendChild(img);
     }
-    container.appendChild(imgDiv);
-  });
+  };
 
-  const addBtn = document.createElement('button');
-  addBtn.className = 'btn btn-sm';
-  addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Image';
-  addBtn.onclick = () => { block.images.push({ url: '' }); onChange(); rebuild(); };
-  container.appendChild(addBtn);
+  container.appendChild(makeModalInput('URL', block.url, v => { block.url = v; onChange(); updatePreview(); }));
+  container.appendChild(makeModalInput('Caption', block.caption ?? '', v => { block.caption = v || undefined; onChange(); }));
+  container.appendChild(makeModalInput('Alt text', block.alt ?? '', v => { block.alt = v || undefined; onChange(); }));
+  updatePreview();
+  container.appendChild(imgPreview);
 }
 
-function renderVideoBlock(container: HTMLElement, block: { type: 'video'; url: string; caption?: string }, onChange: OnChange): void {
-  container.appendChild(makeInput('URL', block.url, v => { block.url = v; onChange(); }));
-  container.appendChild(makeInput('Caption', block.caption ?? '', v => { block.caption = v || undefined; onChange(); }));
+function renderGalleryModalFields(container: HTMLElement, block: { type: 'gallery'; images: GalleryImage[] }, onChange: OnChange): void {
+  const listEl = document.createElement('div');
+
+  function rebuildList(): void {
+    listEl.innerHTML = '';
+    block.images.forEach((img, i) => {
+      const imgDiv = document.createElement('div');
+      imgDiv.className = 'gallery-image-item';
+      const label = document.createElement('span');
+      label.className = 'gallery-image-label';
+      label.textContent = `Image ${i + 1}`;
+      imgDiv.appendChild(label);
+      imgDiv.appendChild(makeModalInput('URL', img.url, v => { img.url = v; onChange(); }));
+      imgDiv.appendChild(makeModalInput('Caption', img.caption ?? '', v => { img.caption = v || undefined; onChange(); }));
+      imgDiv.appendChild(makeModalInput('Alt text', img.alt ?? '', v => { img.alt = v || undefined; onChange(); }));
+      if (block.images.length > 1) {
+        const rmBtn = document.createElement('button');
+        rmBtn.className = 'btn btn-sm btn-danger';
+        rmBtn.textContent = 'Remove';
+        rmBtn.onclick = () => { block.images.splice(i, 1); onChange(); rebuildList(); };
+        imgDiv.appendChild(rmBtn);
+      }
+      listEl.appendChild(imgDiv);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-sm';
+    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Image';
+    addBtn.onclick = () => { block.images.push({ url: '' }); onChange(); rebuildList(); };
+    listEl.appendChild(addBtn);
+  }
+
+  rebuildList();
+  container.appendChild(listEl);
 }
 
-function renderAudioBlock(container: HTMLElement, block: { type: 'audio'; url: string; label?: string }, onChange: OnChange): void {
-  container.appendChild(makeInput('URL', block.url, v => { block.url = v; onChange(); }));
-  container.appendChild(makeInput('Label', block.label ?? '', v => { block.label = v || undefined; onChange(); }));
+function renderVideoModalFields(container: HTMLElement, block: { type: 'video'; url: string; caption?: string }, onChange: OnChange): void {
+  container.appendChild(makeModalInput('URL', block.url, v => { block.url = v; onChange(); }));
+  container.appendChild(makeModalInput('Caption', block.caption ?? '', v => { block.caption = v || undefined; onChange(); }));
 }
 
-function makeInput(label: string, value: string, onChange: (v: string) => void): HTMLElement {
+function renderAudioModalFields(container: HTMLElement, block: { type: 'audio'; url: string; label?: string }, onChange: OnChange): void {
+  container.appendChild(makeModalInput('URL', block.url, v => { block.url = v; onChange(); }));
+  container.appendChild(makeModalInput('Label', block.label ?? '', v => { block.label = v || undefined; onChange(); }));
+}
+
+function makeModalInput(label: string, value: string, onChange: (v: string) => void): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'input-row';
   const lbl = document.createElement('label');

@@ -539,3 +539,249 @@ textarea.input {
   color: #94a3b8;
   font-size: 11px;
 }
+
+/* ---- Content Block WYSIWYG Preview ---- */
+
+.cb-preview-block {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: white;
+  padding: 10px;
+  min-height: 40px;
+  transition: box-shadow 0.15s;
+}
+.cb-preview-block:hover {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.cb-preview-content {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.cb-preview-caption {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Kebab button */
+.cb-kebab {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  z-index: 2;
+}
+.cb-preview-block:hover .cb-kebab {
+  opacity: 1;
+}
+.cb-kebab:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+}
+
+/* Kebab dropdown menu */
+.cb-menu {
+  position: absolute;
+  top: 28px;
+  left: 4px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  min-width: 160px;
+  padding: 4px 0;
+}
+
+.cb-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  text-align: left;
+}
+.cb-menu-item:hover {
+  background: #f1f5f9;
+}
+.cb-menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cb-menu-item--danger {
+  color: #dc2626;
+}
+.cb-menu-item--danger:hover {
+  background: #fef2f2;
+}
+
+/* Placeholder for empty blocks */
+.cb-placeholder {
+  padding: 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+/* Add Block button */
+.cb-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: #94a3b8;
+  transition: color 0.15s, border-color 0.15s;
+  margin-top: 4px;
+}
+.cb-add-btn:hover {
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Gallery preview row */
+.cb-gallery-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cb-gallery-thumb {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Video thumbnail */
+.cb-video-thumb-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.cb-video-thumb {
+  display: block;
+  max-width: 100%;
+  border-radius: 4px;
+}
+.cb-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* Modal overlay */
+.cb-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal card */
+.cb-modal {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cb-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cb-modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cb-modal-body .cb-textarea {
+  width: 100%;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.cb-modal-md-preview {
+  padding: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.cb-modal-img-preview {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.cb-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid #e2e8f0;
+}

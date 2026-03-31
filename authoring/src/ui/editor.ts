@@ -190,7 +190,7 @@ export class TourEditor {
         id,
         title: `Stop ${id}`,
         coords: [lat, lng],
-        content: [],
+        content: [{ type: 'text', body: '*Click the \u22ee menu to edit this block, or add more content below.*' }],
       };
       // Add default getting_here for non-first stops
       if (this.tour.stops.length > 0) {
