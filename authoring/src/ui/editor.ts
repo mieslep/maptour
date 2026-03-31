@@ -693,13 +693,13 @@ export class TourEditor {
       scrollable.appendChild(this.renderStopEditor(stop));
       this.detailPanel.appendChild(scrollable);
     } else if (this.selectedCard === 'welcome') {
-      this.detailPanel.appendChild(makeToolbar('Welcome Screen'));
+      this.detailPanel.appendChild(makeToolbar('Welcome Card'));
       const scrollable = document.createElement('div');
       scrollable.className = 'panel-scrollable';
       scrollable.appendChild(this.renderWelcomeSection());
       this.detailPanel.appendChild(scrollable);
     } else if (this.selectedCard === 'goodbye') {
-      this.detailPanel.appendChild(makeToolbar('Goodbye Screen'));
+      this.detailPanel.appendChild(makeToolbar('Goodbye Card'));
       const scrollable = document.createElement('div');
       scrollable.className = 'panel-scrollable';
       scrollable.appendChild(this.renderGoodbyeSection());
@@ -840,7 +840,7 @@ export class TourEditor {
     // Welcome card (pinned at top)
     const welcomeItem = document.createElement('div');
     welcomeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'welcome' ? 'selected' : ''}`;
-    welcomeItem.innerHTML = `<span class="stop-list-info"><i class="fa-solid fa-door-open" aria-hidden="true" style="color:#16a34a;margin-right:4px;"></i> Welcome Screen</span>`;
+    welcomeItem.innerHTML = `<span class="stop-list-info"><i class="fa-solid fa-door-open" aria-hidden="true" style="color:#16a34a;margin-right:4px;"></i> Welcome Card</span>`;
     welcomeItem.onclick = () => {
       this.selectedStopIdx = -1;
       this.selectedCard = 'welcome';
@@ -917,7 +917,7 @@ export class TourEditor {
     // Goodbye card (pinned at bottom)
     const goodbyeItem = document.createElement('div');
     goodbyeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'goodbye' ? 'selected' : ''}`;
-    goodbyeItem.innerHTML = `<span class="stop-list-info"><i class="fa-solid fa-flag-checkered" aria-hidden="true" style="color:#dc2626;margin-right:4px;"></i> Goodbye Screen</span>`;
+    goodbyeItem.innerHTML = `<span class="stop-list-info"><i class="fa-solid fa-flag-checkered" aria-hidden="true" style="color:#dc2626;margin-right:4px;"></i> Goodbye Card</span>`;
     goodbyeItem.onclick = () => {
       this.selectedStopIdx = -1;
       this.selectedCard = 'goodbye';
@@ -1178,7 +1178,7 @@ export class TourEditor {
     // Stop content blocks
     content.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), 'Stop Content'));
 
-    return this.renderCollapsible(`Stop: ${stop.title}`, content, true);
+    return content;
   }
 
   private renderWelcomeSection(): HTMLElement {
