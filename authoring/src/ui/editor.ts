@@ -840,7 +840,7 @@ export class TourEditor {
     // Welcome card (pinned at top)
     const welcomeItem = document.createElement('div');
     welcomeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'welcome' ? 'selected' : ''}`;
-    welcomeItem.innerHTML = `<span class="stop-drag-handle" style="visibility:hidden;"><i class="fa-solid fa-grip-vertical"></i></span><span class="stop-list-info"><i class="fa-solid fa-flag" aria-hidden="true" style="color:#16a34a;margin-right:4px;"></i> Welcome Card</span>`;
+    welcomeItem.innerHTML = `<span class="stop-drag-handle"><i class="fa-solid fa-flag" style="color:#16a34a;"></i></span><span class="stop-list-info">Welcome Card</span>`;
     welcomeItem.onclick = () => {
       this.selectedStopIdx = -1;
       this.selectedCard = 'welcome';
@@ -917,7 +917,7 @@ export class TourEditor {
     // Goodbye card (pinned at bottom)
     const goodbyeItem = document.createElement('div');
     goodbyeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'goodbye' ? 'selected' : ''}`;
-    goodbyeItem.innerHTML = `<span class="stop-drag-handle" style="visibility:hidden;"><i class="fa-solid fa-grip-vertical"></i></span><span class="stop-list-info"><i class="fa-solid fa-flag-checkered" aria-hidden="true" style="margin-right:4px;"></i> Goodbye Card</span>`;
+    goodbyeItem.innerHTML = `<span class="stop-drag-handle"><i class="fa-solid fa-flag-checkered"></i></span><span class="stop-list-info">Goodbye Card</span>`;
     goodbyeItem.onclick = () => {
       this.selectedStopIdx = -1;
       this.selectedCard = 'goodbye';
