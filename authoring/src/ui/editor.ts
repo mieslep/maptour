@@ -829,46 +829,23 @@ export class TourEditor {
     const content = document.createElement('div');
     content.className = 'section-content';
 
-    // Route generation buttons
-    const routeBar = document.createElement('div');
-    routeBar.className = 'route-bar';
-
-    const genAllBtn = document.createElement('button');
-    genAllBtn.className = 'btn btn-sm';
-    genAllBtn.innerHTML = '<i class="fa-solid fa-route"></i> Generate All Routes';
-    genAllBtn.disabled = this.tour.stops.length < 2;
-    genAllBtn.onclick = async () => {
-      genAllBtn.disabled = true;
-      genAllBtn.textContent = 'Generating...';
-      try {
-        const routes = await generateAllRoutes(this.tour.stops, (done, total) => {
-          genAllBtn.textContent = `Generating... ${done}/${total}`;
-        });
-        this.withUndo(() => {
-          routes.forEach((route, i) => {
-            const stop = this.tour.stops[i + 1];
-            if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-            stop.getting_here.route = route;
-          });
-        });
-        this.refreshRoutePolylines();
-        this.setStatus(`Generated ${routes.size} routes.`);
-      } catch (e) {
-        this.setStatus(`Route generation failed: ${(e as Error).message}`);
-      }
-      genAllBtn.disabled = false;
-      genAllBtn.innerHTML = '<i class="fa-solid fa-route"></i> Generate All Routes';
-    };
-    routeBar.appendChild(genAllBtn);
-    content.appendChild(routeBar);
-
-    // Stop list
+    // Stop list with drag reordering
     const list = document.createElement('div');
     list.className = 'stop-list';
+
+    let dragIdx: number | null = null;
 
     this.tour.stops.forEach((stop, idx) => {
       const item = document.createElement('div');
       item.className = `stop-list-item ${idx === this.selectedStopIdx ? 'selected' : ''}`;
+      item.draggable = true;
+      item.dataset.idx = String(idx);
+
+      // Drag handle
+      const handle = document.createElement('span');
+      handle.className = 'stop-drag-handle';
+      handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+      item.appendChild(handle);
 
       const info = document.createElement('div');
       info.className = 'stop-list-info';
@@ -876,60 +853,39 @@ export class TourEditor {
       info.onclick = () => this.selectStop(idx);
       item.appendChild(info);
 
-      const controls = document.createElement('div');
-      controls.className = 'stop-list-controls';
-
-      if (idx > 0) {
-        const upBtn = document.createElement('button');
-        upBtn.className = 'btn btn-icon';
-        upBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
-        upBtn.title = 'Move up';
-        upBtn.onclick = (e) => { e.stopPropagation(); this.moveStop(idx, idx - 1); };
-        controls.appendChild(upBtn);
-      }
-      if (idx < this.tour.stops.length - 1) {
-        const downBtn = document.createElement('button');
-        downBtn.className = 'btn btn-icon';
-        downBtn.innerHTML = '<i class="fa-solid fa-arrow-down"></i>';
-        downBtn.title = 'Move down';
-        downBtn.onclick = (e) => { e.stopPropagation(); this.moveStop(idx, idx + 1); };
-        controls.appendChild(downBtn);
-      }
-
-      // Generate route button (for stops after the first)
-      if (idx > 0) {
-        const routeBtn = document.createElement('button');
-        routeBtn.className = 'btn btn-icon';
-        routeBtn.innerHTML = '<i class="fa-solid fa-route"></i>';
-        routeBtn.title = 'Generate route from previous stop';
-        routeBtn.onclick = async (e) => {
-          e.stopPropagation();
-          try {
-            const prevStop = this.tour.stops[idx - 1];
-            routeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            const route = await generateRoute(prevStop.coords, stop.coords);
-            this.withUndo(() => {
-              if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-              stop.getting_here.route = route;
-            });
-            this.refreshRoutePolylines();
-            this.setStatus(`Route generated: ${route.length} points.`);
-          } catch (err) {
-            this.setStatus(`Route failed: ${(err as Error).message}`);
-          }
-          routeBtn.innerHTML = '<i class="fa-solid fa-route"></i>';
-        };
-        controls.appendChild(routeBtn);
-      }
-
       const delBtn = document.createElement('button');
       delBtn.className = 'btn btn-icon btn-danger';
       delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
       delBtn.title = 'Delete stop';
       delBtn.onclick = (e) => { e.stopPropagation(); this.deleteStop(idx); };
-      controls.appendChild(delBtn);
+      item.appendChild(delBtn);
 
-      item.appendChild(controls);
+      // Drag events
+      item.ondragstart = (e) => {
+        dragIdx = idx;
+        item.classList.add('dragging');
+        e.dataTransfer!.effectAllowed = 'move';
+      };
+      item.ondragend = () => {
+        item.classList.remove('dragging');
+        dragIdx = null;
+      };
+      item.ondragover = (e) => {
+        e.preventDefault();
+        e.dataTransfer!.dropEffect = 'move';
+        item.classList.add('drag-over');
+      };
+      item.ondragleave = () => {
+        item.classList.remove('drag-over');
+      };
+      item.ondrop = (e) => {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        if (dragIdx !== null && dragIdx !== idx) {
+          this.moveStop(dragIdx, idx);
+        }
+      };
+
       list.appendChild(item);
     });
 
@@ -955,6 +911,43 @@ export class TourEditor {
       }
     };
     content.appendChild(addBtn);
+
+    // Generate All Routes button (centered, after stop list)
+    if (this.tour.stops.length >= 2) {
+      const genAllBtn = document.createElement('button');
+      genAllBtn.className = 'btn btn-sm';
+      genAllBtn.style.cssText = 'display:block; margin: 8px auto 0;';
+      genAllBtn.innerHTML = '<i class="fa-solid fa-route"></i> Generate All Routes';
+      genAllBtn.onclick = async () => {
+        const apiKey = getOrsApiKey();
+        if (!apiKey) {
+          this.showOrsKeyModal(() => { genAllBtn.click(); });
+          return;
+        }
+        genAllBtn.disabled = true;
+        genAllBtn.textContent = 'Generating...';
+        try {
+          const routes = await generateAllRoutes(this.tour.stops, (done, total) => {
+            genAllBtn.textContent = `Generating... ${done}/${total}`;
+          });
+          this.withUndo(() => {
+            routes.forEach((route, i) => {
+              const stop = this.tour.stops[i + 1];
+              if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
+              stop.getting_here.route = route;
+            });
+          });
+          this.refreshRoutePolylines();
+          this.renderPanel();
+          this.setStatus(`Generated ${routes.size} routes.`);
+        } catch (e) {
+          this.setStatus(`Route generation failed: ${(e as Error).message}`);
+        }
+        genAllBtn.disabled = false;
+        genAllBtn.innerHTML = '<i class="fa-solid fa-route"></i> Generate All Routes';
+      };
+      content.appendChild(genAllBtn);
+    }
 
     return this.renderCollapsible(`Stops (${this.tour.stops.length})`, content, true);
   }
@@ -1189,7 +1182,7 @@ export class TourEditor {
       row.className = 'input-row';
       const label = document.createElement('label');
       label.className = 'input-label input-label-sm';
-      label.innerHTML = `${key} <span class="info-icon" title="${info.desc}"><i class="fa-solid fa-circle-info"></i></span>`;
+      label.innerHTML = `<span class="info-icon" title="${info.desc}"><i class="fa-solid fa-circle-info"></i></span> ${key}`;
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'input input-sm';

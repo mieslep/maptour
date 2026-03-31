@@ -345,13 +345,15 @@ textarea.input {
   flex-shrink: 0;
 }
 
-.stop-list-controls {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  opacity: 0.5;
+.stop-drag-handle {
+  cursor: grab;
+  color: #cbd5e1;
+  padding: 0 4px;
+  flex-shrink: 0;
 }
-.stop-list-item:hover .stop-list-controls { opacity: 1; }
+.stop-drag-handle:hover { color: #64748b; }
+.stop-list-item.dragging { opacity: 0.4; }
+.stop-list-item.drag-over { border-top: 2px solid #2563eb; }
 
 .route-bar {
   margin-bottom: 8px;
