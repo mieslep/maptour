@@ -16,6 +16,6 @@
     "declarationDir": "dist",
     "esModuleInterop": true
   },
-  "include": ["src", "tests/unit"],
+  "include": ["src", "authoring/src", "tests/unit"],
   "exclude": ["node_modules", "dist"]
 }

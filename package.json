@@ -10,7 +10,9 @@
     "build": "vite build",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "dev:authoring": "vite --config vite.authoring.config.ts",
+    "build:authoring": "vite build --config vite.authoring.config.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
