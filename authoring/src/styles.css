@@ -485,13 +485,18 @@ textarea.input {
 
 /* ---- Route Edit Widget ---- */
 
-.route-edit-widget-wrapper {
+.leaflet-marker-icon.route-edit-widget-wrapper {
   background: none !important;
   border: none !important;
   overflow: visible !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .route-edit-widget {
+  position: absolute;
+  left: 0;
+  bottom: 0;
   transform: translateX(-50%);
   z-index: 1000;
   background: white;
