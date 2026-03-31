@@ -1,3 +1,5 @@
+import type { BatterySaverConfig } from '../types';
+
 export interface GpsPosition {
   lat: number;
   lng: number;
@@ -9,6 +11,28 @@ export type HeadingCallback = (heading: number | null) => void;
 
 /** Minimum distance (metres) between positions to derive a movement-based heading. */
 const MOVEMENT_THRESHOLD_M = 5;
+
+export type GpsMode = 'HIGH_ACCURACY' | 'FAR_CRUISE' | 'STATIONARY';
+
+interface ModeOptions {
+  enableHighAccuracy: boolean;
+  timeout: number;
+  maximumAge: number;
+}
+
+const MODE_OPTIONS: Record<GpsMode, ModeOptions> = {
+  HIGH_ACCURACY: { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+  FAR_CRUISE: { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 },
+  STATIONARY: { enableHighAccuracy: false, timeout: 30000, maximumAge: 60000 },
+};
+
+const DEFAULT_BATTERY_CONFIG: Required<BatterySaverConfig> = {
+  stationary_timeout: 120,
+  stationary_radius: 10,
+  far_stop_distance: 500,
+  far_stop_max_age: 60000,
+  approach_distance: 200,
+};
 
 /** Compute bearing in degrees (0 = north, 90 = east) between two lat/lng pairs. */
 function computeBearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -51,6 +75,14 @@ export class GpsTracker {
 
   private orientationHandler: ((e: DeviceOrientationEvent) => void) | null = null;
 
+  // Battery saver state
+  private batterySaverEnabled = false;
+  private batteryConfig: Required<BatterySaverConfig> = { ...DEFAULT_BATTERY_CONFIG };
+  private currentMode: GpsMode = 'HIGH_ACCURACY';
+  private nextStopDistance: number | null = null;
+  private stationaryAnchor: GpsPosition | null = null;
+  private stationaryStartTime: number | null = null;
+
   constructor() {
     // No-op if Geolocation API is unavailable
   }
@@ -59,10 +91,53 @@ export class GpsTracker {
     return typeof navigator !== 'undefined' && 'geolocation' in navigator;
   }
 
+  /** Enable battery saver with the given config. Call before start(). */
+  enableBatterySaver(config?: BatterySaverConfig): void {
+    this.batterySaverEnabled = true;
+    this.batteryConfig = { ...DEFAULT_BATTERY_CONFIG, ...config };
+    // Clamp approach_distance to not exceed far_stop_distance
+    if (this.batteryConfig.approach_distance > this.batteryConfig.far_stop_distance) {
+      this.batteryConfig.approach_distance = this.batteryConfig.far_stop_distance;
+    }
+  }
+
+  /** Inform the tracker how far the next stop is (metres). Used for mode transitions. */
+  setNextStopDistance(metres: number): void {
+    this.nextStopDistance = metres;
+    if (this.batterySaverEnabled) {
+      this.evaluateMode();
+    }
+  }
+
+  /** Get the current GPS mode. */
+  getMode(): GpsMode {
+    return this.currentMode;
+  }
+
+  /** Get the current watch options for the active mode. */
+  getWatchOptions(): ModeOptions {
+    return { ...MODE_OPTIONS[this.currentMode] };
+  }
+
   start(): void {
     if (!this.isAvailable()) return;
 
     this.startCompassListener();
+    this.startWatch();
+  }
+
+  private startWatch(): void {
+    // Clear any existing watch
+    if (this.watchId !== null) {
+      try {
+        navigator.geolocation.clearWatch(this.watchId);
+      } catch {
+        // ignore
+      }
+      this.watchId = null;
+    }
+
+    const options = MODE_OPTIONS[this.currentMode];
 
     try {
       this.watchId = navigator.geolocation.watchPosition(
@@ -103,20 +178,88 @@ export class GpsTracker {
           const heading = this.compassHeading ?? geoHeading ?? movementHeading ?? this.currentHeading;
           this.updateHeading(heading);
 
+          // Battery saver: evaluate stationary detection and mode transitions
+          if (this.batterySaverEnabled) {
+            this.updateStationaryState(newPos);
+            this.evaluateMode();
+          }
+
           this.notifyPosition(this.lastPosition);
         },
         (_err) => {
           // Permission denied, unavailable, or timeout — notify with null
           this.notifyPosition(null);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000,
-        }
+        options
       );
     } catch {
       // Geolocation not available in this context
+    }
+  }
+
+  private updateStationaryState(pos: GpsPosition): void {
+    const config = this.batteryConfig;
+    const now = Date.now();
+
+    if (!this.stationaryAnchor) {
+      this.stationaryAnchor = pos;
+      this.stationaryStartTime = now;
+      return;
+    }
+
+    const dist = haversineDistance(
+      this.stationaryAnchor.lat, this.stationaryAnchor.lng,
+      pos.lat, pos.lng
+    );
+
+    if (dist > config.stationary_radius) {
+      // Movement detected — reset anchor
+      this.stationaryAnchor = pos;
+      this.stationaryStartTime = now;
+    }
+    // If within radius, stationaryStartTime stays as-is
+  }
+
+  private isStationary(): boolean {
+    if (!this.stationaryStartTime) return false;
+    const elapsed = (Date.now() - this.stationaryStartTime) / 1000;
+    return elapsed >= this.batteryConfig.stationary_timeout;
+  }
+
+  private evaluateMode(): void {
+    const prevMode = this.currentMode;
+    let newMode: GpsMode = 'HIGH_ACCURACY';
+
+    if (this.isStationary()) {
+      newMode = 'STATIONARY';
+    } else if (this.nextStopDistance !== null) {
+      const config = this.batteryConfig;
+      if (this.currentMode === 'FAR_CRUISE') {
+        // Hysteresis: must be < far_stop_distance * 0.9 to leave far cruise
+        // and within approach_distance to go back to high accuracy
+        if (this.nextStopDistance < config.approach_distance) {
+          newMode = 'HIGH_ACCURACY';
+        } else {
+          newMode = 'FAR_CRUISE';
+        }
+      } else {
+        if (this.nextStopDistance > config.far_stop_distance) {
+          newMode = 'FAR_CRUISE';
+        } else {
+          newMode = 'HIGH_ACCURACY';
+        }
+      }
+    }
+
+    // Movement from stationary always goes to HIGH_ACCURACY
+    if (prevMode === 'STATIONARY' && newMode !== 'STATIONARY') {
+      newMode = 'HIGH_ACCURACY';
+    }
+
+    if (newMode !== prevMode) {
+      this.currentMode = newMode;
+      // Restart watch with new options
+      this.startWatch();
     }
   }
 

@@ -1,9 +1,18 @@
 // MapTour Type Definitions
 
+export interface BatterySaverConfig {
+  stationary_timeout?: number;  // seconds stationary before downshift (default: 120)
+  stationary_radius?: number;   // metres — movement within this is "stationary" (default: 10)
+  far_stop_distance?: number;   // metres — next stop farther than this triggers reduced polling (default: 500)
+  far_stop_max_age?: number;    // maximumAge in ms when far from next stop (default: 60000)
+  approach_distance?: number;   // metres — resume high accuracy when this close (default: 200)
+}
+
 export interface GpsConfig {
   max_distance?: number;   // max metres from nearest stop for GPS pre-selection (default: 5000)
   max_accuracy?: number;   // max GPS accuracy in metres to trust the reading (default: 500)
   arrival_radius?: number; // metres — proximity arrival detection radius (default: 50)
+  battery_saver?: boolean | BatterySaverConfig;
 }
 
 export interface TourMeta {
