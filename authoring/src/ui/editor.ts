@@ -303,17 +303,19 @@ export class TourEditor {
         m.on('mousedown', (e) => {
           justDragged = false;
           pushUndo(this.tour); // snapshot before drag starts
-          // Select this point visually
-          this.routePointMarkers.forEach(rm => {
-            rm.setStyle({ fillColor: '#2563eb', radius: 8 });
-            (rm.options as any)._selected = false;
-          });
-          m.setStyle({ fillColor: '#dc2626', radius: 10 });
-          (m.options as any)._selected = true;
           this.map.dragging.disable();
           L.DomEvent.stopPropagation(e);
           const onMove = (ev: L.LeafletMouseEvent) => {
-            justDragged = true;
+            if (!justDragged) {
+              // First move: select this point visually
+              justDragged = true;
+              this.routePointMarkers.forEach(rm => {
+                rm.setStyle({ fillColor: '#2563eb', radius: 8 });
+                (rm.options as any)._selected = false;
+              });
+              m.setStyle({ fillColor: '#dc2626', radius: 10 });
+              (m.options as any)._selected = true;
+            }
             m.setLatLng(ev.latlng);
             route[ptIdx] = [ev.latlng.lat, ev.latlng.lng];
             this.refreshRoutePolylines();
