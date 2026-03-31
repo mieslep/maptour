@@ -16,6 +16,7 @@ vi.mock('../../src/card/StopCard', () => ({
   StopCard: vi.fn().mockImplementation(() => ({
     render: vi.fn(),
     update: vi.fn(),
+    setSuppressGettingHereNote: vi.fn(),
   })),
 }));
 

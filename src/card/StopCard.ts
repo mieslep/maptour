@@ -36,6 +36,7 @@ export class StopCard {
   private tourNavMode: LegMode | undefined;
   private nextCallback: (() => void) | null = null;
   private startingStopIndex = 0;
+  private suppressGettingHereNote = false;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -50,6 +51,11 @@ export class StopCard {
   /** Register a callback for "Next stop" and "Finish Tour" buttons. */
   onNext(cb: () => void): void {
     this.nextCallback = cb;
+  }
+
+  /** Mark that the next stop card should hide the getting_here note (user just completed a journey). */
+  setSuppressGettingHereNote(suppress: boolean): void {
+    this.suppressGettingHereNote = suppress;
   }
 
   /** Set the tour-level nav mode default (passed down to NavButton). */
@@ -75,8 +81,9 @@ export class StopCard {
     title.textContent = stop.title;
     headerText.appendChild(title);
 
-    // Show getting_here note on all stops except the starting stop
-    if (stop.getting_here?.note && (stopNumber - 1) !== this.startingStopIndex) {
+    // Show getting_here note on all stops except the starting stop,
+    // and hide it if the user just completed a journey card for this stop
+    if (stop.getting_here?.note && (stopNumber - 1) !== this.startingStopIndex && !this.suppressGettingHereNote) {
       const note = document.createElement('div');
       note.className = 'maptour-card__getting-here-note';
       const icon = MODE_ICON[stop.getting_here.mode] ?? '→';

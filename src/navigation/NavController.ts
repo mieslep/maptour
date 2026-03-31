@@ -156,6 +156,8 @@ export class NavController {
 
     this.mapView.setActiveStop(stop);
     this.stopCard.update(stop, index + 1, this.tour.stops.length, nextStop);
+    // Clear suppress flag after rendering so it only applies once (after journey completion)
+    this.stopCard.setSuppressGettingHereNote(false);
     this.mapView.setVisitedStops(this.breadcrumb.getVisited());
     this.updateNavButtons();
     this.updateStopList();
@@ -184,7 +186,8 @@ export class NavController {
       this.inJourney = true;
       this.journeyDestIndex = nextIndex;
       this.stopCard.renderJourney(nextStop, () => {
-        // "I've arrived" — advance to the destination stop
+        // "I've arrived" — advance to the destination stop, hiding redundant getting_here note
+        this.stopCard.setSuppressGettingHereNote(true);
         this.goTo(nextIndex);
       });
       this.callbacks.onJourneyChange?.(true);
