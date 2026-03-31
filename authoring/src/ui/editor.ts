@@ -307,7 +307,10 @@ export class TourEditor {
             this.map.dragging.enable();
             this.map.off('mousemove', onMove);
             this.map.off('mouseup', onUp);
-            if (justDragged) this.changed();
+            if (justDragged) {
+              this.changed();
+              this.updateRouteEditWidgetPosition();
+            }
             // Prevent the map click from firing after drag
             setTimeout(() => { justDragged = false; }, 50);
           };
@@ -315,21 +318,18 @@ export class TourEditor {
           this.map.on('mouseup', onUp);
         });
 
-        // Click to select (for deletion)
+        // Click to select (for deletion) - only if not just dragged
         m.on('click', (e) => {
           L.DomEvent.stopPropagation(e);
-          if (justDragged) return; // ignore click after drag
-          if ((m.options as any)._selected) {
-            m.setStyle({ fillColor: '#2563eb', radius: 8 });
-            (m.options as any)._selected = false;
-          } else {
-            this.routePointMarkers.forEach(rm => {
-              rm.setStyle({ fillColor: '#2563eb', radius: 8 });
-              (rm.options as any)._selected = false;
-            });
-            m.setStyle({ fillColor: '#dc2626', radius: 10 });
-            (m.options as any)._selected = true;
-          }
+          if (justDragged) return;
+          // Always select this point (don't toggle - mousedown already selected it,
+          // and we want click-without-drag to also select)
+          this.routePointMarkers.forEach(rm => {
+            rm.setStyle({ fillColor: '#2563eb', radius: 8 });
+            (rm.options as any)._selected = false;
+          });
+          m.setStyle({ fillColor: '#dc2626', radius: 10 });
+          (m.options as any)._selected = true;
         });
 
         this.routePointMarkers.push(m);
@@ -352,6 +352,7 @@ export class TourEditor {
           });
           this.refreshRoutePolylines();
           rebuildMarkers();
+          this.updateRouteEditWidgetPosition();
           this.setStatus(`Inserted point. ${route.length} points.`);
         });
       }
@@ -362,44 +363,80 @@ export class TourEditor {
     this.setStatus(`Editing route to stop ${stopIdx + 1}.`);
   }
 
+  private routeEditWidgetMarker: L.Marker | null = null;
+
   private showRouteEditWidget(stopIdx: number): void {
     this.hideRouteEditWidget();
-    const stop = this.tour.stops[stopIdx];
+    this.updateRouteEditWidgetPosition(stopIdx);
+  }
+
+  private updateRouteEditWidgetPosition(stopIdx?: number): void {
+    const segIdx = stopIdx ?? this.editingRouteSegment;
+    if (segIdx < 0 || segIdx >= this.tour.stops.length) return;
+    const stop = this.tour.stops[segIdx];
     const route = stop.getting_here?.route;
+    if (!route || route.length === 0) return;
 
-    const widget = document.createElement('div');
-    widget.className = 'route-edit-widget';
-    widget.innerHTML = `
-      <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${stopIdx + 1}</span>
-      <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
-    `;
-    const doneBtn = document.createElement('button');
-    doneBtn.className = 'btn btn-sm btn-primary';
-    doneBtn.textContent = 'Done';
-    doneBtn.onclick = () => {
-      this.stopEditingRoute();
-      this.refreshRoutePolylines();
-      this.setStatus('Route editing finished.');
-    };
-    widget.appendChild(doneBtn);
-
-    // Position near the north-most point of the route
-    if (route && route.length > 0) {
-      let northMost = route[0];
-      for (const pt of route) {
-        if (pt[0] > northMost[0]) northMost = pt;
-      }
-      const px = this.map.latLngToContainerPoint([northMost[0], northMost[1]]);
-      widget.style.left = px.x + 'px';
-      widget.style.top = Math.max(10, px.y - 50) + 'px';
-      widget.style.transform = 'translateX(-50%)';
+    // Find north-most point
+    let northLat = -Infinity, northLng = 0;
+    for (const pt of route) {
+      if (pt[0] > northLat) { northLat = pt[0]; northLng = pt[1]; }
     }
 
-    this.mapContainer.appendChild(widget);
+    // Offset north by ~80px worth of latitude at current zoom
+    const offsetPx = 80;
+    const northPoint = this.map.latLngToLayerPoint([northLat, northLng]);
+    northPoint.y -= offsetPx;
+    const offsetLatLng = this.map.layerPointToLatLng(northPoint);
+
+    const html = `
+      <div class="route-edit-widget">
+        <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${segIdx + 1}</span>
+        <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
+        <button class="btn btn-sm btn-primary route-edit-done">Done</button>
+      </div>
+    `;
+
+    if (this.routeEditWidgetMarker) {
+      this.routeEditWidgetMarker.setLatLng(offsetLatLng);
+      const el = this.routeEditWidgetMarker.getElement();
+      if (el) el.querySelector('.route-edit-widget')!.innerHTML =
+        `<span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${segIdx + 1}</span>
+         <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
+         <button class="btn btn-sm btn-primary route-edit-done">Done</button>`;
+    } else {
+      const icon = L.divIcon({
+        className: 'route-edit-widget-wrapper',
+        html,
+        iconSize: [300, 50],
+        iconAnchor: [150, 50],
+      });
+      this.routeEditWidgetMarker = L.marker(offsetLatLng, {
+        icon,
+        interactive: true,
+        zIndexOffset: 2000,
+      }).addTo(this.map);
+    }
+
+    // Wire done button (need to re-wire after each rebuild)
+    setTimeout(() => {
+      const el = this.routeEditWidgetMarker?.getElement();
+      const doneBtn = el?.querySelector('.route-edit-done');
+      if (doneBtn) {
+        (doneBtn as HTMLElement).onclick = () => {
+          this.stopEditingRoute();
+          this.refreshRoutePolylines();
+          this.setStatus('Route editing finished.');
+        };
+      }
+    }, 0);
   }
 
   private hideRouteEditWidget(): void {
-    this.mapContainer.querySelector('.route-edit-widget')?.remove();
+    if (this.routeEditWidgetMarker) {
+      this.routeEditWidgetMarker.remove();
+      this.routeEditWidgetMarker = null;
+    }
   }
 
   private stopEditingRoute(): void {
