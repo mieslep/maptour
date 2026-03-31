@@ -134,10 +134,7 @@ export class TourEditor {
       if (this.mapMode === 'addStop') {
         this.addStop(e.latlng.lat, e.latlng.lng);
         this.setMapMode('default');
-      }
-      // In default mode, clicking the map deselects route editing
-      if (this.editingRouteSegment >= 0) {
-        this.stopEditingRoute();
+        return;
       }
     });
 
@@ -257,86 +254,91 @@ export class TourEditor {
 
     this.editingRouteSegment = stopIdx;
     const route = stop.getting_here.route;
+    let justDragged = false;
 
-    // Draw draggable point markers for each route waypoint
-    route.forEach((pt, ptIdx) => {
-      const m = L.circleMarker([pt[0], pt[1]], {
-        radius: 5,
-        fillColor: '#2563eb',
-        color: '#fff',
-        weight: 1.5,
-        fillOpacity: 0.8,
-      }).addTo(this.map);
+    const rebuildMarkers = () => {
+      this.routePointMarkers.forEach(m => m.remove());
+      this.routePointMarkers = [];
+      buildMarkers();
+    };
 
-      // Drag support
-      let dragging = false;
-      m.on('mousedown', (e) => {
-        dragging = true;
-        this.map.dragging.disable();
-        L.DomEvent.stopPropagation(e);
-        const onMove = (ev: L.LeafletMouseEvent) => {
-          m.setLatLng(ev.latlng);
-          route[ptIdx] = [ev.latlng.lat, ev.latlng.lng];
-          this.refreshRoutePolylines();
-        };
-        const onUp = () => {
-          dragging = false;
-          this.map.dragging.enable();
-          this.map.off('mousemove', onMove);
-          this.map.off('mouseup', onUp);
-          this.changed();
-        };
-        this.map.on('mousemove', onMove);
-        this.map.on('mouseup', onUp);
-      });
+    const buildMarkers = () => {
+      route.forEach((pt, ptIdx) => {
+        const m = L.circleMarker([pt[0], pt[1]], {
+          radius: 5,
+          fillColor: '#2563eb',
+          color: '#fff',
+          weight: 1.5,
+          fillOpacity: 0.8,
+        }).addTo(this.map);
 
-      // Click to select (for deletion)
-      m.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        // Toggle selection
-        if ((m.options as any)._selected) {
-          m.setStyle({ fillColor: '#2563eb', radius: 5 });
-          (m.options as any)._selected = false;
-        } else {
-          // Deselect others
-          this.routePointMarkers.forEach(rm => {
-            rm.setStyle({ fillColor: '#2563eb', radius: 5 });
-            (rm.options as any)._selected = false;
-          });
-          m.setStyle({ fillColor: '#dc2626', radius: 7 });
-          (m.options as any)._selected = true;
-        }
-      });
-
-      this.routePointMarkers.push(m);
-    });
-
-    // Allow clicking polyline to insert a point
-    this.routePolylines.forEach(pl => {
-      pl.off('click');
-    });
-    // Find the polyline for this segment
-    if (stopIdx - 1 < this.routePolylines.length) {
-      const pl = this.routePolylines[stopIdx - 1];
-      pl.on('click', (e: L.LeafletMouseEvent) => {
-        L.DomEvent.stopPropagation(e);
-        // Find nearest segment to insert after
-        let bestIdx = 0, bestDist = Infinity;
-        for (let i = 0; i < route.length - 1; i++) {
-          const d = this.distToSegment(e.latlng, route[i], route[i + 1]);
-          if (d < bestDist) { bestDist = d; bestIdx = i; }
-        }
-        this.withUndo(() => {
-          route.splice(bestIdx + 1, 0, [e.latlng.lat, e.latlng.lng]);
+        // Drag support
+        m.on('mousedown', (e) => {
+          justDragged = false;
+          this.map.dragging.disable();
+          L.DomEvent.stopPropagation(e);
+          const onMove = (ev: L.LeafletMouseEvent) => {
+            justDragged = true;
+            m.setLatLng(ev.latlng);
+            route[ptIdx] = [ev.latlng.lat, ev.latlng.lng];
+            this.refreshRoutePolylines();
+          };
+          const onUp = () => {
+            this.map.dragging.enable();
+            this.map.off('mousemove', onMove);
+            this.map.off('mouseup', onUp);
+            if (justDragged) this.changed();
+            // Prevent the map click from firing after drag
+            setTimeout(() => { justDragged = false; }, 50);
+          };
+          this.map.on('mousemove', onMove);
+          this.map.on('mouseup', onUp);
         });
-        this.stopEditingRoute();
-        this.startEditingRoute(stopIdx);
-        this.refreshRoutePolylines();
-        this.setStatus(`Inserted route point. ${route.length} points.`);
-      });
-    }
 
-    this.setStatus(`Editing route to stop ${stopIdx + 1}. Drag points, click line to insert, Delete to remove selected.`);
+        // Click to select (for deletion)
+        m.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
+          if (justDragged) return; // ignore click after drag
+          if ((m.options as any)._selected) {
+            m.setStyle({ fillColor: '#2563eb', radius: 5 });
+            (m.options as any)._selected = false;
+          } else {
+            this.routePointMarkers.forEach(rm => {
+              rm.setStyle({ fillColor: '#2563eb', radius: 5 });
+              (rm.options as any)._selected = false;
+            });
+            m.setStyle({ fillColor: '#dc2626', radius: 7 });
+            (m.options as any)._selected = true;
+          }
+        });
+
+        this.routePointMarkers.push(m);
+      });
+
+      // Make the polyline clickable for inserting points
+      if (stopIdx - 1 < this.routePolylines.length) {
+        const pl = this.routePolylines[stopIdx - 1];
+        pl.off('click');
+        pl.setStyle({ weight: 6, opacity: 0.4 }); // wider click target
+        pl.on('click', (e: L.LeafletMouseEvent) => {
+          L.DomEvent.stopPropagation(e);
+          let bestIdx = 0, bestDist = Infinity;
+          for (let i = 0; i < route.length - 1; i++) {
+            const d = this.distToSegment(e.latlng, route[i], route[i + 1]);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          }
+          this.withUndo(() => {
+            route.splice(bestIdx + 1, 0, [e.latlng.lat, e.latlng.lng]);
+          });
+          this.refreshRoutePolylines();
+          rebuildMarkers();
+          this.setStatus(`Inserted point. ${route.length} points.`);
+        });
+      }
+    };
+
+    buildMarkers();
+    this.setStatus(`Editing route to stop ${stopIdx + 1}. Drag points, click line to insert, Delete to remove selected. Press Esc to finish.`);
   }
 
   private stopEditingRoute(): void {
@@ -1104,13 +1106,21 @@ export class TourEditor {
       else this.performRedo();
     }, true); // capture phase
 
-    // Delete key for route points
+    // Delete key for route points, Esc to exit route editing
     document.addEventListener('keydown', (e) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.editingRouteSegment >= 0) {
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
         e.preventDefault();
         this.deleteSelectedRoutePoint();
+      } else if (e.key === 'Escape' && this.editingRouteSegment >= 0) {
+        e.preventDefault();
+        this.stopEditingRoute();
+        this.refreshRoutePolylines();
+        this.setStatus('Exited route editing.');
+      } else if (e.key === 'Escape' && this.mapMode === 'addStop') {
+        this.setMapMode('default');
       }
     });
   }

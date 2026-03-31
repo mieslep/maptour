@@ -50,7 +50,24 @@ export async function generateRoute(
   }
 
   // GeoJSON returns [lng, lat], convert to [lat, lng]
-  return coords.map((c: number[]) => [c[1], c[0]] as [number, number]);
+  const route: [number, number][] = coords.map((c: number[]) => [c[1], c[0]] as [number, number]);
+
+  // Ensure route connects to the actual stop coordinates
+  // ORS may snap to the nearest road which can be offset from the stop
+  if (route.length > 0) {
+    const first = route[0];
+    const last = route[route.length - 1];
+    // Prepend 'from' if ORS start is more than ~5m from the stop
+    if (Math.abs(first[0] - from[0]) > 0.00005 || Math.abs(first[1] - from[1]) > 0.00005) {
+      route.unshift([...from] as [number, number]);
+    }
+    // Append 'to' if ORS end is more than ~5m from the stop
+    if (Math.abs(last[0] - to[0]) > 0.00005 || Math.abs(last[1] - to[1]) > 0.00005) {
+      route.push([...to] as [number, number]);
+    }
+  }
+
+  return route;
 }
 
 /** Decode Google-style encoded polyline (used by ORS). Returns [lat, lng][] */
