@@ -109,7 +109,7 @@ stops:
     expect(result.tour?.stops[0].getting_here?.mode).toBe('cycle');
   });
 
-  it('warns and normalises invalid nav_mode', async () => {
+  it('rejects invalid nav_mode', async () => {
     const { parseTourFromString } = await import('../../src/loader');
     const yaml = `
 tour:
@@ -123,8 +123,8 @@ stops:
     content: []
 `;
     const result = parseTourFromString(yaml);
-    // Should not error — invalid nav_mode is warned and normalised
-    expect(result.error).toBeUndefined();
-    expect(result.tour?.tour.nav_mode).toBe('walk');
+    // Zod schema rejects invalid enum values
+    expect(result.error).toBeDefined();
+    expect(result.tour).toBeUndefined();
   });
 });

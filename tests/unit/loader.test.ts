@@ -126,8 +126,8 @@ stops:
         body: something
 `;
     const result = parseTourFromString(yaml);
-    expect(result.error).toContain('unknown block type');
-    expect(result.error).toContain('unknown_type');
+    expect(result.error).toBeDefined();
+    expect(result.tour).toBeUndefined();
   });
 
   it('returns error for malformed coordinates — wrong length', () => {
@@ -172,7 +172,8 @@ stops:
     content: []
 `;
     const result = parseTourFromString(yaml);
-    expect(result.error).toContain('latitude');
+    expect(result.error).toBeDefined();
+    expect(result.tour).toBeUndefined();
   });
 
   it('returns error for invalid leg mode', () => {
