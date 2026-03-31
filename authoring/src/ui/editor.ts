@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import type { Tour, Stop, ContentBlock, LegMode } from '../types';
-import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey } from '../store';
+import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey, getAssetBaseUrl, setAssetBaseUrl } from '../store';
 import { downloadYaml } from '../yaml-io';
 import { generateRoute, generateAllRoutes } from '../ors';
 import { renderContentBlockEditor } from './content-blocks';
@@ -830,6 +830,24 @@ export class TourEditor {
       row.appendChild(input);
       content.appendChild(row);
     });
+
+    // Asset base URL (for resolving relative image paths in previews)
+    const assetRow = document.createElement('div');
+    assetRow.className = 'input-row';
+    const assetLabel = document.createElement('label');
+    assetLabel.className = 'input-label';
+    assetLabel.innerHTML = 'Asset Base URL <span class="info-icon" title="Base URL for resolving relative image/audio paths in the preview. e.g. http://localhost:4173/ if serving from the demo folder. Not exported to YAML."><i class="fa-solid fa-circle-info"></i></span>';
+    assetRow.appendChild(assetLabel);
+    const assetInput = document.createElement('input');
+    assetInput.type = 'text';
+    assetInput.className = 'input';
+    assetInput.placeholder = 'e.g. http://localhost:4173/';
+    assetInput.value = getAssetBaseUrl();
+    assetInput.oninput = () => {
+      setAssetBaseUrl(assetInput.value);
+    };
+    assetRow.appendChild(assetInput);
+    content.appendChild(assetRow);
 
     return this.renderCollapsible('Tour Metadata', content, false);
   }

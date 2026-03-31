@@ -679,6 +679,48 @@ textarea.input {
   border-radius: 4px;
 }
 
+/* Insert divider between blocks */
+.cb-insert-divider {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.cb-insert-divider::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 50%;
+  height: 1px;
+  background: transparent;
+  transition: background 0.15s;
+}
+.cb-insert-divider:hover::before {
+  background: #d1d5db;
+}
+.cb-insert-btn {
+  width: 22px;
+  height: 22px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  z-index: 1;
+}
+.cb-insert-divider:hover .cb-insert-btn {
+  border-color: #2563eb;
+  background: white;
+  color: #2563eb;
+}
+
 /* Add Block button */
 .cb-add-btn {
   display: flex;

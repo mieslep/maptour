@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import type { ContentBlock, GalleryImage } from '../types';
+import { resolveAssetUrl } from '../store';
 
 type OnChange = () => void;
 
@@ -26,28 +27,46 @@ export function renderContentBlockEditor(
     }
 
     blocks.forEach((block, idx) => {
+      // Insert divider between blocks (and before the first block)
+      container.appendChild(makeInsertDivider(idx, blocks, onChange, rebuild));
       const blockEl = renderPreviewBlock(block, idx, blocks, onChange, rebuild);
       container.appendChild(blockEl);
     });
 
-    // "+ Add Block" only when empty
-    if (blocks.length === 0) {
-      const addBtn = document.createElement('button');
-      addBtn.className = 'cb-add-btn';
-      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Block';
-      addBtn.onclick = () => showTypePicker(addBtn, (type) => {
-        const newBlock = createEmptyBlock(type);
-        blocks.push(newBlock);
-        onChange();
-        rebuild();
-        openEditModal(newBlock, blocks.length - 1, blocks, onChange, rebuild);
-      });
-      container.appendChild(addBtn);
-    }
+    // Insert divider after the last block (or as the only one when empty)
+    container.appendChild(makeInsertDivider(blocks.length, blocks, onChange, rebuild));
   }
 
   rebuild();
   return container;
+}
+
+/* ---------- Insert Divider ---------- */
+
+function makeInsertDivider(
+  insertIdx: number,
+  blocks: ContentBlock[],
+  onChange: OnChange,
+  rebuild: () => void,
+): HTMLElement {
+  const divider = document.createElement('div');
+  divider.className = 'cb-insert-divider';
+  const btn = document.createElement('button');
+  btn.className = 'cb-insert-btn';
+  btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+  btn.title = 'Insert block here';
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    showTypePicker(btn, (type) => {
+      const newBlock = createEmptyBlock(type);
+      blocks.splice(insertIdx, 0, newBlock);
+      onChange();
+      rebuild();
+      openEditModal(newBlock, insertIdx, blocks, onChange, rebuild);
+    });
+  };
+  divider.appendChild(btn);
+  return divider;
 }
 
 /* ---------- Preview Block ---------- */
@@ -116,7 +135,7 @@ function isBlockEmpty(block: ContentBlock): boolean {
 function renderImagePreview(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; alt?: string }): void {
   if (block.url) {
     const img = document.createElement('img');
-    img.src = block.url;
+    img.src = resolveAssetUrl(block.url);
     img.alt = block.alt || '';
     img.style.maxWidth = '100%';
     img.style.borderRadius = '4px';
@@ -139,7 +158,7 @@ function renderGalleryPreview(container: HTMLElement, block: { type: 'gallery'; 
   for (const img of block.images) {
     if (!img.url) continue;
     const thumb = document.createElement('img');
-    thumb.src = img.url;
+    thumb.src = resolveAssetUrl(img.url);
     thumb.alt = img.alt || '';
     thumb.className = 'cb-gallery-thumb';
     thumb.onerror = () => { thumb.replaceWith(makePlaceholderImg('?')); };
@@ -194,7 +213,7 @@ function renderAudioPreview(container: HTMLElement, block: { type: 'audio'; url:
     }
     const audio = document.createElement('audio');
     audio.controls = true;
-    audio.src = block.url;
+    audio.src = resolveAssetUrl(block.url);
     audio.style.width = '100%';
     container.appendChild(audio);
   } else {
@@ -246,26 +265,6 @@ function showKebabMenu(
       label: 'Move Down', icon: 'fa-arrow-down', disabled: idx === blocks.length - 1, action: () => {
         [blocks[idx], blocks[idx + 1]] = [blocks[idx + 1], blocks[idx]];
         onChange(); rebuild();
-      },
-    },
-    {
-      label: 'Insert Above', icon: 'fa-plus', action: () => {
-        showTypePicker(anchor, (type) => {
-          const newBlock = createEmptyBlock(type);
-          blocks.splice(idx, 0, newBlock);
-          onChange(); rebuild();
-          openEditModal(newBlock, idx, blocks, onChange, rebuild);
-        });
-      },
-    },
-    {
-      label: 'Insert Below', icon: 'fa-plus', action: () => {
-        showTypePicker(anchor, (type) => {
-          const newBlock = createEmptyBlock(type);
-          blocks.splice(idx + 1, 0, newBlock);
-          onChange(); rebuild();
-          openEditModal(newBlock, idx + 1, blocks, onChange, rebuild);
-        });
       },
     },
     {

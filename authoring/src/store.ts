@@ -100,6 +100,27 @@ export function setOrsApiKey(key: string): void {
   localStorage.setItem(ORS_KEY, key);
 }
 
+// ---- Asset base URL ----
+
+const ASSET_BASE_KEY = 'maptour-asset-base-url';
+
+export function getAssetBaseUrl(): string {
+  return localStorage.getItem(ASSET_BASE_KEY) ?? '';
+}
+
+export function setAssetBaseUrl(url: string): void {
+  localStorage.setItem(ASSET_BASE_KEY, url);
+}
+
+export function resolveAssetUrl(url: string): string {
+  if (!url) return url;
+  // Already absolute
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  const base = getAssetBaseUrl();
+  if (!base) return url;
+  return base.replace(/\/$/, '') + '/' + url.replace(/^\//, '');
+}
+
 // ---- Tour factory ----
 
 export function createEmptyTour(id?: string): Tour {
