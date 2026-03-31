@@ -8,18 +8,21 @@ Replace all emoji icons in the player with Font Awesome icons for consistent ren
 
 Emoji rendering varies significantly across operating systems, browsers, and devices. The walking person on Android looks different from iOS, some browsers render colour emoji while others show monochrome outlines, and older devices may not support newer emoji at all. Font Awesome provides consistent, scalable vector icons that look the same everywhere and can be styled with CSS.
 
-## Current Emoji Usage
+## Current Icon Usage
 
-| Location | Current Emoji | Proposed FA Icon | Context |
-|----------|--------------|------------------|---------|
-| Nav mode: walk | 🚶 | `fa-person-walking` | Getting here mode indicator |
-| Nav mode: drive | 🚗 | `fa-car` | Getting here mode indicator |
-| Nav mode: transit | 🚌 | `fa-bus` | Getting here mode indicator |
-| Nav mode: cycle | 🚲 | `fa-bicycle` | Getting here mode indicator |
-| GPS position | 🧍 | `fa-location-dot` or `fa-person` | User position on map |
-| Prev arrow | ‹ / ◀ | `fa-chevron-left` | Header navigation |
-| Next arrow | › / ▶ | `fa-chevron-right` | Header navigation |
-| External nav | 📍 | `fa-diamond-turn-right` | Open in maps app button |
+| Location | Current | Proposed FA Icon | Context |
+|----------|---------|------------------|---------|
+| Nav mode: walk | 🚶 emoji | `fa-person-walking` | Getting here mode indicator |
+| Nav mode: drive | 🚗 emoji | `fa-car` | Getting here mode indicator |
+| Nav mode: transit | 🚌 emoji | `fa-bus` | Getting here mode indicator |
+| Nav mode: cycle | 🚲 emoji | `fa-bicycle` | Getting here mode indicator |
+| GPS position | 🧍 emoji | `fa-location-dot` or `fa-person` | User position on map |
+| Prev arrow | `‹` character | `fa-chevron-left` | Header navigation |
+| Next arrow | `›` character | `fa-chevron-right` | Header navigation |
+| External nav | 📍 emoji | `fa-diamond-turn-right` | Open in maps app button |
+| Nav pin button | Inline SVG (map pin) | `fa-location-dot` | Satnav pin on stop/journey card |
+| Nav arrow button | Inline SVG (arrow) | `fa-diamond-turn-right` | Satnav directional arrow |
+| Stop list FAB | Inline SVG (list) | `fa-list` or `fa-bars` | Mobile stop list overlay button |
 
 ## Functional Requirements
 
@@ -43,12 +46,18 @@ Emoji rendering varies significantly across operating systems, browsers, and dev
 - **When** the arrows are displayed
 - **Then** they use `fa-chevron-left` and `fa-chevron-right` instead of arrow characters
 
-### FR-5: Replace external nav icon
+### FR-5: Replace inline SVG icons
+- **Given** the nav button (NavButton.ts) uses inline SVG for the pin and arrow icons
+- **When** the button renders
+- **Then** it uses Font Awesome icons instead of the hand-coded SVG paths
+- The stop list FAB (StopListOverlay.ts) also uses inline SVG which should be replaced
+
+### FR-6: Replace external nav icon
 - **Given** the "open in maps" button renders
 - **When** the button is displayed
 - **Then** it uses a Font Awesome icon instead of 📍
 
-### FR-6: Icon styling
+### FR-7: Icon styling
 - **Given** Font Awesome icons are rendered
 - **When** the player is displayed
 - **Then** icons inherit the surrounding text colour and size, matching the existing visual weight of the emoji they replace
@@ -78,7 +87,7 @@ Emoji rendering varies significantly across operating systems, browsers, and dev
 
 ## Acceptance Criteria
 
-1. All emoji listed in the table above are replaced with Font Awesome icons
+1. All emoji and inline SVGs listed in the table above are replaced with Font Awesome icons
 2. Icons render identically on Chrome, Safari, Firefox (desktop and mobile)
 3. Font Awesome Free is added as a project dependency
 4. Navigation arrows are `fa-chevron-left` / `fa-chevron-right`
