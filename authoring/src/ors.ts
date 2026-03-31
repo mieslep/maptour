@@ -31,10 +31,14 @@ export async function generateRoute(
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    if (response.status === 401 || response.status === 403) {
-      setOrsApiKey(''); // Clear invalid key
+    let text = '';
+    try { text = await response.text(); } catch { /* ignore */ }
+    if (response.status === 401) {
+      setOrsApiKey(''); // Only clear on definite auth rejection
       throw new Error('Invalid ORS API key. It has been cleared — try again.');
+    }
+    if (response.status === 403) {
+      throw new Error('ORS API rejected the request (403). Check your API key and quota at openrouteservice.org/dev');
     }
     throw new Error(`ORS API error (${response.status}): ${text}`);
   }
