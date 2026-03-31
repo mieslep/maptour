@@ -287,6 +287,7 @@ export class TourEditor {
         // Drag support
         m.on('mousedown', (e) => {
           justDragged = false;
+          pushUndo(this.tour); // snapshot before drag starts
           this.map.dragging.disable();
           L.DomEvent.stopPropagation(e);
           const onMove = (ev: L.LeafletMouseEvent) => {
