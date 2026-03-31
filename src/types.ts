@@ -11,7 +11,7 @@ export interface BatterySaverConfig {
 export interface GpsConfig {
   max_distance?: number;   // max metres from nearest stop for GPS pre-selection (default: 5000)
   max_accuracy?: number;   // max GPS accuracy in metres to trust the reading (default: 500)
-  arrival_radius?: number; // metres — proximity arrival detection radius (default: 50)
+  arrival_radius?: number; // metres — proximity arrival detection radius (default: 7.5)
   battery_saver?: boolean | BatterySaverConfig;
 }
 

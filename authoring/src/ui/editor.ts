@@ -249,7 +249,7 @@ export class TourEditor {
 
   private showRadiusCircle(stop: Stop): void {
     this.clearRadiusCircle();
-    const radius = stop.arrival_radius ?? this.tour.tour.gps?.arrival_radius ?? 50;
+    const radius = stop.arrival_radius ?? this.tour.tour.gps?.arrival_radius ?? 7.5;
     this.radiusCircle = L.circle([stop.coords[0], stop.coords[1]], {
       radius,
       color: '#2563eb',
@@ -257,8 +257,9 @@ export class TourEditor {
       fillOpacity: 0.08,
       weight: 1,
       dashArray: '4 4',
-      interactive: false,
+      interactive: true,
     }).addTo(this.map);
+    this.radiusCircle.bindTooltip(`Arrival radius: ${radius}m`, { sticky: true });
   }
 
   private updateRadiusCircle(): void {
@@ -805,7 +806,7 @@ export class TourEditor {
     const gpsFields: Array<{ label: string; key: keyof NonNullable<typeof meta.gps>; placeholder: string }> = [
       { label: 'GPS Max Distance (m)', key: 'max_distance', placeholder: '5000' },
       { label: 'GPS Max Accuracy (m)', key: 'max_accuracy', placeholder: '500' },
-      { label: 'GPS Arrival Radius (m)', key: 'arrival_radius', placeholder: '50' },
+      { label: 'GPS Arrival Radius (m)', key: 'arrival_radius', placeholder: '7.5' },
     ];
 
     if (!meta.gps) meta.gps = {};

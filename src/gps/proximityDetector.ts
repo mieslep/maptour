@@ -1,7 +1,7 @@
 import type { GpsPosition } from './GpsTracker';
 import type { Stop, GpsConfig } from '../types';
 
-const DEFAULT_ARRIVAL_RADIUS = 50; // metres
+const DEFAULT_ARRIVAL_RADIUS = 7.5; // metres
 
 const R = 6371e3; // Earth radius in metres
 

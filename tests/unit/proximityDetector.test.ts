@@ -57,8 +57,8 @@ describe('ProximityDetector', () => {
     const cb = vi.fn();
     detector.onArrival(cb);
 
-    // Position at stop B but with terrible accuracy (100m, >= 50 * 2)
-    detector.checkPosition(makePos(STOP_B[0], STOP_B[1], 100));
+    // Position at stop B but with terrible accuracy (20m, >= 7.5 * 2)
+    detector.checkPosition(makePos(STOP_B[0], STOP_B[1], 20));
     expect(cb).not.toHaveBeenCalled();
   });
 
@@ -154,7 +154,7 @@ describe('ProximityDetector', () => {
     const detector = new ProximityDetector(stops, 0);
 
     const radius = detector.getEffectiveRadius(stops[1]);
-    expect(radius).toBe(50);
+    expect(radius).toBe(7.5);
   });
 
   it('setCurrentStop resets re-trigger protection', () => {
