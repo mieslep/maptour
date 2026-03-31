@@ -374,12 +374,11 @@ export class StopCard {
   }
 
   showNearestIndicator(stopIndex: number, stopName: string, onSelect?: (index: number) => void): void {
-    // Insert after the picker row
     const pickerRow = this.container.querySelector('.maptour-card__picker-row');
     if (!pickerRow) return;
 
     // Remove any existing indicator
-    const existing = this.container.querySelector('.maptour-card__nearest');
+    const existing = pickerRow.querySelector('.maptour-card__nearest');
     if (existing) existing.remove();
 
     const indicator = document.createElement('div');
@@ -403,7 +402,7 @@ export class StopCard {
     }
     indicator.appendChild(link);
 
-    pickerRow.after(indicator);
+    pickerRow.appendChild(indicator);
   }
 
   // === Goodbye card ===
