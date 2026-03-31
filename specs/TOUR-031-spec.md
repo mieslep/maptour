@@ -48,43 +48,48 @@ stops:
 
 ## Functional Requirements
 
-### FR-1: Arrival detection triggers card reveal
-- **Given** GPS tracking is active and the user is viewing stop N (or en-route to N+1)
+### FR-1: Arrival detection requires GPS permission
+- **Given** the user has NOT granted GPS permission (or the device has no GPS)
+- **When** the tour is active
+- **Then** arrival detection is completely inactive; all navigation is manual (existing behaviour preserved)
+
+### FR-2: Arrival detection triggers card reveal
+- **Given** GPS tracking is active (user has granted permission) and the user is viewing stop N (or en-route to N+1)
 - **When** the user's GPS position is within `arrival_radius` of stop N+1
 - **Then** the app automatically navigates to stop N+1's card
 
-### FR-2: Accuracy guard
+### FR-3: Accuracy guard
 - **Given** the GPS reports a position within `arrival_radius` of stop N+1
 - **When** `position.accuracy >= arrival_radius * 2`
 - **Then** the arrival is NOT triggered (position too uncertain)
 
-### FR-3: Sequential stop only
+### FR-4: Sequential stop only
 - **Given** the user is on stop N
 - **When** the user enters the radius of stop N+3 (not the next in sequence)
 - **Then** no arrival is triggered — only the next expected stop (N+1) is monitored
 
-### FR-4: Re-trigger protection
+### FR-5: Re-trigger protection
 - **Given** the user arrived at stop N+1 (detection fired)
 - **When** the user remains within the radius or re-enters without first exiting
 - **Then** no second arrival event fires
 - The flag resets only when the user's position moves outside `arrival_radius`
 
-### FR-5: Tour-level default
+### FR-6: Tour-level default
 - **Given** `tour.gps.arrival_radius` is set to 75
 - **When** a stop has no `arrival_radius` override
 - **Then** the effective radius for that stop is 75m
 
-### FR-6: Per-stop override
+### FR-7: Per-stop override
 - **Given** a stop has `arrival_radius: 30`
 - **When** the user enters 30m of that stop
 - **Then** arrival triggers at 30m regardless of the tour-level default
 
-### FR-7: Default value
+### FR-8: Default value
 - **Given** neither tour-level nor stop-level `arrival_radius` is set
 - **When** arrival detection runs
 - **Then** the effective radius is 50m
 
-### FR-8: Journey card interaction
+### FR-9: Journey card interaction
 - **Given** a journey card is displayed between stop N and N+1
 - **When** the user enters the arrival radius of stop N+1
 - **Then** the journey card is replaced by stop N+1's card (same as tapping "I've arrived")
