@@ -149,13 +149,6 @@ export class TourEditor {
       }
     });
 
-    // Reposition route edit widget when map moves
-    this.map.on('moveend zoomend', () => {
-      if (this.editingRouteSegment >= 0 && this.routeEditWidgetMarker) {
-        this.updateRouteEditWidgetPosition();
-      }
-    });
-
     // Fit to stops if we have any
     if (this.tour.stops.length > 0) {
       const bounds = L.latLngBounds(this.tour.stops.map(s => [s.coords[0], s.coords[1]] as L.LatLngTuple));
@@ -388,73 +381,33 @@ export class TourEditor {
     this.setStatus(`Editing route to stop ${stopIdx + 1}.`);
   }
 
-  private routeEditWidgetMarker: L.Marker | null = null;
-
   private showRouteEditWidget(stopIdx: number): void {
     this.hideRouteEditWidget();
-    this.updateRouteEditWidgetPosition(stopIdx);
+
+    const widget = document.createElement('div');
+    widget.className = 'route-edit-widget';
+    widget.innerHTML = `
+      <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${stopIdx + 1}</span>
+      <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
+    `;
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'btn btn-sm btn-primary';
+    doneBtn.textContent = 'Done';
+    doneBtn.onclick = () => {
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+      this.setStatus('Route editing finished.');
+    };
+    widget.appendChild(doneBtn);
+    this.mapContainer.appendChild(widget);
   }
 
-  private updateRouteEditWidgetPosition(stopIdx?: number): void {
-    const segIdx = stopIdx ?? this.editingRouteSegment;
-    if (segIdx < 0 || segIdx >= this.tour.stops.length) return;
-
-    // Position at the top-center of the visible map area
-    const mapBounds = this.map.getBounds();
-    const topCenter = L.latLng(mapBounds.getNorth(), mapBounds.getCenter().lng);
-    // Nudge south by 20px so the widget is inside the map
-    const topPx = this.map.latLngToLayerPoint(topCenter);
-    topPx.y += 20;
-    const offsetLatLng = this.map.layerPointToLatLng(topPx);
-
-    const html = `
-      <div class="route-edit-widget">
-        <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${segIdx + 1}</span>
-        <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
-        <button class="btn btn-sm btn-primary route-edit-done">Done</button>
-      </div>
-    `;
-
-    if (this.routeEditWidgetMarker) {
-      this.routeEditWidgetMarker.setLatLng(offsetLatLng);
-      const el = this.routeEditWidgetMarker.getElement();
-      if (el) el.querySelector('.route-edit-widget')!.innerHTML =
-        `<span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${segIdx + 1}</span>
-         <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
-         <button class="btn btn-sm btn-primary route-edit-done">Done</button>`;
-    } else {
-      const icon = L.divIcon({
-        className: 'route-edit-widget-wrapper',
-        html,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      });
-      this.routeEditWidgetMarker = L.marker(offsetLatLng, {
-        icon,
-        interactive: true,
-        zIndexOffset: 2000,
-      }).addTo(this.map);
-    }
-
-    // Wire done button (need to re-wire after each rebuild)
-    setTimeout(() => {
-      const el = this.routeEditWidgetMarker?.getElement();
-      const doneBtn = el?.querySelector('.route-edit-done');
-      if (doneBtn) {
-        (doneBtn as HTMLElement).onclick = () => {
-          this.stopEditingRoute();
-          this.refreshRoutePolylines();
-          this.setStatus('Route editing finished.');
-        };
-      }
-    }, 0);
+  private updateRouteEditWidgetPosition(): void {
+    // No-op: widget is CSS-fixed at top of map container
   }
 
   private hideRouteEditWidget(): void {
-    if (this.routeEditWidgetMarker) {
-      this.routeEditWidgetMarker.remove();
-      this.routeEditWidgetMarker = null;
-    }
+    this.mapContainer.querySelector('.route-edit-widget')?.remove();
   }
 
   private stopEditingRoute(): void {
