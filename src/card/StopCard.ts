@@ -262,10 +262,10 @@ export class StopCard {
       let reversed = options.reversed ?? false;
       const toggleBtn = document.createElement('button');
       toggleBtn.className = 'maptour-card__direction-toggle';
-      toggleBtn.textContent = reversed ? t('direction_reverse') : t('direction_forward');
+      toggleBtn.textContent = reversed ? t('direction_forward') : t('direction_reverse');
       toggleBtn.addEventListener('click', () => {
         reversed = !reversed;
-        toggleBtn.textContent = reversed ? t('direction_reverse') : t('direction_forward');
+        toggleBtn.textContent = reversed ? t('direction_forward') : t('direction_reverse');
         options.onReverseToggle!(reversed);
       });
       this.container.appendChild(toggleBtn);

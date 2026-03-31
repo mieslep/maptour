@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 /**
  * Renders a styled error message into the container element.
  */
@@ -16,7 +18,7 @@ export function showError(container: HTMLElement, message: string): void {
 
   const heading = document.createElement('h2');
   heading.className = 'maptour-error__heading';
-  heading.textContent = 'Tour could not load';
+  heading.textContent = t('tour_load_error');
 
   const body = document.createElement('p');
   body.className = 'maptour-error__message';

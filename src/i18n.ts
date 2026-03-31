@@ -48,9 +48,19 @@ const DEFAULTS: Record<string, string> = {
   picker_cancel: 'Cancel',
 
   // Direction toggle
-  direction_forward: 'Walking forward',
-  direction_reverse: 'Walking in reverse',
-  reverse_toggle:    'Reverse direction',
+  direction_forward: 'Start at beginning',
+  direction_reverse: 'Start at end',
+
+  // Transit bar
+  im_here:           "I'm here",
+
+  // Stop list overlay
+  all_stops_title:   'All stops',
+
+  // Error messages
+  tour_load_error:   'Tour could not load',
+  image_error:       'Image could not be loaded',
+  audio_error:       'Audio could not be loaded.',
 
   // Misc
   minimize:      'Minimize',

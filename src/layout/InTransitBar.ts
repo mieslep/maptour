@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 export class InTransitBar {
   private readonly el: HTMLElement;
   private arrivedCallbacks: Array<() => void> = [];
@@ -20,7 +22,7 @@ export class InTransitBar {
 
     const btn = document.createElement('button');
     btn.className = 'maptour-transit-bar__arrived';
-    btn.textContent = "I'm here";
+    btn.textContent = t('im_here');
     btn.setAttribute('aria-label', `I have arrived at stop ${stopNumber}: ${title}`);
     btn.addEventListener('click', () => {
       this.arrivedCallbacks.forEach((cb) => cb());

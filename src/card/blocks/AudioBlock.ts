@@ -1,4 +1,5 @@
 import type { AudioBlock as AudioBlockType } from '../../types';
+import { t } from '../../i18n';
 
 export function renderAudioBlock(block: AudioBlockType): HTMLElement {
   const el = document.createElement('div');
@@ -24,7 +25,7 @@ export function renderAudioBlock(block: AudioBlockType): HTMLElement {
     audio.style.display = 'none';
     const fallback = document.createElement('p');
     fallback.className = 'maptour-audio-error';
-    fallback.textContent = 'Audio could not be loaded.';
+    fallback.textContent = t('audio_error');
     el.appendChild(fallback);
   };
 

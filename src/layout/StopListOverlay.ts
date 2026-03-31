@@ -1,4 +1,5 @@
 import type { Stop } from '../types';
+import { t } from '../i18n';
 
 export class StopListOverlay {
   private readonly backdrop: HTMLElement;
@@ -30,7 +31,7 @@ export class StopListOverlay {
     this.panel.className = 'maptour-stop-list-overlay';
     this.panel.setAttribute('role', 'dialog');
     this.panel.setAttribute('aria-modal', 'true');
-    this.panel.setAttribute('aria-label', 'All stops');
+    this.panel.setAttribute('aria-label', t('all_stops_title'));
     this.panel.hidden = true;
     container.appendChild(this.panel);
   }
@@ -71,7 +72,7 @@ export class StopListOverlay {
 
     const title = document.createElement('h2');
     title.className = 'maptour-stop-list-overlay__title';
-    title.textContent = 'All stops';
+    title.textContent = t('all_stops_title');
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'maptour-stop-list-overlay__close';

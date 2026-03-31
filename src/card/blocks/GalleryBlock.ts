@@ -1,4 +1,5 @@
 import type { GalleryBlock as GalleryBlockType } from '../../types';
+import { t } from '../../i18n';
 
 export function renderGalleryBlock(block: GalleryBlockType): HTMLElement {
   const el = document.createElement('div');
@@ -23,7 +24,7 @@ export function renderGalleryBlock(block: GalleryBlockType): HTMLElement {
       img.style.display = 'none';
       const placeholder = document.createElement('div');
       placeholder.className = 'maptour-image-placeholder';
-      placeholder.textContent = 'Image could not be loaded';
+      placeholder.textContent = t('image_error');
       slide.insertBefore(placeholder, img);
     };
 

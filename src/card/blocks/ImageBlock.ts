@@ -1,4 +1,5 @@
 import type { ImageBlock as ImageBlockType } from '../../types';
+import { t } from '../../i18n';
 
 export function renderImageBlock(block: ImageBlockType): HTMLElement {
   const el = document.createElement('figure');
@@ -16,7 +17,7 @@ export function renderImageBlock(block: ImageBlockType): HTMLElement {
     placeholder.className = 'maptour-image-placeholder';
     placeholder.setAttribute('role', 'img');
     placeholder.setAttribute('aria-label', `Image unavailable: ${img.alt || block.url}`);
-    placeholder.textContent = 'Image could not be loaded';
+    placeholder.textContent = t('image_error');
     el.insertBefore(placeholder, img);
   };
 
