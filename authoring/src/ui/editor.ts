@@ -28,6 +28,7 @@ export class TourEditor {
   private map!: L.Map;
   private stopMarkers: L.Marker[] = [];
   private routePolylines: L.Polyline[] = [];
+  private radiusCircle: L.Circle | null = null;
   private selectedStopIdx: number = -1;
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
@@ -192,7 +193,38 @@ export class TourEditor {
     this.renderPanel();
     this.highlightMarker(idx);
     if (idx >= 0 && idx < this.tour.stops.length) {
-      this.map.panTo([this.tour.stops[idx].coords[0], this.tour.stops[idx].coords[1]]);
+      const stop = this.tour.stops[idx];
+      this.map.flyTo([stop.coords[0], stop.coords[1]], 17, { animate: true, duration: 0.6 });
+      this.showRadiusCircle(stop);
+    } else {
+      this.clearRadiusCircle();
+    }
+  }
+
+  private showRadiusCircle(stop: Stop): void {
+    this.clearRadiusCircle();
+    const radius = stop.arrival_radius ?? this.tour.tour.gps?.arrival_radius ?? 50;
+    this.radiusCircle = L.circle([stop.coords[0], stop.coords[1]], {
+      radius,
+      color: '#2563eb',
+      fillColor: '#2563eb',
+      fillOpacity: 0.08,
+      weight: 1,
+      dashArray: '4 4',
+      interactive: false,
+    }).addTo(this.map);
+  }
+
+  private updateRadiusCircle(): void {
+    if (this.selectedStopIdx >= 0 && this.selectedStopIdx < this.tour.stops.length) {
+      this.showRadiusCircle(this.tour.stops[this.selectedStopIdx]);
+    }
+  }
+
+  private clearRadiusCircle(): void {
+    if (this.radiusCircle) {
+      this.radiusCircle.remove();
+      this.radiusCircle = null;
     }
   }
 
@@ -487,6 +519,7 @@ export class TourEditor {
         const v = input.value ? Number(input.value) : undefined;
         (meta.gps as Record<string, unknown>)[f.key] = v;
         this.changed();
+        if (f.key === 'arrival_radius') this.updateRadiusCircle();
       };
       row.appendChild(label);
       row.appendChild(input);
@@ -662,6 +695,7 @@ export class TourEditor {
     radiusInput.oninput = () => {
       stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
       this.changed();
+      this.updateRadiusCircle();
     };
     radiusRow.appendChild(radiusInput);
     content.appendChild(radiusRow);
