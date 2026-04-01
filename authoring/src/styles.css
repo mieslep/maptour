@@ -690,6 +690,7 @@ textarea.input {
 }
 .device-viewport .cb-preview-block:hover {
   box-shadow: none;
+  background: rgba(37, 99, 235, 0.03);
 }
 .device-viewport .cb-preview-content img {
   max-width: 100%;
@@ -706,9 +707,11 @@ textarea.input {
   background: white;
   padding: 10px;
   min-height: 40px;
-  transition: box-shadow 0.15s;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 .cb-preview-block:hover {
+  background: rgba(37, 99, 235, 0.03);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
@@ -723,40 +726,33 @@ textarea.input {
   margin-top: 4px;
 }
 
-/* Change overlay */
-.cb-change-overlay {
+/* Kebab button (appears on hover) */
+.cb-kebab-btn {
   position: absolute;
-  inset: 0;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(248, 250, 252, 0.75);
-  border-radius: 6px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 2;
-  pointer-events: none;
-}
-.cb-preview-block:hover .cb-change-overlay {
-  opacity: 1;
-  pointer-events: auto;
-}
-.cb-change-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
   cursor: pointer;
-  font-size: 13px;
-  color: #374151;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: background 0.15s;
+  font-size: 16px;
+  line-height: 1;
+  color: #94a3b8;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  z-index: 2;
 }
-.cb-change-btn:hover {
-  background: #f1f5f9;
+.cb-preview-block:hover .cb-kebab-btn {
+  opacity: 1;
+}
+.cb-kebab-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #475569;
 }
 
 /* Kebab dropdown menu */

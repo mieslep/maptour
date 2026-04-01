@@ -64,18 +64,23 @@ function renderPreviewBlock(
   const wrapper = document.createElement('div');
   wrapper.className = 'cb-preview-block';
 
-  // "Change" overlay button (centered, visible on hover, greys out content)
-  const overlay = document.createElement('div');
-  overlay.className = 'cb-change-overlay';
-  const changeBtn = document.createElement('button');
-  changeBtn.className = 'cb-change-btn';
-  changeBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Change';
-  changeBtn.onclick = (e) => {
-    e.stopPropagation();
-    showKebabMenu(changeBtn, idx, blocks, onChange, rebuild);
+  // Click the whole block to open edit modal
+  wrapper.onclick = (e) => {
+    // Don't trigger if clicking the kebab menu or its children
+    if ((e.target as HTMLElement).closest('.cb-kebab-btn, .cb-menu')) return;
+    openEditModal(block, idx, blocks, onChange, rebuild);
   };
-  overlay.appendChild(changeBtn);
-  wrapper.appendChild(overlay);
+
+  // Subtle "⋮" kebab button, appears on hover for move/delete/insert
+  const kebab = document.createElement('button');
+  kebab.className = 'cb-kebab-btn';
+  kebab.innerHTML = '⋮';
+  kebab.title = 'More actions';
+  kebab.onclick = (e) => {
+    e.stopPropagation();
+    showKebabMenu(kebab, idx, blocks, onChange, rebuild);
+  };
+  wrapper.appendChild(kebab);
 
   // Render content preview
   const content = document.createElement('div');
@@ -84,7 +89,7 @@ function renderPreviewBlock(
   if (isBlockEmpty(block)) {
     const placeholder = document.createElement('div');
     placeholder.className = 'cb-placeholder';
-    placeholder.textContent = `${block.type.charAt(0).toUpperCase() + block.type.slice(1)} block \u2014 Click \u22ee to edit`;
+    placeholder.textContent = `${block.type.charAt(0).toUpperCase() + block.type.slice(1)} block \u2014 Click to edit`;
     content.appendChild(placeholder);
   } else if (block.type === 'text') {
     const html = marked.parse(block.body || '') as string;
@@ -234,11 +239,6 @@ function showKebabMenu(
 
   const items: { label: string; icon: string; cls?: string; disabled?: boolean; action: () => void }[] = [
     {
-      label: 'Edit', icon: 'fa-pen', action: () => {
-        openEditModal(blocks[idx], idx, blocks, onChange, rebuild);
-      },
-    },
-    {
       label: 'Insert Above', icon: 'fa-circle-plus', action: () => {
         showTypePicker(anchor, (type) => {
           const newBlock = createEmptyBlock(type);
@@ -292,11 +292,10 @@ function showKebabMenu(
     menu.appendChild(btn);
   }
 
-  // Position below the Change button
+  // Position below the kebab button
   anchor.style.position = 'relative';
   menu.style.top = '100%';
-  menu.style.left = '50%';
-  menu.style.transform = 'translateX(-50%)';
+  menu.style.right = '0';
   anchor.appendChild(menu);
 
   // Close on click outside
