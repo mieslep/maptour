@@ -1260,8 +1260,33 @@ export class TourEditor {
       ghDiv.appendChild(routeDiv);
 
       // Journey content blocks
-      if (!gh.journey) gh.journey = [];
-      ghDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), 'Journey Content'));
+      if (gh.journey && gh.journey.length > 0) {
+        ghDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), 'Journey Content'));
+        const removeJourneyBtn = document.createElement('button');
+        removeJourneyBtn.className = 'btn btn-sm btn-danger';
+        removeJourneyBtn.style.marginTop = '8px';
+        removeJourneyBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove all journey content';
+        removeJourneyBtn.onclick = () => {
+          if (!confirm('Remove all journey content for this route?')) return;
+          this.withUndo(() => {
+            gh.journey = undefined;
+          });
+          this.renderPanel();
+        };
+        ghDiv.appendChild(removeJourneyBtn);
+      } else {
+        const addJourneyBtn = document.createElement('button');
+        addJourneyBtn.className = 'btn btn-sm';
+        addJourneyBtn.style.marginTop = '8px';
+        addJourneyBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add journey content for this route';
+        addJourneyBtn.onclick = () => {
+          this.withUndo(() => {
+            gh.journey = [{ type: 'text', body: '' }];
+          });
+          this.renderPanel();
+        };
+        ghDiv.appendChild(addJourneyBtn);
+      }
 
       content.appendChild(ghSection.wrapper);
     }

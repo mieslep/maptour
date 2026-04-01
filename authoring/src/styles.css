@@ -461,14 +461,16 @@ textarea.input {
 }
 
 /* Markdown preview styling */
-.markdown-preview h1 { font-size: 1.3em; margin: 0.5em 0 0.3em; }
-.markdown-preview h2 { font-size: 1.15em; margin: 0.5em 0 0.3em; }
-.markdown-preview h3 { font-size: 1.05em; margin: 0.5em 0 0.3em; }
-.markdown-preview p { margin: 0.4em 0; }
-.markdown-preview ul, .markdown-preview ol { padding-left: 1.5em; margin: 0.4em 0; }
+.markdown-preview h1 { font-size: 1.5em; font-weight: 700; margin: 0.6em 0 0.3em; }
+.markdown-preview h2 { font-size: 1.25em; font-weight: 600; margin: 0.5em 0 0.3em; }
+.markdown-preview h3 { font-size: 1.1em; font-weight: 600; margin: 0.5em 0 0.3em; }
+.markdown-preview p { margin: 0.5em 0; }
+.markdown-preview ul, .markdown-preview ol { padding-left: 1.5em; margin: 0.5em 0; }
+.markdown-preview li { margin: 0.2em 0; }
 .markdown-preview a { color: #2563eb; }
 .markdown-preview strong { font-weight: 600; }
 .markdown-preview code { background: #e2e8f0; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
+.markdown-preview img { max-width: 100%; border-radius: 8px; }
 
 /* ---- Gallery ---- */
 
@@ -567,6 +569,9 @@ textarea.input {
   display: flex;
   justify-content: center;
   background: #f1f5f9;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .device-frame {
@@ -577,11 +582,14 @@ textarea.input {
 
 .device-frame--phone {
   width: 375px;
+  max-height: calc(100vh - 120px);
   margin: 16px auto;
   border-radius: 24px;
   border: 3px solid #1e293b;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .device-frame--tablet {
@@ -612,6 +620,12 @@ textarea.input {
 .device-viewport {
   padding: 8px;
   min-height: 200px;
+  overflow-y: auto;
+  flex: 1;
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #111827;
 }
 
 .device-frame--phone .device-viewport {
@@ -645,6 +659,41 @@ textarea.input {
 
 .card-section-body {
   padding: 10px 12px;
+}
+
+/* ---- Player-like card sections inside device frame ---- */
+
+.device-viewport .card-section {
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.device-viewport .card-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #374151;
+  padding: 12px 12px 6px;
+  background: transparent;
+  border-bottom: none;
+}
+.device-viewport .card-section-body {
+  padding: 4px 12px 12px;
+}
+.device-viewport .cb-preview-block {
+  border: none;
+  border-radius: 0;
+  margin-bottom: 4px;
+  padding: 4px 0;
+}
+.device-viewport .cb-preview-block:hover {
+  box-shadow: none;
+}
+.device-viewport .cb-preview-content img {
+  max-width: 100%;
+  border-radius: 8px;
 }
 
 /* ---- Content Block WYSIWYG Preview ---- */

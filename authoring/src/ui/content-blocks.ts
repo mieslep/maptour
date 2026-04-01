@@ -27,46 +27,29 @@ export function renderContentBlockEditor(
     }
 
     blocks.forEach((block, idx) => {
-      // Insert divider between blocks (and before the first block)
-      container.appendChild(makeInsertDivider(idx, blocks, onChange, rebuild));
       const blockEl = renderPreviewBlock(block, idx, blocks, onChange, rebuild);
       container.appendChild(blockEl);
     });
 
-    // Insert divider after the last block (or as the only one when empty)
-    container.appendChild(makeInsertDivider(blocks.length, blocks, onChange, rebuild));
+    // Always show "+ Add Block" button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'cb-add-btn';
+    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Block';
+    addBtn.onclick = (e) => {
+      e.stopPropagation();
+      showTypePicker(addBtn, (type) => {
+        const newBlock = createEmptyBlock(type);
+        blocks.push(newBlock);
+        onChange();
+        rebuild();
+        openEditModal(newBlock, blocks.length - 1, blocks, onChange, rebuild);
+      });
+    };
+    container.appendChild(addBtn);
   }
 
   rebuild();
   return container;
-}
-
-/* ---------- Insert Divider ---------- */
-
-function makeInsertDivider(
-  insertIdx: number,
-  blocks: ContentBlock[],
-  onChange: OnChange,
-  rebuild: () => void,
-): HTMLElement {
-  const divider = document.createElement('div');
-  divider.className = 'cb-insert-divider';
-  const btn = document.createElement('button');
-  btn.className = 'cb-insert-btn';
-  btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-  btn.title = 'Insert block here';
-  btn.onclick = (e) => {
-    e.stopPropagation();
-    showTypePicker(btn, (type) => {
-      const newBlock = createEmptyBlock(type);
-      blocks.splice(insertIdx, 0, newBlock);
-      onChange();
-      rebuild();
-      openEditModal(newBlock, insertIdx, blocks, onChange, rebuild);
-    });
-  };
-  divider.appendChild(btn);
-  return divider;
 }
 
 /* ---------- Preview Block ---------- */
@@ -253,6 +236,28 @@ function showKebabMenu(
     {
       label: 'Edit', icon: 'fa-pen', action: () => {
         openEditModal(blocks[idx], idx, blocks, onChange, rebuild);
+      },
+    },
+    {
+      label: 'Insert Above', icon: 'fa-circle-plus', action: () => {
+        showTypePicker(anchor, (type) => {
+          const newBlock = createEmptyBlock(type);
+          blocks.splice(idx, 0, newBlock);
+          onChange();
+          rebuild();
+          openEditModal(newBlock, idx, blocks, onChange, rebuild);
+        });
+      },
+    },
+    {
+      label: 'Insert Below', icon: 'fa-circle-plus', action: () => {
+        showTypePicker(anchor, (type) => {
+          const newBlock = createEmptyBlock(type);
+          blocks.splice(idx + 1, 0, newBlock);
+          onChange();
+          rebuild();
+          openEditModal(newBlock, idx + 1, blocks, onChange, rebuild);
+        });
       },
     },
     {
