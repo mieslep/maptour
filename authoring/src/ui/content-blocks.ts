@@ -3,21 +3,30 @@ import type { ContentBlock, GalleryImage } from '../types';
 import { resolveAssetUrl } from '../store';
 
 type OnChange = () => void;
+type BeforeMutate = () => void;
+
+// Module-level ref so all internal functions can call it without threading it everywhere
+let _beforeMutate: BeforeMutate = () => {};
 
 /**
  * Render a WYSIWYG-style content block editor with preview mode and edit-on-click.
  * Returns the container element.
+ *
+ * @param onBeforeMutate - called before any data mutation (undo snapshot hook)
  */
 export function renderContentBlockEditor(
   blocks: ContentBlock[],
   onChange: OnChange,
   label: string,
+  onBeforeMutate?: BeforeMutate,
 ): HTMLElement {
   const container = document.createElement('div');
   container.className = 'cb-editor';
 
   function rebuild(): void {
     container.innerHTML = '';
+    // Set module-level ref for this editor instance during rebuild
+    _beforeMutate = onBeforeMutate || (() => {});
 
     if (label) {
       const headerLabel = document.createElement('div');
@@ -38,6 +47,7 @@ export function renderContentBlockEditor(
     addBtn.onclick = (e) => {
       e.stopPropagation();
       showTypePicker(addBtn, (type) => {
+        _beforeMutate();
         const newBlock = createEmptyBlock(type);
         blocks.push(newBlock);
         onChange();
@@ -66,21 +76,53 @@ function renderPreviewBlock(
 
   // Click the whole block to open edit modal
   wrapper.onclick = (e) => {
-    // Don't trigger if clicking the kebab menu or its children
-    if ((e.target as HTMLElement).closest('.cb-kebab-btn, .cb-menu')) return;
+    if ((e.target as HTMLElement).closest('.cb-block-actions')) return;
     openEditModal(block, idx, blocks, onChange, rebuild);
   };
 
-  // Subtle "⋮" kebab button, appears on hover for move/delete/insert
-  const kebab = document.createElement('button');
-  kebab.className = 'cb-kebab-btn';
-  kebab.innerHTML = '⋮';
-  kebab.title = 'More actions';
-  kebab.onclick = (e) => {
+  // Inline hover actions: move up, move down, delete
+  const actions = document.createElement('div');
+  actions.className = 'cb-block-actions';
+
+  if (idx > 0) {
+    const upBtn = document.createElement('button');
+    upBtn.className = 'cb-action-btn';
+    upBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+    upBtn.title = 'Move up';
+    upBtn.onclick = (e) => {
+      e.stopPropagation();
+      _beforeMutate();
+      [blocks[idx - 1], blocks[idx]] = [blocks[idx], blocks[idx - 1]];
+      onChange(); rebuild();
+    };
+    actions.appendChild(upBtn);
+  }
+
+  if (idx < blocks.length - 1) {
+    const downBtn = document.createElement('button');
+    downBtn.className = 'cb-action-btn';
+    downBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+    downBtn.title = 'Move down';
+    downBtn.onclick = (e) => {
+      e.stopPropagation();
+      _beforeMutate();
+      [blocks[idx], blocks[idx + 1]] = [blocks[idx + 1], blocks[idx]];
+      onChange(); rebuild();
+    };
+    actions.appendChild(downBtn);
+  }
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'cb-action-btn cb-action-btn--danger';
+  delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+  delBtn.title = 'Delete';
+  delBtn.onclick = (e) => {
     e.stopPropagation();
-    showKebabMenu(kebab, idx, blocks, onChange, rebuild);
+    _beforeMutate(); blocks.splice(idx, 1); onChange(); rebuild();
   };
-  wrapper.appendChild(kebab);
+  actions.appendChild(delBtn);
+
+  wrapper.appendChild(actions);
 
   // Render content preview
   const content = document.createElement('div');
@@ -364,6 +406,9 @@ function openEditModal(
   onChange: OnChange,
   rebuild: () => void,
 ): void {
+  // Snapshot for undo before any edits in this modal
+  _beforeMutate();
+
   // Overlay
   const overlay = document.createElement('div');
   overlay.className = 'cb-modal-overlay';
@@ -407,6 +452,7 @@ function openEditModal(
   typeSelect.onchange = () => {
     const newType = typeSelect.value as ContentBlock['type'];
     if (newType === block.type) return;
+    _beforeMutate();
     const newBlock = createEmptyBlock(newType);
     blocks[idx] = newBlock;
     onChange();

@@ -544,25 +544,49 @@ textarea.input {
 
 /* ---- Device Preview Frame ---- */
 
-.device-toggles {
+/* Device category tabs */
+.device-tab-bar {
   display: flex;
-  gap: 2px;
-  margin-right: 8px;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 0 8px;
+  gap: 0;
 }
-
-.device-toggle {
-  font-size: 14px !important;
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
-  color: #94a3b8 !important;
-  transition: color 0.15s, background 0.15s;
+.device-tab {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
 }
-.device-toggle.active {
-  color: #2563eb !important;
-  background: #eff6ff !important;
+.device-tab:hover { color: #1e293b; }
+.device-tab.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
 }
-.device-toggle:disabled {
-  opacity: 0.3 !important;
+.device-tab:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.device-select {
+  margin-left: auto;
+  padding: 3px 6px;
+  font-size: 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  outline: none;
+}
+.device-select:focus {
+  border-color: #2563eb;
 }
 
 .device-scroll-area {
@@ -581,8 +605,7 @@ textarea.input {
 }
 
 .device-frame--phone {
-  width: 375px;
-  max-height: calc(100vh - 120px);
+  max-width: 100%;
   margin: 16px auto;
   border-radius: 24px;
   border: 3px solid #1e293b;
@@ -593,13 +616,14 @@ textarea.input {
 }
 
 .device-frame--tablet {
-  width: 768px;
   max-width: 100%;
   margin: 12px auto;
   border-radius: 16px;
   border: 2px solid #475569;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .device-frame--desktop {
@@ -722,6 +746,12 @@ textarea.input {
   color: #94a3b8;
   margin-top: 2px;
 }
+.card-meta-line {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.4;
+}
 
 /* Getting Here zone */
 .card-getting-here {
@@ -752,6 +782,12 @@ textarea.input {
   border-radius: 4px;
   flex-shrink: 0;
 }
+.card-gh-placeholder {
+  font-size: 13px;
+  color: #ef4444;
+  font-style: italic;
+  letter-spacing: 0.5px;
+}
 
 /* Content zone */
 .card-content-zone {
@@ -772,6 +808,15 @@ textarea.input {
   color: #94a3b8;
   border-top: 1px solid #e2e8f0;
   text-align: center;
+}
+.card-footer--clickable {
+  cursor: pointer;
+  color: #2563eb;
+  transition: background 0.15s, color 0.15s;
+}
+.card-footer--clickable:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 /* ---- Device viewport overrides for card preview ---- */
@@ -820,33 +865,41 @@ textarea.input {
   margin-top: 4px;
 }
 
-/* Kebab button (appears on hover) */
-.cb-kebab-btn {
+/* Inline block actions (appear on hover) */
+.cb-block-actions {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 24px;
-  height: 24px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.cb-preview-block:hover .cb-block-actions {
+  opacity: 1;
+}
+.cb-action-btn {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
+  font-size: 10px;
   color: #94a3b8;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
-  z-index: 2;
+  transition: background 0.15s, color 0.15s;
 }
-.cb-preview-block:hover .cb-kebab-btn {
-  opacity: 1;
-}
-.cb-kebab-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+.cb-action-btn:hover {
+  background: #f1f5f9;
   color: #475569;
+}
+.cb-action-btn--danger:hover {
+  background: #fef2f2;
+  color: #ef4444;
 }
 
 /* Kebab dropdown menu */

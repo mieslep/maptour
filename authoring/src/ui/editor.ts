@@ -61,7 +61,21 @@ export class TourEditor {
   private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
   private selectedCard: 'welcome' | 'goodbye' | null = null;
-  private previewMode: 'phone' | 'tablet' | 'desktop' = 'phone';
+  private previewDevice = 'iphone-14';
+
+  private static readonly DEVICES: Array<{
+    id: string; label: string; category: 'phone' | 'tablet' | 'desktop';
+    width: number; height: number; minPanelWidth: number;
+  }> = [
+    { id: 'iphone-se',  label: 'iPhone SE',       category: 'phone',   width: 375, height: 667,  minPanelWidth: 0 },
+    { id: 'iphone-14',  label: 'iPhone 14',       category: 'phone',   width: 390, height: 844,  minPanelWidth: 0 },
+    { id: 'iphone-14-pro-max', label: 'iPhone 14 Pro Max', category: 'phone', width: 430, height: 932, minPanelWidth: 0 },
+    { id: 'pixel-7',    label: 'Pixel 7',         category: 'phone',   width: 412, height: 915,  minPanelWidth: 0 },
+    { id: 'galaxy-s23', label: 'Galaxy S23',       category: 'phone',   width: 360, height: 780,  minPanelWidth: 0 },
+    { id: 'ipad-mini',  label: 'iPad Mini',       category: 'tablet',  width: 768, height: 1024, minPanelWidth: 400 },
+    { id: 'ipad-air',   label: 'iPad Air',        category: 'tablet',  width: 820, height: 1180, minPanelWidth: 400 },
+    { id: 'desktop',    label: 'Desktop',          category: 'desktop', width: 0,   height: 0,    minPanelWidth: 780 },
+  ];
   private detailTab: 'stop' | 'journey' = 'stop';
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
@@ -192,7 +206,7 @@ export class TourEditor {
         id,
         title: `Stop ${id}`,
         coords: [lat, lng],
-        content: [{ type: 'text', body: '*Click the \u22ee menu to edit this block, or add more content below.*' }],
+        content: [],
       };
       // Add default getting_here for non-first stops
       if (this.tour.stops.length > 0) {
@@ -669,7 +683,14 @@ export class TourEditor {
     this.renderDetailPanel();
   }
 
+  private getDevice() {
+    return TourEditor.DEVICES.find(d => d.id === this.previewDevice) || TourEditor.DEVICES[1];
+  }
+
   private makeDeviceToolbar(title: string): HTMLElement {
+    const wrapper = document.createElement('div');
+
+    // Top bar: title + close button
     const toolbar = document.createElement('div');
     toolbar.className = 'panel-toolbar';
 
@@ -677,37 +698,6 @@ export class TourEditor {
     label.style.cssText = 'font-weight:600; font-size:14px; flex:1;';
     label.textContent = title;
     toolbar.appendChild(label);
-
-    // Device preview toggles
-    const devices = document.createElement('div');
-    devices.className = 'device-toggles';
-
-    const modes: Array<{ mode: 'phone' | 'tablet' | 'desktop'; icon: string; label: string; minWidth: number }> = [
-      { mode: 'phone', icon: 'fa-mobile-screen', label: 'Phone (375px)', minWidth: 0 },
-      { mode: 'tablet', icon: 'fa-tablet-screen-button', label: 'Tablet (768px)', minWidth: 400 },
-      { mode: 'desktop', icon: 'fa-desktop', label: 'Desktop (full)', minWidth: 780 },
-    ];
-
-    for (const m of modes) {
-      const btn = document.createElement('button');
-      btn.className = `btn btn-icon device-toggle ${this.previewMode === m.mode ? 'active' : ''}`;
-      btn.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
-      btn.title = m.label;
-
-      // Disable if panel is too narrow
-      const panelWidth = this.detailPanel.offsetWidth;
-      if (panelWidth > 0 && panelWidth < m.minWidth) {
-        btn.disabled = true;
-        btn.title = `${m.label} — expand the panel to enable`;
-      }
-
-      btn.onclick = () => {
-        this.previewMode = m.mode;
-        this.renderDetailPanel();
-      };
-      devices.appendChild(btn);
-    }
-    toolbar.appendChild(devices);
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'btn btn-icon';
@@ -720,16 +710,91 @@ export class TourEditor {
       this.renderPanel();
     };
     toolbar.appendChild(closeBtn);
+    wrapper.appendChild(toolbar);
 
-    return toolbar;
+    // Device category tabs
+    const categories: Array<{ key: 'phone' | 'tablet' | 'desktop'; label: string }> = [
+      { key: 'phone', label: 'Phone' },
+      { key: 'tablet', label: 'Tablet' },
+      { key: 'desktop', label: 'Desktop' },
+    ];
+    const currentDevice = this.getDevice();
+    const panelWidth = this.detailPanel.offsetWidth;
+
+    const tabBar = document.createElement('div');
+    tabBar.className = 'device-tab-bar';
+
+    for (const cat of categories) {
+      const tab = document.createElement('button');
+      const isActive = currentDevice.category === cat.key;
+      tab.className = `device-tab${isActive ? ' active' : ''}`;
+
+      // Disable if panel too narrow
+      const catDevices = TourEditor.DEVICES.filter(d => d.category === cat.key);
+      const minWidth = Math.min(...catDevices.map(d => d.minPanelWidth));
+      if (panelWidth > 0 && panelWidth < minWidth) {
+        tab.disabled = true;
+        tab.title = 'Expand the panel to enable';
+      }
+
+      tab.textContent = cat.label;
+      tab.onclick = () => {
+        // Switch to first device in this category
+        const first = catDevices.find(d => !(panelWidth > 0 && panelWidth < d.minPanelWidth));
+        if (first) {
+          this.previewDevice = first.id;
+          this.renderDetailPanel();
+        }
+      };
+      tabBar.appendChild(tab);
+    }
+
+    // Device model selector (dropdown for phones/tablets)
+    if (currentDevice.category !== 'desktop') {
+      const catDevices = TourEditor.DEVICES.filter(d => d.category === currentDevice.category);
+      if (catDevices.length > 1) {
+        const select = document.createElement('select');
+        select.className = 'device-select';
+        for (const d of catDevices) {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = `${d.label} (${d.width}\u00d7${d.height})`;
+          if (d.id === this.previewDevice) opt.selected = true;
+          if (panelWidth > 0 && panelWidth < d.minPanelWidth) opt.disabled = true;
+          select.appendChild(opt);
+        }
+        select.onchange = () => {
+          this.previewDevice = select.value;
+          this.renderDetailPanel();
+        };
+        tabBar.appendChild(select);
+      }
+    }
+
+    wrapper.appendChild(tabBar);
+    return wrapper;
   }
 
   private wrapInDeviceFrame(content: HTMLElement): HTMLElement {
+    const device = this.getDevice();
     const frame = document.createElement('div');
-    frame.className = `device-frame device-frame--${this.previewMode}`;
 
-    if (this.previewMode === 'phone') {
-      // Phone chrome: notch + rounded corners
+    if (device.category === 'desktop') {
+      frame.className = 'device-frame device-frame--desktop';
+      const viewport = document.createElement('div');
+      viewport.className = 'device-viewport';
+      viewport.appendChild(content);
+      frame.appendChild(viewport);
+      return frame;
+    }
+
+    frame.className = `device-frame device-frame--${device.category}`;
+    frame.style.width = `${device.width}px`;
+    // Aspect ratio height, capped to viewport
+    frame.style.maxHeight = 'calc(100vh - 160px)';
+    frame.style.aspectRatio = `${device.width} / ${device.height}`;
+
+    if (device.category === 'phone') {
       const notch = document.createElement('div');
       notch.className = 'device-notch';
       frame.appendChild(notch);
@@ -1072,44 +1137,18 @@ export class TourEditor {
   private renderStopEditor(stop: Stop): HTMLElement {
     const content = document.createElement('div');
     content.className = 'card-preview';
-
-    const stopIdx = this.selectedStopIdx;
-    const hasJourney = stopIdx > 0;
-
-    // Tab switcher (only if journey could exist)
-    if (hasJourney) {
-      const tabs = document.createElement('div');
-      tabs.className = 'card-tab-switcher';
-      for (const tab of ['stop', 'journey'] as const) {
-        const btn = document.createElement('button');
-        btn.className = `card-tab${this.detailTab === tab ? ' active' : ''}`;
-        btn.textContent = tab === 'stop' ? 'Stop Card' : 'Journey';
-        btn.onclick = () => {
-          this.detailTab = tab;
-          this.renderDetailPanel();
-        };
-        tabs.appendChild(btn);
-      }
-      content.appendChild(tabs);
-    }
-
-    if (this.detailTab === 'journey' && hasJourney) {
-      content.appendChild(this.renderJourneyTab(stop));
-    } else {
-      content.appendChild(this.renderStopCardTab(stop, stopIdx));
-    }
-
+    content.appendChild(this.renderStopCardTab(stop, this.selectedStopIdx));
     return content;
   }
 
   private renderStopCardTab(stop: Stop, stopIdx: number): HTMLElement {
     const frag = document.createElement('div');
 
-    // Zone 1: Title
+    // Zone 1: Title (click to edit)
     const titleZone = document.createElement('div');
     titleZone.className = 'card-edit-zone';
-
-    titleZone.appendChild(this.makeGutterButton(() => this.showTitleModal(stop)));
+    titleZone.style.cursor = 'pointer';
+    titleZone.onclick = () => this.showTitleModal(stop);
 
     const titleContent = document.createElement('div');
     const titleHeading = document.createElement('div');
@@ -1117,26 +1156,20 @@ export class TourEditor {
     titleHeading.textContent = stop.title || 'Untitled Stop';
     titleContent.appendChild(titleHeading);
 
-    const coordsSmall = document.createElement('div');
-    coordsSmall.className = 'card-coords';
-    coordsSmall.textContent = `${stop.coords[0].toFixed(5)}, ${stop.coords[1].toFixed(5)}`;
-    titleContent.appendChild(coordsSmall);
     titleZone.appendChild(titleContent);
     frag.appendChild(titleZone);
 
-    // Zone 2: Getting Here (non-first stops only)
-    if (stopIdx > 0) {
-      if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-      const gh = stop.getting_here;
+    // Zone 2: Getting Here (all stops, click to edit)
+    const gh = stop.getting_here;
+    const ghZone = document.createElement('div');
+    ghZone.className = 'card-edit-zone card-getting-here';
+    ghZone.style.cursor = 'pointer';
+    ghZone.onclick = () => this.showGettingHereModal(stop, stopIdx);
 
-      const ghZone = document.createElement('div');
-      ghZone.className = 'card-edit-zone card-getting-here';
+    const ghContent = document.createElement('div');
+    ghContent.style.cssText = 'display:flex; align-items:center; gap:6px; flex:1; min-width:0;';
 
-      ghZone.appendChild(this.makeGutterButton(() => this.showGettingHereModal(stop, stopIdx)));
-
-      const ghContent = document.createElement('div');
-      ghContent.style.cssText = 'display:flex; align-items:center; gap:6px; flex:1; min-width:0;';
-
+    if (gh && (gh.note || gh.mode)) {
       const iconClass = TourEditor.MODE_ICONS[gh.mode] || 'fa-person-walking';
       const modeIcon = document.createElement('i');
       modeIcon.className = `fa-solid ${iconClass} card-gh-icon`;
@@ -1146,17 +1179,16 @@ export class TourEditor {
       noteText.className = 'card-gh-note';
       noteText.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
       ghContent.appendChild(noteText);
-
-      if (gh.route && gh.route.length > 0) {
-        const badge = document.createElement('span');
-        badge.className = 'card-gh-badge';
-        badge.textContent = `${gh.route.length} pts`;
-        ghContent.appendChild(badge);
-      }
-
-      ghZone.appendChild(ghContent);
-      frag.appendChild(ghZone);
+    } else {
+      const placeholder = document.createElement('span');
+      placeholder.className = 'card-gh-placeholder';
+      const fromIdx = stopIdx === 0 ? this.tour.stops.length : stopIdx;
+      placeholder.textContent = `Click to add notes on getting here from stop ${fromIdx}`;
+      ghContent.appendChild(placeholder);
     }
+
+    ghZone.appendChild(ghContent);
+    frag.appendChild(ghZone);
 
     // Divider
     const divider = document.createElement('div');
@@ -1166,21 +1198,29 @@ export class TourEditor {
     // Zone 3: Content blocks (reuse existing WYSIWYG block preview system)
     const contentZone = document.createElement('div');
     contentZone.className = 'card-content-zone';
-    contentZone.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), ''));
+    contentZone.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), '', () => pushUndo(this.tour)));
     frag.appendChild(contentZone);
 
-    // Zone 4: Footer (visual only)
+    // Zone 4: Footer (clickable navigation)
     const nextIdx = stopIdx + 1;
     if (nextIdx < this.tour.stops.length) {
       const footer = document.createElement('div');
-      footer.className = 'card-footer';
+      footer.className = 'card-footer card-footer--clickable';
       const nextStop = this.tour.stops[nextIdx];
-      footer.textContent = `Next: Stop ${nextIdx + 1} \u2014 ${nextStop.title || 'Untitled'}`;
+      footer.textContent = `Next: ${nextStop.title || 'Untitled'} \u2192`;
+      footer.onclick = () => this.selectStop(nextIdx);
       frag.appendChild(footer);
     } else {
       const footer = document.createElement('div');
-      footer.className = 'card-footer';
-      footer.textContent = 'Last stop';
+      footer.className = 'card-footer card-footer--clickable';
+      footer.textContent = 'Goodbye Card \u2192';
+      footer.onclick = () => {
+        this.selectedStopIdx = -1;
+        this.selectedCard = 'goodbye';
+        this.clearRadiusCircle();
+        this.highlightMarker(-1);
+        this.renderPanel();
+      };
       frag.appendChild(footer);
     }
 
@@ -1194,7 +1234,7 @@ export class TourEditor {
     const gh = stop.getting_here;
 
     if (gh.journey && gh.journey.length > 0) {
-      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), ''));
+      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour)));
       const removeBtn = document.createElement('button');
       removeBtn.className = 'btn btn-sm btn-danger';
       removeBtn.style.marginTop = '8px';
@@ -1464,27 +1504,225 @@ export class TourEditor {
 
       routeDiv.appendChild(btnRow);
       body.appendChild(routeDiv);
+
+      // Journey card section
+      const journeyDiv = document.createElement('div');
+      journeyDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
+
+      const journeyHeader = document.createElement('div');
+      journeyHeader.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;';
+      const journeyLabel = document.createElement('div');
+      journeyLabel.className = 'subsection-title';
+      journeyLabel.style.margin = '0';
+      journeyLabel.textContent = 'Journey Card';
+      journeyHeader.appendChild(journeyLabel);
+
+      if (gh.journey && gh.journey.length > 0) {
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn btn-sm btn-danger';
+        removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+        removeBtn.onclick = () => {
+          if (!confirm('Remove all journey content for this stop?')) return;
+          this.withUndo(() => { gh.journey = undefined; });
+          // Close current modal, re-open with updated state
+          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+          this.renderDetailPanel();
+          this.showGettingHereModal(stop, stopIdx);
+        };
+        journeyHeader.appendChild(removeBtn);
+        journeyDiv.appendChild(journeyHeader);
+
+        // Embed content block editor for journey blocks
+        journeyDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour)));
+      } else {
+        journeyDiv.appendChild(journeyHeader);
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-sm';
+        addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Journey Card';
+        addBtn.onclick = () => {
+          this.withUndo(() => { gh.journey = [{ type: 'text', body: '' }]; });
+          // Close current modal, re-open with updated state
+          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+          this.renderDetailPanel();
+          this.showGettingHereModal(stop, stopIdx);
+        };
+        journeyDiv.appendChild(addBtn);
+      }
+
+      body.appendChild(journeyDiv);
     });
   }
 
   private renderWelcomeSection(): HTMLElement {
     if (!this.tour.tour.welcome) this.tour.tour.welcome = [];
-    const content = document.createElement('div');
-    content.className = 'section-content';
-    content.appendChild(renderContentBlockEditor(
-      this.tour.tour.welcome, () => this.changed(), 'Content Blocks',
+    const meta = this.tour.tour;
+    const frag = document.createElement('div');
+    frag.className = 'card-preview';
+
+    // Zone 1: Tour title (click to edit title/description/duration)
+    const titleZone = document.createElement('div');
+    titleZone.className = 'card-edit-zone';
+    titleZone.style.cursor = 'pointer';
+    titleZone.onclick = () => this.showWelcomeMetaModal();
+
+    const titleContent = document.createElement('div');
+    const titleHeading = document.createElement('div');
+    titleHeading.className = 'card-title';
+    titleHeading.textContent = meta.title || 'Untitled Tour';
+    titleContent.appendChild(titleHeading);
+
+    if (meta.description || meta.duration) {
+      const metaLine = document.createElement('div');
+      metaLine.className = 'card-meta-line';
+      const parts: string[] = [];
+      if (meta.description) parts.push(meta.description);
+      if (meta.duration) parts.push(meta.duration);
+      metaLine.textContent = parts.join(' \u2022 ');
+      titleContent.appendChild(metaLine);
+    }
+
+    titleZone.appendChild(titleContent);
+    frag.appendChild(titleZone);
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'card-divider';
+    frag.appendChild(divider);
+
+    // Content blocks
+    const contentZone = document.createElement('div');
+    contentZone.className = 'card-content-zone';
+    contentZone.appendChild(renderContentBlockEditor(
+      this.tour.tour.welcome!, () => this.changed(), '', () => pushUndo(this.tour),
     ));
-    return content;
+    frag.appendChild(contentZone);
+
+    // Footer - navigate to first stop
+    const footer = document.createElement('div');
+    footer.className = 'card-footer card-footer--clickable';
+    if (this.tour.stops.length > 0) {
+      const firstStop = this.tour.stops[0];
+      footer.textContent = `First stop: ${firstStop.title || 'Untitled'} \u2192`;
+      footer.onclick = () => this.selectStop(0);
+    } else {
+      footer.className = 'card-footer';
+      footer.textContent = 'No stops yet';
+    }
+    frag.appendChild(footer);
+
+    return frag;
+  }
+
+  private showWelcomeMetaModal(): void {
+    const meta = this.tour.tour;
+    this.showEditZoneModal('Edit Welcome Card', (body) => {
+      // Title
+      const titleRow = document.createElement('div');
+      titleRow.className = 'input-row';
+      titleRow.innerHTML = '<label class="input-label">Tour Title</label>';
+      const titleInput = document.createElement('input');
+      titleInput.type = 'text';
+      titleInput.className = 'input';
+      titleInput.value = meta.title;
+      titleInput.oninput = () => { meta.title = titleInput.value; this.changed(); };
+      titleRow.appendChild(titleInput);
+      body.appendChild(titleRow);
+
+      // Description
+      const descRow = document.createElement('div');
+      descRow.className = 'input-row';
+      descRow.innerHTML = '<label class="input-label">Description</label>';
+      const descInput = document.createElement('textarea');
+      descInput.className = 'input';
+      descInput.rows = 3;
+      descInput.value = meta.description ?? '';
+      descInput.placeholder = 'Brief tour description';
+      descInput.oninput = () => { meta.description = descInput.value || undefined; this.changed(); };
+      descRow.appendChild(descInput);
+      body.appendChild(descRow);
+
+      // Duration
+      const durRow = document.createElement('div');
+      durRow.className = 'input-row';
+      durRow.innerHTML = '<label class="input-label">Duration</label>';
+      const durInput = document.createElement('input');
+      durInput.type = 'text';
+      durInput.className = 'input';
+      durInput.value = meta.duration ?? '';
+      durInput.placeholder = 'e.g. "45 minutes"';
+      durInput.oninput = () => { meta.duration = durInput.value || undefined; this.changed(); };
+      durRow.appendChild(durInput);
+      body.appendChild(durRow);
+    });
   }
 
   private renderGoodbyeSection(): HTMLElement {
     if (!this.tour.tour.goodbye) this.tour.tour.goodbye = [];
-    const content = document.createElement('div');
-    content.className = 'section-content';
-    content.appendChild(renderContentBlockEditor(
-      this.tour.tour.goodbye, () => this.changed(), 'Content Blocks',
+    const meta = this.tour.tour;
+    const frag = document.createElement('div');
+    frag.className = 'card-preview';
+
+    // Zone 1: Title (click to edit close_url)
+    const titleZone = document.createElement('div');
+    titleZone.className = 'card-edit-zone';
+    titleZone.style.cursor = 'pointer';
+    titleZone.onclick = () => this.showGoodbyeMetaModal();
+
+    const titleContent = document.createElement('div');
+    const titleHeading = document.createElement('div');
+    titleHeading.className = 'card-title';
+    titleHeading.textContent = 'Tour Complete';
+    titleContent.appendChild(titleHeading);
+
+    if (meta.close_url) {
+      const metaLine = document.createElement('div');
+      metaLine.className = 'card-meta-line';
+      metaLine.textContent = `Closes to: ${meta.close_url}`;
+      titleContent.appendChild(metaLine);
+    }
+
+    titleZone.appendChild(titleContent);
+    frag.appendChild(titleZone);
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'card-divider';
+    frag.appendChild(divider);
+
+    // Content blocks
+    const contentZone = document.createElement('div');
+    contentZone.className = 'card-content-zone';
+    contentZone.appendChild(renderContentBlockEditor(
+      this.tour.tour.goodbye!, () => this.changed(), '', () => pushUndo(this.tour),
     ));
-    return content;
+    frag.appendChild(contentZone);
+
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'card-footer';
+    footer.textContent = meta.close_url ? 'Close Tour' : 'End of tour';
+    frag.appendChild(footer);
+
+    return frag;
+  }
+
+  private showGoodbyeMetaModal(): void {
+    const meta = this.tour.tour;
+    this.showEditZoneModal('Edit Goodbye Card', (body) => {
+      // Close URL
+      const urlRow = document.createElement('div');
+      urlRow.className = 'input-row';
+      urlRow.innerHTML = '<label class="input-label">Close URL</label>';
+      const urlInput = document.createElement('input');
+      urlInput.type = 'text';
+      urlInput.className = 'input';
+      urlInput.value = meta.close_url ?? '';
+      urlInput.placeholder = 'e.g. https://example.com/thank-you';
+      urlInput.oninput = () => { meta.close_url = urlInput.value || undefined; this.changed(); };
+      urlRow.appendChild(urlInput);
+      body.appendChild(urlRow);
+    });
   }
 
   private renderStringsSection(): HTMLElement {
