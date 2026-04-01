@@ -61,6 +61,7 @@ export class TourEditor {
   private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
   private selectedCard: 'welcome' | 'goodbye' | null = null;
+  private previewMode: 'phone' | 'tablet' | 'desktop' = 'phone';
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
   private mapContainer!: HTMLElement;
@@ -666,48 +667,101 @@ export class TourEditor {
     this.renderDetailPanel();
   }
 
+  private makeDeviceToolbar(title: string): HTMLElement {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'panel-toolbar';
+
+    const label = document.createElement('span');
+    label.style.cssText = 'font-weight:600; font-size:14px; flex:1;';
+    label.textContent = title;
+    toolbar.appendChild(label);
+
+    // Device preview toggles
+    const devices = document.createElement('div');
+    devices.className = 'device-toggles';
+
+    const modes: Array<{ mode: 'phone' | 'tablet' | 'desktop'; icon: string; label: string; minWidth: number }> = [
+      { mode: 'phone', icon: 'fa-mobile-screen', label: 'Phone (375px)', minWidth: 0 },
+      { mode: 'tablet', icon: 'fa-tablet-screen-button', label: 'Tablet (768px)', minWidth: 400 },
+      { mode: 'desktop', icon: 'fa-desktop', label: 'Desktop (full)', minWidth: 780 },
+    ];
+
+    for (const m of modes) {
+      const btn = document.createElement('button');
+      btn.className = `btn btn-icon device-toggle ${this.previewMode === m.mode ? 'active' : ''}`;
+      btn.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
+      btn.title = m.label;
+
+      // Disable if panel is too narrow
+      const panelWidth = this.detailPanel.offsetWidth;
+      if (panelWidth > 0 && panelWidth < m.minWidth) {
+        btn.disabled = true;
+        btn.title = `${m.label} — expand the panel to enable`;
+      }
+
+      btn.onclick = () => {
+        this.previewMode = m.mode;
+        this.renderDetailPanel();
+      };
+      devices.appendChild(btn);
+    }
+    toolbar.appendChild(devices);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn btn-icon';
+    closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    closeBtn.title = 'Close';
+    closeBtn.onclick = () => {
+      this.selectedStopIdx = -1;
+      this.selectedCard = null;
+      this.refreshMap();
+      this.renderPanel();
+    };
+    toolbar.appendChild(closeBtn);
+
+    return toolbar;
+  }
+
+  private wrapInDeviceFrame(content: HTMLElement): HTMLElement {
+    const frame = document.createElement('div');
+    frame.className = `device-frame device-frame--${this.previewMode}`;
+
+    if (this.previewMode === 'phone') {
+      // Phone chrome: notch + rounded corners
+      const notch = document.createElement('div');
+      notch.className = 'device-notch';
+      frame.appendChild(notch);
+    }
+
+    const viewport = document.createElement('div');
+    viewport.className = 'device-viewport';
+    viewport.appendChild(content);
+    frame.appendChild(viewport);
+
+    return frame;
+  }
+
   private renderDetailPanel(): void {
     this.detailPanel.innerHTML = '';
 
-    const makeToolbar = (title: string) => {
-      const toolbar = document.createElement('div');
-      toolbar.className = 'panel-toolbar';
-      const label = document.createElement('span');
-      label.style.cssText = 'font-weight:600; font-size:14px; flex:1;';
-      label.textContent = title;
-      toolbar.appendChild(label);
-      const closeBtn = document.createElement('button');
-      closeBtn.className = 'btn btn-icon';
-      closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-      closeBtn.title = 'Close';
-      closeBtn.onclick = () => {
-        this.selectedStopIdx = -1;
-        this.selectedCard = null;
-        this.refreshMap();
-        this.renderPanel();
-      };
-      toolbar.appendChild(closeBtn);
-      return toolbar;
-    };
-
     if (this.selectedStopIdx >= 0 && this.selectedStopIdx < this.tour.stops.length) {
       const stop = this.tour.stops[this.selectedStopIdx];
-      this.detailPanel.appendChild(makeToolbar(`Stop ${this.selectedStopIdx + 1}: ${stop.title || 'Untitled'}`));
+      this.detailPanel.appendChild(this.makeDeviceToolbar(`Stop ${this.selectedStopIdx + 1}: ${stop.title || 'Untitled'}`));
       const scrollable = document.createElement('div');
-      scrollable.className = 'panel-scrollable';
-      scrollable.appendChild(this.renderStopEditor(stop));
+      scrollable.className = 'panel-scrollable device-scroll-area';
+      scrollable.appendChild(this.wrapInDeviceFrame(this.renderStopEditor(stop)));
       this.detailPanel.appendChild(scrollable);
     } else if (this.selectedCard === 'welcome') {
-      this.detailPanel.appendChild(makeToolbar('Welcome Card'));
+      this.detailPanel.appendChild(this.makeDeviceToolbar('Welcome Card'));
       const scrollable = document.createElement('div');
-      scrollable.className = 'panel-scrollable';
-      scrollable.appendChild(this.renderWelcomeSection());
+      scrollable.className = 'panel-scrollable device-scroll-area';
+      scrollable.appendChild(this.wrapInDeviceFrame(this.renderWelcomeSection()));
       this.detailPanel.appendChild(scrollable);
     } else if (this.selectedCard === 'goodbye') {
-      this.detailPanel.appendChild(makeToolbar('Goodbye Card'));
+      this.detailPanel.appendChild(this.makeDeviceToolbar('Goodbye Card'));
       const scrollable = document.createElement('div');
-      scrollable.className = 'panel-scrollable';
-      scrollable.appendChild(this.renderGoodbyeSection());
+      scrollable.className = 'panel-scrollable device-scroll-area';
+      scrollable.appendChild(this.wrapInDeviceFrame(this.renderGoodbyeSection()));
       this.detailPanel.appendChild(scrollable);
     } else {
       const empty = document.createElement('div');
