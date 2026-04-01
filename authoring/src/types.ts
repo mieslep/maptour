@@ -11,7 +11,10 @@ export interface ImageBlock {
   type: 'image';
   url: string;
   caption?: string;
+  caption_position?: 'above' | 'below';
   alt?: string;
+  padding_x?: number;
+  padding_y?: number;
 }
 
 export interface GalleryImage {

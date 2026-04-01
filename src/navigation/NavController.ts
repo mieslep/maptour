@@ -18,6 +18,7 @@ export class NavController {
   private reversed = false;
   private inJourney = false;
   private journeyDestIndex = -1;
+  private returningToStart = false;
   private mapView: MapView;
   private stopCard: StopCard;
   private breadcrumb: Breadcrumb;
@@ -55,6 +56,7 @@ export class NavController {
   /** Set the starting stop index for circular tour navigation. */
   setStartIndex(index: number): void {
     this.startIndex = index;
+    this.returningToStart = false;
   }
 
   /** Set reversed navigation mode. */
@@ -62,8 +64,32 @@ export class NavController {
     this.reversed = reversed;
   }
 
+  /** Navigate back to the starting stop from the last stop. */
+  returnToStart(): void {
+    this.returningToStart = true;
+    // Disable the return-to-start callback so the start stop shows "Finish Tour" not the two-button choice
+    this.stopCard.onReturnToStart(null);
+
+    const startStop = this.tour.stops[this.startIndex];
+
+    // Show journey card if the start stop has journey content
+    if (startStop.getting_here?.journey && startStop.getting_here.journey.length > 0) {
+      this.inJourney = true;
+      this.journeyDestIndex = this.startIndex;
+      this.stopCard.renderJourney(startStop, () => {
+        this.stopCard.setSuppressGettingHereNote(true);
+        this.goTo(this.startIndex);
+      });
+      this.callbacks.onJourneyChange?.(true);
+    } else {
+      this.goTo(this.startIndex);
+    }
+  }
+
   /** True if advancing from this stop would return to the starting stop (tour complete). */
   private isLastTourStop(index: number): boolean {
+    // When returning to start, the start stop is the last stop
+    if (this.returningToStart && index === this.startIndex) return true;
     if (this.reversed) {
       const prevInSequence = (index - 1 + this.tour.stops.length) % this.tour.stops.length;
       return prevInSequence === this.startIndex;

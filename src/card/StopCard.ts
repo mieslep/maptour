@@ -35,6 +35,7 @@ export class StopCard {
   private navPreference: NavAppPreference;
   private tourNavMode: LegMode | undefined;
   private nextCallback: (() => void) | null = null;
+  private returnToStartCallback: (() => void) | null = null;
   private startingStopIndex = 0;
   private suppressGettingHereNote = false;
 
@@ -51,6 +52,11 @@ export class StopCard {
   /** Register a callback for "Next stop" and "Finish Tour" buttons. */
   onNext(cb: () => void): void {
     this.nextCallback = cb;
+  }
+
+  /** Register a callback for "Return to start" on last stop. Set to null to disable. */
+  onReturnToStart(cb: (() => void) | null): void {
+    this.returnToStartCallback = cb;
   }
 
   /** Mark that the next stop card should hide the getting_here note (user just completed a journey). */
@@ -137,8 +143,26 @@ export class StopCard {
       footer.appendChild(nextBtn);
 
       this.container.appendChild(footer);
+    } else if (this.returnToStartCallback) {
+      // Last tour stop — offer return to start or finish here
+      const footer = document.createElement('div');
+      footer.className = 'maptour-card__finish';
+
+      const returnBtn = document.createElement('button');
+      returnBtn.className = 'maptour-card__finish-btn';
+      returnBtn.textContent = t('return_to_start');
+      returnBtn.addEventListener('click', () => this.returnToStartCallback?.());
+      footer.appendChild(returnBtn);
+
+      const finishLink = document.createElement('button');
+      finishLink.className = 'maptour-card__finish-link';
+      finishLink.textContent = t('finish_here');
+      finishLink.addEventListener('click', () => this.nextCallback?.());
+      footer.appendChild(finishLink);
+
+      this.container.appendChild(footer);
     } else {
-      // Last tour stop — "Finish Tour" leads to goodbye card
+      // Last tour stop (returning to start) — just "Finish Tour"
       const footer = document.createElement('div');
       footer.className = 'maptour-card__finish';
 

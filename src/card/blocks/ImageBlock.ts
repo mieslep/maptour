@@ -5,6 +5,10 @@ export function renderImageBlock(block: ImageBlockType): HTMLElement {
   const el = document.createElement('figure');
   el.className = 'maptour-block maptour-block--image';
 
+  const py = block.padding_y ?? 5;
+  const px = block.padding_x ?? 5;
+  el.style.padding = `${py}% ${px}%`;
+
   const img = document.createElement('img');
   img.src = block.url;
   img.alt = block.alt ?? block.caption ?? '';
@@ -21,13 +25,24 @@ export function renderImageBlock(block: ImageBlockType): HTMLElement {
     el.insertBefore(placeholder, img);
   };
 
-  el.appendChild(img);
-
-  if (block.caption) {
+  const makeCaptionEl = (): HTMLElement | null => {
+    if (!block.caption) return null;
     const caption = document.createElement('figcaption');
     caption.className = 'maptour-image__caption';
     caption.textContent = block.caption;
-    el.appendChild(caption);
+    return caption;
+  };
+
+  if (block.caption_position === 'above') {
+    const cap = makeCaptionEl();
+    if (cap) el.appendChild(cap);
+  }
+
+  el.appendChild(img);
+
+  if (block.caption_position !== 'above') {
+    const cap = makeCaptionEl();
+    if (cap) el.appendChild(cap);
   }
 
   return el;

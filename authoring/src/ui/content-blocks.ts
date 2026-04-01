@@ -162,20 +162,37 @@ function isBlockEmpty(block: ContentBlock): boolean {
   return true;
 }
 
-function renderImagePreview(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; alt?: string }): void {
+function renderImagePreview(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; caption_position?: 'above' | 'below'; alt?: string; padding_x?: number; padding_y?: number }): void {
   if (block.url) {
+    const py = block.padding_y ?? 5;
+    const px = block.padding_x ?? 5;
+    container.style.padding = `${py}% ${px}%`;
+
+    const makeCap = (): HTMLElement | null => {
+      if (!block.caption) return null;
+      const cap = document.createElement('div');
+      cap.className = 'cb-preview-caption';
+      cap.style.textAlign = 'center';
+      cap.textContent = block.caption;
+      return cap;
+    };
+
+    if (block.caption_position === 'above') {
+      const cap = makeCap();
+      if (cap) container.appendChild(cap);
+    }
+
     const img = document.createElement('img');
     img.src = resolveAssetUrl(block.url);
     img.alt = block.alt || '';
     img.style.maxWidth = '100%';
     img.style.borderRadius = '4px';
-    img.onerror = () => { img.replaceWith(makePlaceholderImg(`📷 ${block.url}`)); };
+    img.onerror = () => { img.replaceWith(makePlaceholderImg(`\ud83d\udcf7 ${block.url}`)); };
     container.appendChild(img);
-    if (block.caption) {
-      const cap = document.createElement('div');
-      cap.className = 'cb-preview-caption';
-      cap.textContent = block.caption;
-      container.appendChild(cap);
+
+    if (block.caption_position !== 'above') {
+      const cap = makeCap();
+      if (cap) container.appendChild(cap);
     }
   } else {
     container.appendChild(makePlaceholderImg('No image URL'));
@@ -532,26 +549,95 @@ function renderTextModalFields(container: HTMLElement, block: { type: 'text'; bo
   container.appendChild(preview);
 }
 
-function renderImageModalFields(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; alt?: string }, onChange: OnChange): void {
+function renderImageModalFields(container: HTMLElement, block: { type: 'image'; url: string; caption?: string; caption_position?: 'above' | 'below'; alt?: string; padding_x?: number; padding_y?: number }, onChange: OnChange): void {
   const imgPreview = document.createElement('div');
   imgPreview.className = 'cb-modal-img-preview';
 
+  let previewTimer: ReturnType<typeof setTimeout> | null = null;
   const updatePreview = () => {
-    imgPreview.innerHTML = '';
-    if (block.url) {
-      const img = document.createElement('img');
-      img.src = block.url;
-      img.style.maxWidth = '100%';
-      img.style.maxHeight = '200px';
-      img.style.borderRadius = '4px';
-      img.onerror = () => { imgPreview.textContent = 'Image not found'; };
-      imgPreview.appendChild(img);
-    }
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => {
+      imgPreview.innerHTML = '';
+      if (block.url) {
+        const img = document.createElement('img');
+        img.src = resolveAssetUrl(block.url);
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '200px';
+        img.style.borderRadius = '4px';
+        img.onerror = () => { imgPreview.textContent = 'Image not found'; };
+        imgPreview.appendChild(img);
+      }
+    }, 400);
   };
 
   container.appendChild(makeModalInput('URL', block.url, v => { block.url = v; onChange(); updatePreview(); }));
   container.appendChild(makeModalInput('Caption', block.caption ?? '', v => { block.caption = v || undefined; onChange(); }));
   container.appendChild(makeModalInput('Alt text', block.alt ?? '', v => { block.alt = v || undefined; onChange(); }));
+
+  // Caption position
+  const capPosRow = document.createElement('div');
+  capPosRow.className = 'input-row';
+  const capPosLabel = document.createElement('label');
+  capPosLabel.className = 'input-label';
+  capPosLabel.textContent = 'Caption Position';
+  const capPosSelect = document.createElement('select');
+  capPosSelect.className = 'input';
+  for (const pos of [{ value: 'below', label: 'Below image' }, { value: 'above', label: 'Above image' }]) {
+    const opt = document.createElement('option');
+    opt.value = pos.value;
+    opt.textContent = pos.label;
+    if ((block.caption_position ?? 'below') === pos.value) opt.selected = true;
+    capPosSelect.appendChild(opt);
+  }
+  capPosSelect.onchange = () => {
+    block.caption_position = capPosSelect.value === 'above' ? 'above' : undefined;
+    onChange();
+  };
+  capPosRow.appendChild(capPosLabel);
+  capPosRow.appendChild(capPosSelect);
+  container.appendChild(capPosRow);
+
+  // Padding (horizontal / vertical, in %)
+  const padRow = document.createElement('div');
+  padRow.className = 'input-row';
+  const padLabel = document.createElement('label');
+  padLabel.className = 'input-label';
+  padLabel.textContent = 'Padding (%)';
+
+  const padGroup = document.createElement('div');
+  padGroup.style.cssText = 'display:flex; gap:8px; flex:1;';
+
+  const makePadInput = (label: string, value: number | undefined, onSet: (v: number | undefined) => void): HTMLElement => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'flex:1; display:flex; flex-direction:column; gap:2px;';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:10px; color:#94a3b8;';
+    lbl.textContent = label;
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'input';
+    input.min = '0';
+    input.max = '50';
+    input.step = '1';
+    input.value = value?.toString() ?? '';
+    input.placeholder = '5';
+    input.oninput = () => {
+      const v = input.value ? Number(input.value) : undefined;
+      onSet(v != null && v >= 0 ? v : undefined);
+      onChange();
+    };
+    wrap.appendChild(lbl);
+    wrap.appendChild(input);
+    return wrap;
+  };
+
+  padGroup.appendChild(makePadInput('Left / Right', block.padding_x, v => { block.padding_x = v; }));
+  padGroup.appendChild(makePadInput('Top / Bottom', block.padding_y, v => { block.padding_y = v; }));
+
+  padRow.appendChild(padLabel);
+  padRow.appendChild(padGroup);
+  container.appendChild(padRow);
+
   updatePreview();
   container.appendChild(imgPreview);
 }

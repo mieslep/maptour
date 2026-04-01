@@ -24,7 +24,10 @@ export const ImageBlockSchema = z.object({
   type: z.literal('image'),
   url: z.string(),
   caption: z.string().optional(),
+  caption_position: z.enum(['above', 'below']).optional(),
   alt: z.string().optional(),
+  padding_x: z.number().min(0).max(50).optional(),
+  padding_y: z.number().min(0).max(50).optional(),
 });
 
 export const GalleryImageSchema = z.object({

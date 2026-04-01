@@ -28,6 +28,8 @@ const DEFAULTS: Record<string, string> = {
   next_stop:     'Next: {stop}',
   next_btn:      'Next →',
   finish_tour:   'Finish Tour',
+  return_to_start: 'Return to start →',
+  finish_here:   'Finish here',
 
   // Journey card
   arrived:       "I've arrived at {stop} →",

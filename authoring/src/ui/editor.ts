@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import type { Tour, Stop, ContentBlock, LegMode } from '../types';
-import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey, getAssetBaseUrl, setAssetBaseUrl } from '../store';
+import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey } from '../store';
 import { downloadYaml } from '../yaml-io';
 import { generateRoute, generateAllRoutes } from '../ors';
 import { renderContentBlockEditor } from './content-blocks';
@@ -53,7 +53,8 @@ export class TourEditor {
   private callbacks: EditorCallbacks;
   private map!: L.Map;
   private stopMarkers: L.Marker[] = [];
-  private routePolylines: L.Polyline[] = [];
+  private routePolylines: Map<number, L.Polyline> = new Map();
+  private routeConnectors: L.Polyline[] = [];
   private radiusCircle: L.Circle | null = null;
   private routePointMarkers: L.CircleMarker[] = [];
   private editingRouteSegment: number = -1;
@@ -303,9 +304,10 @@ export class TourEditor {
     }
   }
 
-  private startEditingRoute(stopIdx: number): void {
+  private startEditingRoute(stopIdx: number, fitMap = true): void {
     this.stopEditingRoute();
-    if (stopIdx <= 0 || stopIdx >= this.tour.stops.length) return;
+    if (stopIdx < 0 || stopIdx >= this.tour.stops.length) return;
+    if (this.tour.stops.length < 2) return;
     const stop = this.tour.stops[stopIdx];
     if (!stop.getting_here?.route || stop.getting_here.route.length === 0) return;
 
@@ -318,14 +320,17 @@ export class TourEditor {
     const route = stop.getting_here.route;
     let justDragged = false;
 
-    // Fit map to show the full segment with padding
-    const prevStop = this.tour.stops[stopIdx - 1];
-    const allPts: L.LatLngTuple[] = [
-      [prevStop.coords[0], prevStop.coords[1]],
-      ...route.map(p => [p[0], p[1]] as L.LatLngTuple),
-      [stop.coords[0], stop.coords[1]],
-    ];
-    this.map.fitBounds(L.latLngBounds(allPts), { padding: [60, 60], animate: true });
+    // Fit map to show the full segment with padding (only on first entry)
+    if (fitMap) {
+      const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
+      const prevStop = this.tour.stops[prevIdx];
+      const allPts: L.LatLngTuple[] = [
+        [prevStop.coords[0], prevStop.coords[1]],
+        ...route.map(p => [p[0], p[1]] as L.LatLngTuple),
+        [stop.coords[0], stop.coords[1]],
+      ];
+      this.map.fitBounds(L.latLngBounds(allPts), { padding: [60, 60], animate: true });
+    }
 
     const rebuildMarkers = () => {
       this.routePointMarkers.forEach(m => m.remove());
@@ -402,8 +407,8 @@ export class TourEditor {
       });
 
       // Make the polyline clickable for inserting points
-      if (stopIdx - 1 < this.routePolylines.length) {
-        const pl = this.routePolylines[stopIdx - 1];
+      if (this.routePolylines.has(stopIdx)) {
+        const pl = this.routePolylines.get(stopIdx)!;
         pl.off('click');
         pl.setStyle({ weight: 6, opacity: 0.4 }); // wider click target
         pl.on('click', (e: L.LeafletMouseEvent) => {
@@ -442,6 +447,18 @@ export class TourEditor {
     doneBtn.className = 'btn btn-sm btn-primary';
     doneBtn.textContent = 'Done';
     doneBtn.onclick = () => {
+      // Auto-connect last point to destination if not already there
+      const stop = this.tour.stops[stopIdx];
+      const route = stop.getting_here?.route;
+      if (route && route.length > 0) {
+        const lastPt = route[route.length - 1];
+        const dest = stop.coords;
+        const dist = Math.sqrt((lastPt[0] - dest[0]) ** 2 + (lastPt[1] - dest[1]) ** 2);
+        if (dist > 1e-6) {
+          route.push([...dest] as [number, number]);
+          this.changed();
+        }
+      }
       this.stopEditingRoute();
       this.refreshRoutePolylines();
       this.setStatus('Route editing finished.');
@@ -505,10 +522,10 @@ export class TourEditor {
     }
 
     this.refreshRoutePolylines();
-    // Rebuild markers to include the new point
+    // Rebuild markers without re-fitting the map
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
-    this.startEditingRoute(this.editingRouteSegment);
+    this.startEditingRoute(this.editingRouteSegment, false);
     this.setStatus(`Added point. ${route.length} points.`);
   }
 
@@ -530,7 +547,7 @@ export class TourEditor {
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
     this.refreshRoutePolylines();
-    this.startEditingRoute(segIdx);
+    this.startEditingRoute(segIdx, false);
     this.setStatus(`Deleted point. ${route.length} points remaining.`);
   }
 
@@ -548,7 +565,9 @@ export class TourEditor {
     this.stopMarkers.forEach(m => m.remove());
     this.stopMarkers = [];
     this.routePolylines.forEach(p => p.remove());
-    this.routePolylines = [];
+    this.routePolylines = new Map();
+    this.routeConnectors.forEach(p => p.remove());
+    this.routeConnectors = [];
     this.stopEditingRoute();
 
     // Add stop markers
@@ -582,29 +601,53 @@ export class TourEditor {
 
   private refreshRoutePolylines(): void {
     this.routePolylines.forEach(p => p.remove());
-    this.routePolylines = [];
+    this.routePolylines = new Map();
+    this.routeConnectors.forEach(p => p.remove());
+    this.routeConnectors = [];
 
-    for (let i = 1; i < this.tour.stops.length; i++) {
+    for (let i = 0; i < this.tour.stops.length; i++) {
       const stop = this.tour.stops[i];
-      const prevStop = this.tour.stops[i - 1];
+      const prevIdx = i === 0 ? this.tour.stops.length - 1 : i - 1;
+      const prevStop = this.tour.stops[prevIdx];
 
-      let points: [number, number][];
-      if (stop.getting_here?.route && stop.getting_here.route.length > 0) {
-        points = stop.getting_here.route;
-      } else {
-        // Draw a straight line if no route
-        points = [prevStop.coords, stop.coords];
-      }
+      // Skip if this stop has no getting_here and it's the first stop (no implicit route)
+      if (!stop.getting_here && i === 0) continue;
 
       const hasRoute = !!(stop.getting_here?.route && stop.getting_here.route.length > 0);
-      const polyline = L.polyline(points, {
-        color: hasRoute ? '#2563eb' : '#94a3b8',
-        weight: hasRoute ? 3 : 2,
-        dashArray: hasRoute ? undefined : '6 4',
-        opacity: 0.7,
-      }).addTo(this.map);
+      const isEditing = i === this.editingRouteSegment;
 
-      this.routePolylines.push(polyline);
+      if (hasRoute) {
+        // Solid line along actual route points
+        const polyline = L.polyline(stop.getting_here!.route!, {
+          color: '#2563eb',
+          weight: isEditing ? 4 : 3,
+          opacity: isEditing ? 0.9 : 0.7,
+        }).addTo(this.map);
+        this.routePolylines.set(i, polyline);
+
+        // During editing, show dashed connector from last route point to destination
+        if (isEditing) {
+          const lastPt = stop.getting_here!.route![stop.getting_here!.route!.length - 1];
+          if (lastPt[0] !== stop.coords[0] || lastPt[1] !== stop.coords[1]) {
+            const connector = L.polyline([lastPt, stop.coords], {
+              color: '#94a3b8',
+              weight: 2,
+              dashArray: '6 4',
+              opacity: 0.6,
+            }).addTo(this.map);
+            this.routeConnectors.push(connector);
+          }
+        }
+      } else {
+        // No route — draw a faint straight line from prev to this stop
+        const polyline = L.polyline([prevStop.coords, stop.coords], {
+          color: '#94a3b8',
+          weight: 2,
+          dashArray: '6 4',
+          opacity: 0.7,
+        }).addTo(this.map);
+        this.routePolylines.set(i, polyline);
+      }
     }
   }
 
@@ -864,19 +907,22 @@ export class TourEditor {
     content.className = 'section-content';
 
     const meta = this.tour.tour;
-    const fields: Array<{ label: string; key: string; value: string; type?: string }> = [
-      { label: 'ID', key: 'id', value: meta.id },
-      { label: 'Description', key: 'description', value: meta.description ?? '', type: 'textarea' },
-      { label: 'Duration', key: 'duration', value: meta.duration ?? '' },
-      { label: 'Close URL', key: 'close_url', value: meta.close_url ?? '' },
+    const fields: Array<{ label: string; key: string; value: string; type?: string; tip?: string }> = [
+      { label: 'ID', key: 'id', value: meta.id, tip: 'Unique identifier for this tour. Used in URLs and local storage.' },
+      { label: 'Description', key: 'description', value: meta.description ?? '', type: 'textarea', tip: 'Short description shown on the welcome card.' },
+      { label: 'Duration', key: 'duration', value: meta.duration ?? '', tip: 'Estimated time/distance, e.g. "2.5 km / approx. 45 minutes".' },
+      { label: 'Close URL', key: 'close_url', value: meta.close_url ?? '', tip: 'Where the user is sent after finishing the tour. Leave blank to just close the sheet.' },
     ];
+
+    const makeTip = (text: string): string =>
+      ` <span class="info-icon" title="${text}"><i class="fa-solid fa-circle-info"></i></span>`;
 
     fields.forEach(f => {
       const row = document.createElement('div');
       row.className = 'input-row';
       const label = document.createElement('label');
       label.className = 'input-label';
-      label.textContent = f.label;
+      label.innerHTML = f.label + (f.tip ? makeTip(f.tip) : '');
       row.appendChild(label);
 
       if (f.type === 'textarea') {
@@ -906,7 +952,7 @@ export class TourEditor {
     // Nav mode dropdown
     const navRow = document.createElement('div');
     navRow.className = 'input-row';
-    navRow.innerHTML = '<label class="input-label">Default Nav Mode</label>';
+    navRow.innerHTML = `<label class="input-label">Default Nav Mode${makeTip('Default transport mode for "get directions" buttons. Per-stop modes override this.')}</label>`;
     const navSelect = document.createElement('select');
     navSelect.className = 'input';
     for (const mode of ['', 'walk', 'drive', 'transit', 'cycle']) {
@@ -924,10 +970,10 @@ export class TourEditor {
     content.appendChild(navRow);
 
     // GPS config
-    const gpsFields: Array<{ label: string; key: keyof NonNullable<typeof meta.gps>; placeholder: string }> = [
-      { label: 'GPS Max Distance (m)', key: 'max_distance', placeholder: '5000' },
-      { label: 'GPS Max Accuracy (m)', key: 'max_accuracy', placeholder: '500' },
-      { label: 'GPS Arrival Radius (m)', key: 'arrival_radius', placeholder: '7.5' },
+    const gpsFields: Array<{ label: string; key: keyof NonNullable<typeof meta.gps>; placeholder: string; tip: string }> = [
+      { label: 'GPS Max Distance (m)', key: 'max_distance', placeholder: '500', tip: 'Ignore GPS readings farther than this from the nearest stop. Prevents pre-selecting a stop when the user is nowhere near the tour.' },
+      { label: 'GPS Max Accuracy (m)', key: 'max_accuracy', placeholder: '50', tip: 'Ignore GPS readings less accurate than this. Lower = stricter. 50m is good for urban areas.' },
+      { label: 'GPS Arrival Radius (m)', key: 'arrival_radius', placeholder: '7.5', tip: 'How close the user must be to a stop for automatic arrival detection. Can be overridden per stop.' },
     ];
 
     if (!meta.gps) meta.gps = {};
@@ -936,7 +982,7 @@ export class TourEditor {
       row.className = 'input-row';
       const label = document.createElement('label');
       label.className = 'input-label';
-      label.textContent = f.label;
+      label.innerHTML = f.label + makeTip(f.tip);
       const input = document.createElement('input');
       input.type = 'number';
       input.className = 'input';
@@ -952,24 +998,6 @@ export class TourEditor {
       row.appendChild(input);
       content.appendChild(row);
     });
-
-    // Asset base URL (for resolving relative image paths in previews)
-    const assetRow = document.createElement('div');
-    assetRow.className = 'input-row';
-    const assetLabel = document.createElement('label');
-    assetLabel.className = 'input-label';
-    assetLabel.innerHTML = 'Asset Base URL <span class="info-icon" title="Base URL for resolving relative image/audio paths in the preview. e.g. http://localhost:4173/ if serving from the demo folder. Not exported to YAML."><i class="fa-solid fa-circle-info"></i></span>';
-    assetRow.appendChild(assetLabel);
-    const assetInput = document.createElement('input');
-    assetInput.type = 'text';
-    assetInput.className = 'input';
-    assetInput.placeholder = 'e.g. http://localhost:4173/';
-    assetInput.value = getAssetBaseUrl();
-    assetInput.oninput = () => {
-      setAssetBaseUrl(assetInput.value);
-    };
-    assetRow.appendChild(assetInput);
-    content.appendChild(assetRow);
 
     return this.renderCollapsible('Tour Metadata', content, false);
   }
@@ -1431,7 +1459,10 @@ export class TourEditor {
         const editBtn = document.createElement('button');
         editBtn.className = 'btn btn-sm';
         editBtn.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i> Edit';
-        editBtn.onclick = () => this.startEditingRoute(stopIdx);
+        editBtn.onclick = () => {
+          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+          this.startEditingRoute(stopIdx);
+        };
         btnRow.appendChild(editBtn);
 
         const clearBtn = document.createElement('button');
@@ -1441,7 +1472,8 @@ export class TourEditor {
           this.withUndo(() => { gh.route = undefined; });
           this.stopEditingRoute();
           this.refreshRoutePolylines();
-          this.renderPanel();
+          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+          this.renderDetailPanel();
         };
         btnRow.appendChild(clearBtn);
       } else {
@@ -1450,18 +1482,20 @@ export class TourEditor {
         noRoute.textContent = 'No route';
         btnRow.appendChild(noRoute);
 
-        if (stopIdx > 0) {
+        if (this.tour.stops.length > 1) {
+          const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
           const manualBtn = document.createElement('button');
           manualBtn.className = 'btn btn-sm';
           manualBtn.innerHTML = '<i class="fa-solid fa-draw-polygon" aria-hidden="true"></i> Draw Route';
           manualBtn.onclick = () => {
-            const prevStop = this.tour.stops[stopIdx - 1];
+            const prevStop = this.tour.stops[prevIdx];
             this.withUndo(() => {
               gh.route = [
                 [...prevStop.coords] as [number, number],
                 [...stop.coords] as [number, number],
               ];
             });
+            document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
             this.refreshRoutePolylines();
             this.startEditingRoute(stopIdx);
             this.renderPanel();
@@ -1470,7 +1504,8 @@ export class TourEditor {
         }
       }
 
-      if (stopIdx > 0) {
+      if (this.tour.stops.length > 1) {
+        const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
         const genBtn = document.createElement('button');
         genBtn.className = 'btn btn-sm';
         genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
@@ -1483,7 +1518,7 @@ export class TourEditor {
             this.showOrsKeyModal(() => { genBtn.click(); });
             return;
           }
-          const prevStop = this.tour.stops[stopIdx - 1];
+          const prevStop = this.tour.stops[prevIdx];
           genBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
           genBtn.disabled = true;
           try {
@@ -1491,13 +1526,14 @@ export class TourEditor {
             this.withUndo(() => { gh.route = route; });
             this.stopEditingRoute();
             this.refreshRoutePolylines();
-            this.renderPanel();
+            document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+            this.renderDetailPanel();
             this.setStatus(`Route generated: ${route.length} points.`);
           } catch (err) {
             this.setStatus(`Route failed: ${(err as Error).message}`);
+            genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
+            genBtn.disabled = false;
           }
-          genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
-          genBtn.disabled = false;
         };
         btnRow.appendChild(genBtn);
       }

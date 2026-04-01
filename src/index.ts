@@ -357,6 +357,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
     }
   );
 
+  // Set up return-to-start on last stop (only for tours with 2+ stops)
+  if (tour.stops.length > 1) {
+    stopCard.onReturnToStart(() => navController.returnToStart());
+  }
+
   // === GPS ===
   let proximityDetector: ProximityDetector | null = null;
 
@@ -390,8 +395,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
         // Show nearest stop indicator on welcome screen (once, if accuracy and distance acceptable)
         if (!gpsPickerApplied && arrowMode === 'picker') {
-          const maxAccuracy = tour.tour.gps?.max_accuracy ?? 500;
-          const maxDistance = tour.tour.gps?.max_distance ?? 5000;
+          const maxAccuracy = tour.tour.gps?.max_accuracy ?? 50;
+          const maxDistance = tour.tour.gps?.max_distance ?? 500;
           if (pos.accuracy <= maxAccuracy) {
             const result = nearestStop(pos.lat, pos.lng, tour.stops);
             if (result.distance <= maxDistance) {
