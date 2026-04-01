@@ -62,6 +62,7 @@ export class TourEditor {
   private selectedStopIdx: number = -1;
   private selectedCard: 'welcome' | 'goodbye' | null = null;
   private previewMode: 'phone' | 'tablet' | 'desktop' = 'phone';
+  private detailTab: 'stop' | 'journey' = 'stop';
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
   private mapContainer!: HTMLElement;
@@ -237,6 +238,7 @@ export class TourEditor {
   private selectStop(idx: number): void {
     this.selectedStopIdx = idx;
     this.selectedCard = null;
+    this.detailTab = 'stop';
     this.renderPanel();
     this.highlightMarker(idx);
     if (idx >= 0 && idx < this.tour.stops.length) {
@@ -1060,80 +1062,279 @@ export class TourEditor {
     return this.renderCollapsible(`Cards (${this.tour.stops.length} stops)`, content, true);
   }
 
-  private makeCardSection(title: string): { wrapper: HTMLElement; body: HTMLElement } {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'card-section';
-    const header = document.createElement('div');
-    header.className = 'card-section-title';
-    header.textContent = title;
-    wrapper.appendChild(header);
-    const body = document.createElement('div');
-    body.className = 'card-section-body';
-    wrapper.appendChild(body);
-    return { wrapper, body };
-  }
+  private static MODE_ICONS: Record<string, string> = {
+    walk: 'fa-person-walking',
+    drive: 'fa-car',
+    transit: 'fa-bus',
+    cycle: 'fa-bicycle',
+  };
 
   private renderStopEditor(stop: Stop): HTMLElement {
     const content = document.createElement('div');
-    content.className = 'section-content';
+    content.className = 'card-preview';
 
-    // Title section
-    const titleSection = this.makeCardSection('Title');
-    const titleRow = document.createElement('div');
-    titleRow.className = 'input-row';
-    titleRow.innerHTML = '<label class="input-label">Title</label>';
-    const titleInput = document.createElement('input');
-    titleInput.type = 'text';
-    titleInput.className = 'input';
-    titleInput.value = stop.title;
-    titleInput.oninput = () => {
-      stop.title = titleInput.value;
-      this.changed();
-      // Update marker tooltip
-      const marker = this.stopMarkers[this.selectedStopIdx];
-      if (marker) marker.setTooltipContent(stop.title);
-    };
-    titleRow.appendChild(titleInput);
-    titleSection.body.appendChild(titleRow);
+    const stopIdx = this.selectedStopIdx;
+    const hasJourney = stopIdx > 0;
 
-    // Coords (readonly)
-    const coordsRow = document.createElement('div');
-    coordsRow.className = 'input-row';
-    coordsRow.innerHTML = '<label class="input-label">Coords</label>';
-    const coordsInput = document.createElement('input');
-    coordsInput.type = 'text';
-    coordsInput.className = 'input';
-    coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
-    coordsInput.readOnly = true;
-    coordsRow.appendChild(coordsInput);
-    titleSection.body.appendChild(coordsRow);
+    // Tab switcher (only if journey could exist)
+    if (hasJourney) {
+      const tabs = document.createElement('div');
+      tabs.className = 'card-tab-switcher';
+      for (const tab of ['stop', 'journey'] as const) {
+        const btn = document.createElement('button');
+        btn.className = `card-tab${this.detailTab === tab ? ' active' : ''}`;
+        btn.textContent = tab === 'stop' ? 'Stop Card' : 'Journey';
+        btn.onclick = () => {
+          this.detailTab = tab;
+          this.renderDetailPanel();
+        };
+        tabs.appendChild(btn);
+      }
+      content.appendChild(tabs);
+    }
 
-    // Arrival radius override
-    const radiusRow = document.createElement('div');
-    radiusRow.className = 'input-row';
-    radiusRow.innerHTML = '<label class="input-label">Arrival Radius (m)</label>';
-    const radiusInput = document.createElement('input');
-    radiusInput.type = 'number';
-    radiusInput.className = 'input';
-    radiusInput.placeholder = 'Default';
-    radiusInput.value = stop.arrival_radius?.toString() ?? '';
-    radiusInput.oninput = () => {
-      stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
-      this.changed();
-      this.updateRadiusCircle();
-    };
-    radiusRow.appendChild(radiusInput);
-    titleSection.body.appendChild(radiusRow);
-    content.appendChild(titleSection.wrapper);
+    if (this.detailTab === 'journey' && hasJourney) {
+      content.appendChild(this.renderJourneyTab(stop));
+    } else {
+      content.appendChild(this.renderStopCardTab(stop, stopIdx));
+    }
 
-    // Getting here section (for non-first stops)
-    if (this.selectedStopIdx > 0) {
+    return content;
+  }
+
+  private renderStopCardTab(stop: Stop, stopIdx: number): HTMLElement {
+    const frag = document.createElement('div');
+
+    // Zone 1: Title
+    const titleZone = document.createElement('div');
+    titleZone.className = 'card-edit-zone';
+
+    const titleHeading = document.createElement('div');
+    titleHeading.className = 'card-title';
+    titleHeading.textContent = stop.title || 'Untitled Stop';
+    titleZone.appendChild(titleHeading);
+
+    const coordsSmall = document.createElement('div');
+    coordsSmall.className = 'card-coords';
+    coordsSmall.textContent = `${stop.coords[0].toFixed(5)}, ${stop.coords[1].toFixed(5)}`;
+    titleZone.appendChild(coordsSmall);
+
+    titleZone.appendChild(this.makeZoneOverlay(() => this.showTitleModal(stop)));
+    frag.appendChild(titleZone);
+
+    // Zone 2: Getting Here (non-first stops only)
+    if (stopIdx > 0) {
       if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
       const gh = stop.getting_here;
 
-      const ghSection = this.makeCardSection('Getting Here');
-      const ghDiv = ghSection.body;
+      const ghZone = document.createElement('div');
+      ghZone.className = 'card-edit-zone card-getting-here';
 
+      const iconClass = TourEditor.MODE_ICONS[gh.mode] || 'fa-person-walking';
+      const modeIcon = document.createElement('i');
+      modeIcon.className = `fa-solid ${iconClass} card-gh-icon`;
+      ghZone.appendChild(modeIcon);
+
+      const noteText = document.createElement('span');
+      noteText.className = 'card-gh-note';
+      noteText.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
+      ghZone.appendChild(noteText);
+
+      if (gh.route && gh.route.length > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'card-gh-badge';
+        badge.textContent = `${gh.route.length} pts`;
+        ghZone.appendChild(badge);
+      }
+
+      ghZone.appendChild(this.makeZoneOverlay(() => this.showGettingHereModal(stop, stopIdx)));
+      frag.appendChild(ghZone);
+    }
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'card-divider';
+    frag.appendChild(divider);
+
+    // Zone 3: Content blocks (reuse existing WYSIWYG block preview system)
+    const contentZone = document.createElement('div');
+    contentZone.className = 'card-content-zone';
+    contentZone.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), ''));
+    frag.appendChild(contentZone);
+
+    // Zone 4: Footer (visual only)
+    const nextIdx = stopIdx + 1;
+    if (nextIdx < this.tour.stops.length) {
+      const footer = document.createElement('div');
+      footer.className = 'card-footer';
+      const nextStop = this.tour.stops[nextIdx];
+      footer.textContent = `Next: Stop ${nextIdx + 1} \u2014 ${nextStop.title || 'Untitled'}`;
+      frag.appendChild(footer);
+    } else {
+      const footer = document.createElement('div');
+      footer.className = 'card-footer';
+      footer.textContent = 'Last stop';
+      frag.appendChild(footer);
+    }
+
+    return frag;
+  }
+
+  private renderJourneyTab(stop: Stop): HTMLElement {
+    const frag = document.createElement('div');
+    frag.style.padding = '8px 0';
+    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
+    const gh = stop.getting_here;
+
+    if (gh.journey && gh.journey.length > 0) {
+      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), ''));
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn btn-sm btn-danger';
+      removeBtn.style.marginTop = '8px';
+      removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove all journey content';
+      removeBtn.onclick = () => {
+        if (!confirm('Remove all journey content for this route?')) return;
+        this.withUndo(() => { gh.journey = undefined; });
+        this.renderDetailPanel();
+      };
+      frag.appendChild(removeBtn);
+    } else {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'empty-msg';
+      emptyMsg.textContent = 'No journey content yet.';
+      frag.appendChild(emptyMsg);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'cb-add-btn';
+      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add journey content';
+      addBtn.onclick = () => {
+        this.withUndo(() => { gh.journey = [{ type: 'text', body: '' }]; });
+        this.renderDetailPanel();
+      };
+      frag.appendChild(addBtn);
+    }
+
+    return frag;
+  }
+
+  private makeZoneOverlay(onClick: () => void): HTMLElement {
+    const overlay = document.createElement('div');
+    overlay.className = 'card-zone-overlay';
+    const btn = document.createElement('button');
+    btn.className = 'card-zone-change';
+    btn.innerHTML = '<i class="fa-solid fa-pen"></i> Change';
+    btn.onclick = (e) => { e.stopPropagation(); onClick(); };
+    overlay.appendChild(btn);
+    return overlay;
+  }
+
+  private showEditZoneModal(title: string, renderFields: (body: HTMLElement) => void, onClose?: () => void): void {
+    const overlay = document.createElement('div');
+    overlay.className = 'cb-modal-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'cb-modal';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'cb-modal-header';
+    const titleEl = document.createElement('span');
+    titleEl.textContent = title;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'btn-icon';
+    closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    closeBtn.onclick = () => close();
+    header.appendChild(titleEl);
+    header.appendChild(closeBtn);
+    modal.appendChild(header);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'cb-modal-body';
+    renderFields(body);
+    modal.appendChild(body);
+
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'cb-modal-footer';
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'btn btn-primary';
+    doneBtn.textContent = 'Done';
+    doneBtn.onclick = () => close();
+    footer.appendChild(doneBtn);
+    modal.appendChild(footer);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+    const escHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', escHandler);
+
+    const self = this;
+    function close(): void {
+      document.removeEventListener('keydown', escHandler);
+      overlay.remove();
+      if (onClose) onClose();
+      self.renderDetailPanel();
+    }
+  }
+
+  private showTitleModal(stop: Stop): void {
+    this.showEditZoneModal('Edit Title', (body) => {
+      // Title
+      const titleRow = document.createElement('div');
+      titleRow.className = 'input-row';
+      titleRow.innerHTML = '<label class="input-label">Title</label>';
+      const titleInput = document.createElement('input');
+      titleInput.type = 'text';
+      titleInput.className = 'input';
+      titleInput.value = stop.title;
+      titleInput.oninput = () => {
+        stop.title = titleInput.value;
+        this.changed();
+        const marker = this.stopMarkers[this.selectedStopIdx];
+        if (marker) marker.setTooltipContent(stop.title);
+      };
+      titleRow.appendChild(titleInput);
+      body.appendChild(titleRow);
+
+      // Coords (readonly)
+      const coordsRow = document.createElement('div');
+      coordsRow.className = 'input-row';
+      coordsRow.innerHTML = '<label class="input-label">Coords</label>';
+      const coordsInput = document.createElement('input');
+      coordsInput.type = 'text';
+      coordsInput.className = 'input';
+      coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
+      coordsInput.readOnly = true;
+      coordsRow.appendChild(coordsInput);
+      body.appendChild(coordsRow);
+
+      // Arrival radius
+      const radiusRow = document.createElement('div');
+      radiusRow.className = 'input-row';
+      radiusRow.innerHTML = '<label class="input-label">Arrival Radius (m)</label>';
+      const radiusInput = document.createElement('input');
+      radiusInput.type = 'number';
+      radiusInput.className = 'input';
+      radiusInput.placeholder = 'Default';
+      radiusInput.value = stop.arrival_radius?.toString() ?? '';
+      radiusInput.oninput = () => {
+        stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
+        this.changed();
+        this.updateRadiusCircle();
+      };
+      radiusRow.appendChild(radiusInput);
+      body.appendChild(radiusRow);
+    });
+  }
+
+  private showGettingHereModal(stop: Stop, stopIdx: number): void {
+    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
+    const gh = stop.getting_here;
+
+    this.showEditZoneModal('Edit Getting Here', (body) => {
       // Mode
       const modeRow = document.createElement('div');
       modeRow.className = 'input-row';
@@ -1149,7 +1350,7 @@ export class TourEditor {
       }
       modeSelect.onchange = () => { gh.mode = modeSelect.value as LegMode; this.changed(); };
       modeRow.appendChild(modeSelect);
-      ghDiv.appendChild(modeRow);
+      body.appendChild(modeRow);
 
       // Note
       const noteRow = document.createElement('div');
@@ -1162,25 +1363,31 @@ export class TourEditor {
       noteInput.placeholder = 'e.g. "Continue along the path, ~3 min"';
       noteInput.oninput = () => { gh.note = noteInput.value || undefined; this.changed(); };
       noteRow.appendChild(noteInput);
-      ghDiv.appendChild(noteRow);
+      body.appendChild(noteRow);
 
-      // Route controls (always shown)
-      const stopIdx = this.tour.stops.indexOf(stop);
+      // Route controls
       const routeDiv = document.createElement('div');
-      routeDiv.className = 'route-info';
-      routeDiv.style.cssText = 'flex-wrap:wrap; gap:4px;';
+      routeDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
+
+      const routeLabel = document.createElement('div');
+      routeLabel.className = 'subsection-title';
+      routeLabel.textContent = 'Route';
+      routeDiv.appendChild(routeLabel);
+
+      const btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; align-items:center;';
 
       if (gh.route && gh.route.length > 0) {
-        const label = document.createElement('span');
-        label.textContent = `Route: ${gh.route.length} pts`;
-        label.style.marginRight = '4px';
-        routeDiv.appendChild(label);
+        const info = document.createElement('span');
+        info.style.cssText = 'font-size:12px; color:#64748b;';
+        info.textContent = `${gh.route.length} points`;
+        btnRow.appendChild(info);
 
         const editBtn = document.createElement('button');
         editBtn.className = 'btn btn-sm';
         editBtn.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i> Edit';
         editBtn.onclick = () => this.startEditingRoute(stopIdx);
-        routeDiv.appendChild(editBtn);
+        btnRow.appendChild(editBtn);
 
         const clearBtn = document.createElement('button');
         clearBtn.className = 'btn btn-sm btn-danger';
@@ -1191,14 +1398,13 @@ export class TourEditor {
           this.refreshRoutePolylines();
           this.renderPanel();
         };
-        routeDiv.appendChild(clearBtn);
+        btnRow.appendChild(clearBtn);
       } else {
-        const label = document.createElement('span');
-        label.textContent = 'No route';
-        label.style.cssText = 'color:#94a3b8; margin-right:4px;';
-        routeDiv.appendChild(label);
+        const noRoute = document.createElement('span');
+        noRoute.style.cssText = 'font-size:12px; color:#94a3b8;';
+        noRoute.textContent = 'No route';
+        btnRow.appendChild(noRoute);
 
-        // Create manual route (straight line between prev stop and this one, editable)
         if (stopIdx > 0) {
           const manualBtn = document.createElement('button');
           manualBtn.className = 'btn btn-sm';
@@ -1215,25 +1421,21 @@ export class TourEditor {
             this.startEditingRoute(stopIdx);
             this.renderPanel();
           };
-          routeDiv.appendChild(manualBtn);
+          btnRow.appendChild(manualBtn);
         }
       }
 
-      // Auto-generate route button (always available if there's a previous stop)
       if (stopIdx > 0) {
         const genBtn = document.createElement('button');
         genBtn.className = 'btn btn-sm';
         genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
         genBtn.onclick = async () => {
-          // Confirm if overwriting existing route
           if (gh.route && gh.route.length > 0) {
             if (!confirm(`Replace existing route (${gh.route.length} points) with auto-generated route?`)) return;
           }
           const apiKey = getOrsApiKey();
           if (!apiKey) {
-            this.showOrsKeyModal(() => {
-              genBtn.click();
-            });
+            this.showOrsKeyModal(() => { genBtn.click(); });
             return;
           }
           const prevStop = this.tour.stops[stopIdx - 1];
@@ -1241,9 +1443,7 @@ export class TourEditor {
           genBtn.disabled = true;
           try {
             const route = await generateRoute(prevStop.coords, stop.coords);
-            this.withUndo(() => {
-              gh.route = route;
-            });
+            this.withUndo(() => { gh.route = route; });
             this.stopEditingRoute();
             this.refreshRoutePolylines();
             this.renderPanel();
@@ -1254,49 +1454,12 @@ export class TourEditor {
           genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
           genBtn.disabled = false;
         };
-        routeDiv.appendChild(genBtn);
+        btnRow.appendChild(genBtn);
       }
 
-      ghDiv.appendChild(routeDiv);
-
-      // Journey content blocks
-      if (gh.journey && gh.journey.length > 0) {
-        ghDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), 'Journey Content'));
-        const removeJourneyBtn = document.createElement('button');
-        removeJourneyBtn.className = 'btn btn-sm btn-danger';
-        removeJourneyBtn.style.marginTop = '8px';
-        removeJourneyBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove all journey content';
-        removeJourneyBtn.onclick = () => {
-          if (!confirm('Remove all journey content for this route?')) return;
-          this.withUndo(() => {
-            gh.journey = undefined;
-          });
-          this.renderPanel();
-        };
-        ghDiv.appendChild(removeJourneyBtn);
-      } else {
-        const addJourneyBtn = document.createElement('button');
-        addJourneyBtn.className = 'btn btn-sm';
-        addJourneyBtn.style.marginTop = '8px';
-        addJourneyBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add journey content for this route';
-        addJourneyBtn.onclick = () => {
-          this.withUndo(() => {
-            gh.journey = [{ type: 'text', body: '' }];
-          });
-          this.renderPanel();
-        };
-        ghDiv.appendChild(addJourneyBtn);
-      }
-
-      content.appendChild(ghSection.wrapper);
-    }
-
-    // Stop content blocks
-    const contentSection = this.makeCardSection('Stop Content');
-    contentSection.body.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), ''));
-    content.appendChild(contentSection.wrapper);
-
-    return content;
+      routeDiv.appendChild(btnRow);
+      body.appendChild(routeDiv);
+    });
   }
 
   private renderWelcomeSection(): HTMLElement {
