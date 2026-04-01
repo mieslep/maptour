@@ -32,6 +32,23 @@ Built for Tidy Towns committees, heritage trails, festival maps, and any communi
 
 Download `maptour.js` and `maptour.css` from the [latest GitHub Release](https://github.com/YOUR-ORG/maptour/releases/latest) and place them alongside your HTML file.
 
+### Embedding from a CDN with SRI (recommended)
+
+For security, use [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) hashes when loading from an external source. Pin to a tagged release for stability:
+
+```html
+<link rel="stylesheet"
+      href="https://github.com/YOUR-ORG/maptour/releases/download/v1.2.0/maptour.css"
+      integrity="sha384-HASH_HERE" crossorigin="anonymous">
+
+<script src="https://github.com/YOUR-ORG/maptour/releases/download/v1.2.0/maptour.js"
+        integrity="sha384-HASH_HERE" crossorigin="anonymous"></script>
+```
+
+SRI hashes for each release are published in `sri.json` and `EMBED.md` alongside the release assets. The build generates these automatically via `npm run build:site`.
+
+**Best practice:** Always pin to a specific version tag (e.g. `v1.2.0`) rather than referencing `main`. This ensures the player version matches your tour's `schema_version` and avoids unexpected changes.
+
 ### Init options
 
 | Option | Type | Required | Description |
