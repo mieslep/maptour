@@ -1109,17 +1109,19 @@ export class TourEditor {
     const titleZone = document.createElement('div');
     titleZone.className = 'card-edit-zone';
 
+    titleZone.appendChild(this.makeGutterButton(() => this.showTitleModal(stop)));
+
+    const titleContent = document.createElement('div');
     const titleHeading = document.createElement('div');
     titleHeading.className = 'card-title';
     titleHeading.textContent = stop.title || 'Untitled Stop';
-    titleZone.appendChild(titleHeading);
+    titleContent.appendChild(titleHeading);
 
     const coordsSmall = document.createElement('div');
     coordsSmall.className = 'card-coords';
     coordsSmall.textContent = `${stop.coords[0].toFixed(5)}, ${stop.coords[1].toFixed(5)}`;
-    titleZone.appendChild(coordsSmall);
-
-    titleZone.appendChild(this.makeZoneOverlay(() => this.showTitleModal(stop)));
+    titleContent.appendChild(coordsSmall);
+    titleZone.appendChild(titleContent);
     frag.appendChild(titleZone);
 
     // Zone 2: Getting Here (non-first stops only)
@@ -1130,24 +1132,29 @@ export class TourEditor {
       const ghZone = document.createElement('div');
       ghZone.className = 'card-edit-zone card-getting-here';
 
+      ghZone.appendChild(this.makeGutterButton(() => this.showGettingHereModal(stop, stopIdx)));
+
+      const ghContent = document.createElement('div');
+      ghContent.style.cssText = 'display:flex; align-items:center; gap:6px; flex:1; min-width:0;';
+
       const iconClass = TourEditor.MODE_ICONS[gh.mode] || 'fa-person-walking';
       const modeIcon = document.createElement('i');
       modeIcon.className = `fa-solid ${iconClass} card-gh-icon`;
-      ghZone.appendChild(modeIcon);
+      ghContent.appendChild(modeIcon);
 
       const noteText = document.createElement('span');
       noteText.className = 'card-gh-note';
       noteText.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
-      ghZone.appendChild(noteText);
+      ghContent.appendChild(noteText);
 
       if (gh.route && gh.route.length > 0) {
         const badge = document.createElement('span');
         badge.className = 'card-gh-badge';
         badge.textContent = `${gh.route.length} pts`;
-        ghZone.appendChild(badge);
+        ghContent.appendChild(badge);
       }
 
-      ghZone.appendChild(this.makeZoneOverlay(() => this.showGettingHereModal(stop, stopIdx)));
+      ghZone.appendChild(ghContent);
       frag.appendChild(ghZone);
     }
 
@@ -1217,15 +1224,13 @@ export class TourEditor {
     return frag;
   }
 
-  private makeZoneOverlay(onClick: () => void): HTMLElement {
-    const overlay = document.createElement('div');
-    overlay.className = 'card-zone-overlay';
+  private makeGutterButton(onClick: () => void): HTMLElement {
     const btn = document.createElement('button');
-    btn.className = 'card-zone-change';
-    btn.innerHTML = '<i class="fa-solid fa-pen"></i> Change';
+    btn.className = 'card-gutter-btn';
+    btn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    btn.title = 'Edit';
     btn.onclick = (e) => { e.stopPropagation(); onClick(); };
-    overlay.appendChild(btn);
-    return overlay;
+    return btn;
   }
 
   private showEditZoneModal(title: string, renderFields: (body: HTMLElement) => void, onClose?: () => void): void {

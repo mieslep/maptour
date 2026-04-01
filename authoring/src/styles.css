@@ -669,52 +669,46 @@ textarea.input {
   font-weight: 600;
 }
 
-/* Edit zone */
+/* Edit zone with gutter button */
 .card-edit-zone {
   position: relative;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  margin: 4px 0;
-  transition: border-color 0.15s;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0;
+  transition: background 0.15s;
 }
 .card-edit-zone:hover {
-  border-color: #93c5fd;
+  background: rgba(37, 99, 235, 0.02);
 }
 
-/* Zone overlay with Change button */
-.card-zone-overlay {
-  position: absolute;
-  inset: 0;
+/* Gutter pencil button */
+.card-gutter-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(248, 250, 252, 0.7);
-  border-radius: 6px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  z-index: 2;
-  pointer-events: none;
-}
-.card-edit-zone:hover .card-zone-overlay {
-  opacity: 1;
-  pointer-events: auto;
-}
-.card-zone-change {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 5px;
-  background: white;
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 11px;
   cursor: pointer;
-  font-size: 12px;
-  color: #374151;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  transition: background 0.15s;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  margin-top: 2px;
 }
-.card-zone-change:hover { background: #f1f5f9; }
+.card-gutter-btn:hover {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+/* Zone content (fills remaining space) */
+.card-edit-zone > *:not(.card-gutter-btn) {
+  flex: 1;
+  min-width: 0;
+}
 
 /* Title zone */
 .card-title {
