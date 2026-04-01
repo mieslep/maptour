@@ -44,7 +44,6 @@ console.log('Player bundle: ✓ (already built)');
 // Demo files
 copy('demo/index.html', 'index.html');
 copy('demo/tour.yaml', 'tour.yaml');
-copy('demo/images', 'images');
 
 // Authoring app (already in dist/authoring/ from `npm run build:authoring`)
 if (existsSync(resolve(dist, 'authoring/index.html'))) {
@@ -83,12 +82,12 @@ const embedMd = `# Embedding MapTour
 ## Script tag with SRI hash
 
 \`\`\`html
-<link rel="stylesheet" href="https://YOURORG.github.io/maptour/maptour.css"
+<link rel="stylesheet" href="https://mieslep.github.io/maptour/maptour.css"
       integrity="${sriHashes['maptour.css'] || 'HASH'}" crossorigin="anonymous">
 
 <div id="maptour" style="width:100%;height:100vh;"></div>
 
-<script src="https://YOURORG.github.io/maptour/maptour.js"
+<script src="https://mieslep.github.io/maptour/maptour.js"
         integrity="${sriHashes['maptour.js'] || 'HASH'}" crossorigin="anonymous"></script>
 <script>
   MapTour.init({
@@ -103,7 +102,7 @@ const embedMd = `# Embedding MapTour
 Pin to a specific version for stability:
 
 \`\`\`html
-<script src="https://github.com/YOURORG/maptour/releases/download/v${version}/maptour.js"
+<script src="https://github.com/mieslep/maptour/releases/download/v${version}/maptour.js"
         integrity="${sriHashes['maptour.js'] || 'HASH'}" crossorigin="anonymous"></script>
 \`\`\`
 

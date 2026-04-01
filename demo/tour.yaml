@@ -1,14 +1,12 @@
-# Ennis Sculpture Trail — Self-Guided Walking Tour
 tour:
   schema_version: "1.0"
   id: ennis-sculpture-trail
   title: Ennis Sculpture Trail
-  description: >
-    A self-guided walking tour of the Ennis Sculpture Trail. Discover public artworks
-    placed throughout the town and its riverside paths, each with its own story.
-  duration: "2.5 km / approx. 45 minutes"
+  description: |
+    A self-guided walking tour of the Ennis Sculpture Trail. Discover public artworks placed throughout the town and its riverside paths, each with its own story.
+  duration: 2.5 km / approx. 45 minutes
   nav_mode: walk
-  close_url: "https://visitennis.ie"
+  close_url: https://visitennis.ie
   welcome:
     - type: text
       body: |
@@ -29,7 +27,6 @@ tour:
         **Before you start:**
         - There is one set of stairs between stops 5 and 6 (a step-free
           alternative is noted at that stop)
-
   goodbye:
     - type: text
       body: |
@@ -46,11 +43,12 @@ tour:
 
         For more about Ennis and what else to see, visit
         [visitennis.ie](https://visitennis.ie).
-
 stops:
   - id: 1
     title: Trinity
-    coords: [52.846411, -8.982617]
+    coords:
+      - 52.846411
+      - -8.982617
     content:
       - type: text
         body: |
@@ -64,28 +62,55 @@ stops:
           spearheaded by sculptor Carmel Doherty in 1997. Five artists
           created the trail together, several of them carving stone for
           the first time.
-
       - type: image
-        url: images/stop1-sculpture.jpg
-        caption: '"Trinity" by Diarmuid Twohig & Marcel Twohig'
-
-  - id: 2
-    title: The Centurial Sphere & Easter Rising Memorial
+        url: https://images.ennistidytowns.ie/sculpture/stop1-sculpture.jpg
+        caption: "\"Trinity\" by Diarmuid Twohig & Marcel Twohig"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~2 min"
       route:
-        - [52.846411, -8.982617]
-        - [52.846386, -8.982567]
-        - [52.846308, -8.982578]
-        - [52.846264, -8.982557]
-        - [52.846284, -8.982426]
-        - [52.846267, -8.982286]
-        - [52.846233, -8.982080]
-        - [52.846212, -8.981994]
-        - [52.846175, -8.981960]
-        - [52.846129, -8.981962]
-    coords: [52.846129, -8.981962]
+        - - 52.844034
+          - -8.981866
+        - - 52.84405030411838
+          - -8.98199343077261
+        - - 52.84412289347634
+          - -8.98209991361877
+        - - 52.844196432659324
+          - -8.982496907574799
+        - - 52.84431600807743
+          - -8.982592334337012
+        - - 52.84447812045452
+          - -8.982747687851763
+        - - 52.84460130249754
+          - -8.982562723517034
+        - - 52.844726074791744
+          - -8.98236984100683
+        - - 52.844799096880955
+          - -8.982236079881694
+        - - 52.84503415648426
+          - -8.982020918862514
+        - - 52.84529410190351
+          - -8.981835872287451
+        - - 52.845391957001105
+          - -8.981806530119215
+        - - 52.84566588260411
+          - -8.981753158506885
+        - - 52.84592045364437
+          - -8.981763981331902
+        - - 52.846101895648346
+          - -8.981804383647235
+        - - 52.84621202500438
+          - -8.981876255805
+        - - 52.84626636798792
+          - -8.98193390058481
+        - - 52.8463303092641
+          - -8.982378251057828
+        - - 52.846411
+          - -8.982617
+  - id: 2
+    title: The Centurial Sphere & Easter Rising Memorial
+    coords:
+      - 52.846129
+      - -8.981962
     content:
       - type: text
         body: |
@@ -103,33 +128,40 @@ stops:
           cultural tradition - a tradition cherished by the men and women
           of 1916.
       - type: image
-        url: images/stop2-sphere.jpg
+        url: https://images.ennistidytowns.ie/sculpture/stop2-sphere.jpg
         caption: The Centurial Sphere (2016) by Paddy Murray
       - type: image
-        url: images/stop2-memorial.jpg
+        url: https://images.ennistidytowns.ie/sculpture/stop2-memorial.jpg
         caption: Easter Rising Memorial Stone (1966)
-
-  - id: 3
-    title: "Bl\xE1th na h\xCDnse"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~3 min"
+      note: Continue along the path, ~2 min
       route:
-        - [52.846129, -8.981962]
-        - [52.846084, -8.981928]
-        - [52.845981, -8.981879]
-        - [52.845867, -8.981850]
-        - [52.845647, -8.981852]
-        - [52.845509, -8.981893]
-        - [52.845430, -8.981917]
-        - [52.845449, -8.982212]
-        - [52.845467, -8.982343]
-        - [52.845326, -8.982464]
-        - [52.845128, -8.982663]
-        - [52.845120, -8.982898]
-        - [52.845062, -8.983044]
-
-    coords: [52.845062, -8.983044]
+        - - 52.846411
+          - -8.982617
+        - - 52.846386
+          - -8.982567
+        - - 52.846308
+          - -8.982578
+        - - 52.846264
+          - -8.982557
+        - - 52.846284
+          - -8.982426
+        - - 52.846267
+          - -8.982286
+        - - 52.846233
+          - -8.98208
+        - - 52.846212
+          - -8.981994
+        - - 52.846175
+          - -8.98196
+        - - 52.846129
+          - -8.981962
+  - id: 3
+    title: Bláth na hÍnse
+    coords:
+      - 52.845062
+      - -8.983044
     content:
       - type: text
         body: |
@@ -142,23 +174,43 @@ stops:
           Three steel benches surround the Iris, which rises from a flowerbed
           filled with wildflowers and is illuminated at night.
       - type: image
-        url: images/stop3-sculpture.jpg
-        caption: '"Bláth na hÍnse" by Conor & Paddy Murray, Kilkee Forge'
-
-  - id: 4
-    title: Contentment is Wealth
+        url: https://images.ennistidytowns.ie/sculpture/stop3-sculpture.jpg
+        caption: "\"Bláth na hÍnse\" by Conor & Paddy Murray, Kilkee Forge"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~6 min"
+      note: Continue along the path, ~3 min
       route:
-        - [52.845062, -8.983044]
-        - [52.844894, -8.983421]
-        - [52.844792, -8.983520]
-        - [52.844669, -8.983639]
-        - [52.844623, -8.983547]
-        - [52.844580, -8.983599]
-        - [52.844562, -8.983567]
-    coords: [52.844562, -8.983567]
+        - - 52.846129
+          - -8.981962
+        - - 52.846084
+          - -8.981928
+        - - 52.845981
+          - -8.981879
+        - - 52.845867
+          - -8.98185
+        - - 52.845647
+          - -8.981852
+        - - 52.845509
+          - -8.981893
+        - - 52.84543
+          - -8.981917
+        - - 52.845449
+          - -8.982212
+        - - 52.845467
+          - -8.982343
+        - - 52.845326
+          - -8.982464
+        - - 52.845128
+          - -8.982663
+        - - 52.84512
+          - -8.982898
+        - - 52.845062
+          - -8.983044
+  - id: 4
+    title: Contentment is Wealth
+    coords:
+      - 52.844562
+      - -8.983567
     content:
       - type: text
         body: |
@@ -171,26 +223,34 @@ stops:
           Together, the two pieces celebrate Ennis's strong tradition of
           music, performance, and informal gathering.
       - type: image
-        url: images/stop4-fiddler.jpg
+        url: https://images.ennistidytowns.ie/sculpture/stop4-fiddler.jpg
         caption: The fiddler - "Contentment is Wealth" by Fiona O'Dwyer (1998)
       - type: image
-        url: images/stop4-chair.jpg
+        url: https://images.ennistidytowns.ie/sculpture/stop4-chair.jpg
         caption: The stone chair - "Contentment is Wealth" by Fiona O'Dwyer (1998)
-
-  - id: 5
-    title: Sleepy Head - Helping Hands
     getting_here:
       mode: walk
-      note: "Continue along the path, ~3 min"
+      note: Continue along the path, ~6 min
       route:
-        - [52.844562, -8.983567]
-        - [52.844604, -8.983666]
-        - [52.844506, -8.983792]
-        - [52.844426, -8.983977]
-        - [52.844426, -8.984103]
-        - [52.844442, -8.984188]
-        - [52.844473, -8.984257]
-    coords: [52.844473, -8.984257]
+        - - 52.845062
+          - -8.983044
+        - - 52.844894
+          - -8.983421
+        - - 52.844792
+          - -8.98352
+        - - 52.844669
+          - -8.983639
+        - - 52.844623
+          - -8.983547
+        - - 52.84458
+          - -8.983599
+        - - 52.844562
+          - -8.983567
+  - id: 5
+    title: Sleepy Head - Helping Hands
+    coords:
+      - 52.844473
+      - -8.984257
     content:
       - type: text
         body: |
@@ -199,48 +259,34 @@ stops:
           in Ennis - a town where there is always time to stop, chat, and
           lend a hand.
       - type: image
-        url: images/stop5-sleepyhead.jpg
-        caption: '"Sleepy Head" by Shane Gilmore (1998)'
+        url: https://images.ennistidytowns.ie/sculpture/stop5-sleepyhead.jpg
+        caption: "\"Sleepy Head\" by Shane Gilmore (1998)"
       - type: image
-        url: images/stop5-helpinghands.jpg
-        caption: '"Helping Hands" by Shane Gilmore (1998)'
-
-  - id: 6
-    title: Clara
+        url: https://images.ennistidytowns.ie/sculpture/stop5-helpinghands.jpg
+        caption: "\"Helping Hands\" by Shane Gilmore (1998)"
     getting_here:
       mode: walk
-      note: |
-          Up the stairs past AIB to Bindon Street, ~4 min.
-          Step-free alternative: double back and turn left at the road.
-      journey:
-        - type: text
-          body: |
-            As you head up the steps from Bank Place, look around at the
-            red-brick Georgian terraces. Ennis grew rapidly in the 18th and
-            early 19th centuries as a market town and parliamentary borough.
-            Many of these terraced houses date from that period, built for
-            the merchants and professionals who served the town's thriving
-            economy. Bindon Street is one of Clare's best surviving
-            Georgian streetscapes.
-        - type: image
-          url: images/journey-5to6-georgian.jpg
-          caption: Georgian terraced houses on the route between stops 5 and 6
+      note: Continue along the path, ~3 min
       route:
-        - [52.844473, -8.984257]
-        - [52.844568, -8.984331]
-        - [52.844589, -8.984261]
-        - [52.844634, -8.984049]
-        - [52.844672, -8.983958]
-        - [52.844691, -8.983918]
-        - [52.844751, -8.984017]
-        - [52.844842, -8.984202]
-        - [52.845114, -8.984859]
-        - [52.845174, -8.985049]
-        - [52.845235, -8.985009]
-        - [52.845268, -8.985135]
-        - [52.845399, -8.985650]
-        - [52.845447, -8.985658]
-    coords: [52.845447, -8.985658]
+        - - 52.844562
+          - -8.983567
+        - - 52.844604
+          - -8.983666
+        - - 52.844506
+          - -8.983792
+        - - 52.844426
+          - -8.983977
+        - - 52.844426
+          - -8.984103
+        - - 52.844442
+          - -8.984188
+        - - 52.844473
+          - -8.984257
+  - id: 6
+    title: Clara
+    coords:
+      - 52.845447
+      - -8.985658
     content:
       - type: text
         body: |
@@ -256,28 +302,60 @@ stops:
           Woods in 1996, which proved so popular that thousands of brochures
           were picked up in the first month.
       - type: image
-        url: images/stop6-clara.jpg
-        caption: '"Clara" by Carmel Doherty'
-
-  - id: 7
-    title: Figurative Sculptures, Harmony Row
+        url: https://images.ennistidytowns.ie/sculpture/stop6-clara.jpg
+        caption: "\"Clara\" by Carmel Doherty"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~3 min"
+      note: |
+        Up the stairs past AIB to Bindon Street, ~4 min.
+        Step-free alternative: double back and turn left at the road.
       route:
-        - [52.845447, -8.985658]
-        - [52.845469, -8.985685]
-        - [52.845556, -8.985610]
-        - [52.845879, -8.985390]
-        - [52.846015, -8.985301]
-        - [52.846224, -8.985184]
-        - [52.846206, -8.984953]
-        - [52.846198, -8.984816]
-        - [52.846211, -8.984575]
-        - [52.846169, -8.984563]
-        - [52.846172, -8.984500]
-        - [52.846143, -8.984485]
-    coords: [52.846143, -8.984485]
+        - - 52.844473
+          - -8.984257
+        - - 52.844568
+          - -8.984331
+        - - 52.844589
+          - -8.984261
+        - - 52.844634
+          - -8.984049
+        - - 52.844672
+          - -8.983958
+        - - 52.844691
+          - -8.983918
+        - - 52.844751
+          - -8.984017
+        - - 52.844842
+          - -8.984202
+        - - 52.845114
+          - -8.984859
+        - - 52.845174
+          - -8.985049
+        - - 52.845235
+          - -8.985009
+        - - 52.845268
+          - -8.985135
+        - - 52.845399
+          - -8.98565
+        - - 52.845447
+          - -8.985658
+      journey:
+        - type: text
+          body: |
+            As you head up the steps from Bank Place, look around at the
+            red-brick Georgian terraces. Ennis grew rapidly in the 18th and
+            early 19th centuries as a market town and parliamentary borough.
+            Many of these terraced houses date from that period, built for
+            the merchants and professionals who served the town's thriving
+            economy. Bindon Street is one of Clare's best surviving
+            Georgian streetscapes.
+        - type: image
+          url: images/journey-5to6-georgian.jpg
+          caption: Georgian terraced houses on the route between stops 5 and 6
+  - id: 7
+    title: Figurative Sculptures, Harmony Row
+    coords:
+      - 52.846143
+      - -8.984485
     content:
       - type: text
         body: |
@@ -289,33 +367,42 @@ stops:
           look and invite different interpretations - identity, presence,
           community, and conversation.
       - type: image
-        url: images/stop7-lawn.jpg
+        url: https://images.ennistidytowns.ie/sculpture/stop7-lawn.jpg
       - type: image
-        url: images/stop7-figures.jpg
-
-  - id: 8
-    title: A Fishy Tail
+        url: https://images.ennistidytowns.ie/sculpture/stop7-figures.jpg
     getting_here:
       mode: walk
-      note: "Continue along the path, ~5 min"
+      note: Continue along the path, ~3 min
       route:
-        - [52.846143, -8.984485]
-        - [52.846180, -8.984497]
-        - [52.846172, -8.984564]
-        - [52.846212, -8.984578]
-        - [52.846199, -8.984827]
-        - [52.846216, -8.985117]
-        - [52.846237, -8.985264]
-        - [52.846250, -8.985417]
-        - [52.846411, -8.986066]
-        - [52.846473, -8.986358]
-        - [52.846598, -8.986886]
-        - [52.846723, -8.987551]
-        - [52.846847, -8.988098]
-        - [52.846949, -8.988385]
-        - [52.846941, -8.988565]
-        - [52.846979, -8.988706]
-    coords: [52.846979, -8.988706]
+        - - 52.845447
+          - -8.985658
+        - - 52.845469
+          - -8.985685
+        - - 52.845556
+          - -8.98561
+        - - 52.845879
+          - -8.98539
+        - - 52.846015
+          - -8.985301
+        - - 52.846224
+          - -8.985184
+        - - 52.846206
+          - -8.984953
+        - - 52.846198
+          - -8.984816
+        - - 52.846211
+          - -8.984575
+        - - 52.846169
+          - -8.984563
+        - - 52.846172
+          - -8.9845
+        - - 52.846143
+          - -8.984485
+  - id: 8
+    title: A Fishy Tail
+    coords:
+      - 52.846979
+      - -8.988706
     content:
       - type: text
         body: |
@@ -323,8 +410,8 @@ stops:
           Its position inside the fountain at the Maid of Erin roundabout
           highlights the aquatic theme perfectly.
       - type: image
-        url: images/stop8-fishtail.jpg
-        caption: '"A Fishy Tail" by Carmel Doherty'
+        url: https://images.ennistidytowns.ie/sculpture/stop8-fishtail.jpg
+        caption: "\"A Fishy Tail\" by Carmel Doherty"
       - type: text
         body: |
           Opposite the fountain stands the **Maid of Erin**, a monument
@@ -337,25 +424,47 @@ stops:
       - type: image
         url: images/stop8-maidoferin.jpg
         caption: The Maid of Erin monument (1897)
-
-  - id: 9
-    title: Memory of Meaning
     getting_here:
       mode: walk
-      note: "Continue along the path, ~2 min"
+      note: Continue along the path, ~5 min
       route:
-        - [52.846979, -8.988706]
-        - [52.847058, -8.988874]
-        - [52.847059, -8.988976]
-        - [52.847025, -8.989144]
-        - [52.846920, -8.989252]
-        - [52.846651, -8.989313]
-        - [52.846541, -8.989327]
-        - [52.846549, -8.989488]
-        - [52.846525, -8.989496]
-        - [52.846535, -8.989678]
-        - [52.846547, -8.989682]
-    coords: [52.846547, -8.989682]
+        - - 52.846143
+          - -8.984485
+        - - 52.84618
+          - -8.984497
+        - - 52.846172
+          - -8.984564
+        - - 52.846212
+          - -8.984578
+        - - 52.846199
+          - -8.984827
+        - - 52.846216
+          - -8.985117
+        - - 52.846237
+          - -8.985264
+        - - 52.84625
+          - -8.985417
+        - - 52.846411
+          - -8.986066
+        - - 52.846473
+          - -8.986358
+        - - 52.846598
+          - -8.986886
+        - - 52.846723
+          - -8.987551
+        - - 52.846847
+          - -8.988098
+        - - 52.846949
+          - -8.988385
+        - - 52.846941
+          - -8.988565
+        - - 52.846979
+          - -8.988706
+  - id: 9
+    title: Memory of Meaning
+    coords:
+      - 52.846547
+      - -8.989682
     content:
       - type: text
         body: |
@@ -373,23 +482,39 @@ stops:
           Clare has gone on to win the Liam McCarthy cup three more times 
           since then (1997, 2013, and 2024) — Hon the Banner!
       - type: image
-        url: images/stop9-memory.jpg
-        caption: '"Memory of Meaning" by Colin Grehan & Barry Wrafter'
-
-  - id: 10
-    title: Four Minds
+        url: https://images.ennistidytowns.ie/sculpture/stop9-memory.jpg
+        caption: "\"Memory of Meaning\" by Colin Grehan & Barry Wrafter"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~1 min"
+      note: Continue along the path, ~2 min
       route:
-        - [52.846547, -8.989682]
-        - [52.846531, -8.989691]
-        - [52.846522, -8.989504]
-        - [52.846546, -8.989496]
-        - [52.846538, -8.989262]
-        - [52.846537, -8.989154]
-        - [52.846520, -8.989155]
-    coords: [52.846520, -8.989155]
+        - - 52.846979
+          - -8.988706
+        - - 52.847058
+          - -8.988874
+        - - 52.847059
+          - -8.988976
+        - - 52.847025
+          - -8.989144
+        - - 52.84692
+          - -8.989252
+        - - 52.846651
+          - -8.989313
+        - - 52.846541
+          - -8.989327
+        - - 52.846549
+          - -8.989488
+        - - 52.846525
+          - -8.989496
+        - - 52.846535
+          - -8.989678
+        - - 52.846547
+          - -8.989682
+  - id: 10
+    title: Four Minds
+    coords:
+      - 52.84652
+      - -8.989155
     content:
       - type: text
         body: |
@@ -406,26 +531,31 @@ stops:
           similar style - human forms blended with symbolic and natural 
           elements.
       - type: image
-        url: images/stop10-fourminds.jpg
-        caption: '"Four Minds" by Diarmuid Twohig & Marcel Twohig'
-
-  - id: 11
-    title: Dreamboat
+        url: https://images.ennistidytowns.ie/sculpture/stop10-fourminds.jpg
+        caption: "\"Four Minds\" by Diarmuid Twohig & Marcel Twohig"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~2 min"
+      note: Continue along the path, ~1 min
       route:
-        - [52.846520, -8.989155]
-        - [52.846538, -8.989150]
-        - [52.846540, -8.989030]
-        - [52.846496, -8.988960]
-        - [52.846465, -8.988949]
-        - [52.846400, -8.988890]
-        - [52.846379, -8.988804]
-        - [52.846368, -8.988654]
-        - [52.846425, -8.988569]
-        - [52.846404, -8.988386]
-    coords: [52.846404, -8.988386]
+        - - 52.846547
+          - -8.989682
+        - - 52.846531
+          - -8.989691
+        - - 52.846522
+          - -8.989504
+        - - 52.846546
+          - -8.989496
+        - - 52.846538
+          - -8.989262
+        - - 52.846537
+          - -8.989154
+        - - 52.84652
+          - -8.989155
+  - id: 11
+    title: Dreamboat
+    coords:
+      - 52.846404
+      - -8.988386
     content:
       - type: text
         body: |
@@ -438,14 +568,79 @@ stops:
           on the trail combines figurative imagery with symbols that invite
           personal interpretation.
       - type: image
-        url: images/stop11-dreamboat.jpg
-        caption: '"Dreamboat" by Fiona Dwyer'
-
-  - id: 12
-    title: Embrace Nature
+        url: https://images.ennistidytowns.ie/sculpture/stop11-dreamboat.jpg
+        caption: "\"Dreamboat\" by Fiona Dwyer"
     getting_here:
       mode: walk
-      note: "Along the riverside path, ~4 min"
+      note: Continue along the path, ~2 min
+      route:
+        - - 52.84652
+          - -8.989155
+        - - 52.846538
+          - -8.98915
+        - - 52.84654
+          - -8.98903
+        - - 52.846496
+          - -8.98896
+        - - 52.846465
+          - -8.988949
+        - - 52.8464
+          - -8.98889
+        - - 52.846379
+          - -8.988804
+        - - 52.846368
+          - -8.988654
+        - - 52.846425
+          - -8.988569
+        - - 52.846404
+          - -8.988386
+  - id: 12
+    title: Embrace Nature
+    coords:
+      - 52.844301
+      - -8.987508
+    content:
+      - type: text
+        body: |
+          This limestone sculpture shows the relationship between mankind
+          and nature. It was Shane's first attempt at stone carving. Look
+          closely and see if you can spot a frog, a fish, an otter and a
+          bird hidden in the embrace.
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/stop12-embrace.jpg
+        caption: "\"Embrace Nature\" by Shane Gilmore (1997)"
+    getting_here:
+      mode: walk
+      note: Along the riverside path, ~4 min
+      route:
+        - - 52.846404
+          - -8.988386
+        - - 52.846395
+          - -8.98833
+        - - 52.84636
+          - -8.987976
+        - - 52.84634
+          - -8.98786
+        - - 52.846274
+          - -8.987812
+        - - 52.845974
+          - -8.987737
+        - - 52.845854
+          - -8.987785
+        - - 52.845582
+          - -8.987903
+        - - 52.845276
+          - -8.988091
+        - - 52.845164
+          - -8.988102
+        - - 52.844926
+          - -8.988087
+        - - 52.844722
+          - -8.988021
+        - - 52.844583
+          - -8.987923
+        - - 52.844301
+          - -8.987508
       journey:
         - type: text
           body: |
@@ -462,38 +657,69 @@ stops:
         - type: image
           url: images/journey-11to12-fergus.jpg
           caption: The River Fergus and Post Office Field
-      route:
-        - [52.846404, -8.988386]
-        - [52.846395, -8.988330]
-        - [52.846360, -8.987976]
-        - [52.846340, -8.987860]
-        - [52.846274, -8.987812]
-        - [52.845974, -8.987737]
-        - [52.845854, -8.987785]
-        - [52.845582, -8.987903]
-        - [52.845276, -8.988091]
-        - [52.845164, -8.988102]
-        - [52.844926, -8.988087]
-        - [52.844722, -8.988021]
-        - [52.844583, -8.987923]
-        - [52.844301, -8.987508]
-    coords: [52.844301, -8.987508]
+  - id: 13
+    title: Market Day
+    coords:
+      - 52.843121
+      - -8.984797
     content:
       - type: text
         body: |
-          This limestone sculpture shows the relationship between mankind
-          and nature. It was Shane's first attempt at stone carving. Look
-          closely and see if you can spot a frog, a fish, an otter and a
-          bird hidden in the embrace.
-      - type: image
-        url: images/stop12-embrace.jpg
-        caption: '"Embrace Nature" by Shane Gilmore (1997)'
+          In Ennis Market Square, this scene shows two farmers negotiating
+          the sale of a cow, with a faithful dog alongside. It captures the
+          old market trading culture that was central to Ennis life for
+          centuries. The town held its charter market here, and cattle fairs
+          were a regular feature well into the 20th century.
 
-  - id: 13
-    title: Market Day
+          This sculpture replaced the older Icarus statue on the roundabout
+          and has become one of the most recognisable pieces in Ennis.
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/stop13-marketday.jpg
+        caption: "\"Market Day\" by Barry Wrafter (c. 2012)"
     getting_here:
       mode: walk
-      note: "Through Enright's Bow and along the laneways, ~4 min"
+      note: Through Enright's Bow and along the laneways, ~4 min
+      route:
+        - - 52.844301
+          - -8.987508
+        - - 52.844281
+          - -8.987391
+        - - 52.844246
+          - -8.987243
+        - - 52.84421
+          - -8.987163
+        - - 52.844168
+          - -8.987021
+        - - 52.844166
+          - -8.986819
+        - - 52.84427
+          - -8.986264
+        - - 52.844341
+          - -8.985835
+        - - 52.844268
+          - -8.985744
+        - - 52.844237
+          - -8.985736
+        - - 52.844182
+          - -8.985704
+        - - 52.844086
+          - -8.985676
+        - - 52.844016
+          - -8.985677
+        - - 52.843889
+          - -8.985648
+        - - 52.843703
+          - -8.985534
+        - - 52.843381
+          - -8.985323
+        - - 52.843328
+          - -8.984958
+        - - 52.84328
+          - -8.984838
+        - - 52.843217
+          - -8.984778
+        - - 52.843121
+          - -8.984797
       journey:
         - type: text
           body: |
@@ -512,59 +738,11 @@ stops:
         - type: image
           url: images/journey-12to13-bowway.jpg
           caption: Enright's Bow - one of Ennis's restored bowways
-      route:
-        - [52.844301, -8.987508]
-        - [52.844281, -8.987391]
-        - [52.844246, -8.987243]
-        - [52.844210, -8.987163]
-        - [52.844168, -8.987021]
-        - [52.844166, -8.986819]
-        - [52.844270, -8.986264]
-        - [52.844341, -8.985835]
-        - [52.844268, -8.985744]
-        - [52.844237, -8.985736]
-        - [52.844182, -8.985704]
-        - [52.844086, -8.985676]
-        - [52.844016, -8.985677]
-        - [52.843889, -8.985648]
-        - [52.843703, -8.985534]
-        - [52.843381, -8.985323]
-        - [52.843328, -8.984958]
-        - [52.843280, -8.984838]
-        - [52.843217, -8.984778]
-        - [52.843121, -8.984797]
-    coords: [52.843121, -8.984797]
-    content:
-      - type: text
-        body: |
-          In Ennis Market Square, this scene shows two farmers negotiating
-          the sale of a cow, with a faithful dog alongside. It captures the
-          old market trading culture that was central to Ennis life for
-          centuries. The town held its charter market here, and cattle fairs
-          were a regular feature well into the 20th century.
-
-          This sculpture replaced the older Icarus statue on the roundabout
-          and has become one of the most recognisable pieces in Ennis.
-      - type: image
-        url: images/stop13-marketday.jpg
-        caption: '"Market Day" by Barry Wrafter (c. 2012)'
-
   - id: 14
     title: Weathered Woman
-    getting_here:
-      mode: walk
-      note: "Continue along the path, ~4 min"
-      route:
-        - [52.843121, -8.984797]
-        - [52.843063, -8.984819]
-        - [52.842892, -8.984942]
-        - [52.842752, -8.985073]
-        - [52.842582, -8.985183]
-        - [52.842327, -8.985190]
-        - [52.842204, -8.985135]
-        - [52.842173, -8.985087]
-        - [52.842067, -8.984443]
-    coords: [52.842067, -8.984443]
+    coords:
+      - 52.842067
+      - -8.984443
     content:
       - type: text
         body: |
@@ -578,26 +756,35 @@ stops:
           is part of the meaning, a reminder that time leaves its mark
           on all of us.
       - type: image
-        url: images/stop14-weathered.jpg
-        caption: '"Weathered Woman" by Jose Croft (1998)'
-
-  - id: 15
-    title: Hands
+        url: https://images.ennistidytowns.ie/sculpture/stop14-weathered.jpg
+        caption: "\"Weathered Woman\" by Jose Croft (1998)"
     getting_here:
       mode: walk
-      note: "Continue along the path, ~1 min"
+      note: Continue along the path, ~4 min
       route:
-        - [52.842067, -8.984443]
-        - [52.842094, -8.984303]
-        - [52.842149, -8.984180]
-        - [52.842172, -8.984049]
-        - [52.842159, -8.983791]
-        - [52.842148, -8.983620]
-        - [52.842119, -8.983486]
-        - [52.842065, -8.983518]
-        - [52.842026, -8.983380]
-        - [52.842014, -8.983296]
-    coords: [52.842014, -8.983296]
+        - - 52.843121
+          - -8.984797
+        - - 52.843063
+          - -8.984819
+        - - 52.842892
+          - -8.984942
+        - - 52.842752
+          - -8.985073
+        - - 52.842582
+          - -8.985183
+        - - 52.842327
+          - -8.98519
+        - - 52.842204
+          - -8.985135
+        - - 52.842173
+          - -8.985087
+        - - 52.842067
+          - -8.984443
+  - id: 15
+    title: Hands
+    coords:
+      - 52.842014
+      - -8.983296
     content:
       - type: text
         body: |
@@ -611,14 +798,90 @@ stops:
           story continued to grow beyond the original sculptures of the
           late 1990s.
       - type: image
-        url: images/stop15-hands.jpg
-        caption: '"Hands" by Shane Gilmore (2008)'
-
-  - id: 16
-    title: Celtic Rest
+        url: https://images.ennistidytowns.ie/sculpture/stop15-hands.jpg
+        caption: "\"Hands\" by Shane Gilmore (2008)"
     getting_here:
       mode: walk
-      note: "Up O'Connell Street to The Height, ~4 min"
+      note: Continue along the path, ~1 min
+      route:
+        - - 52.842067
+          - -8.984443
+        - - 52.842094
+          - -8.984303
+        - - 52.842149
+          - -8.98418
+        - - 52.842172
+          - -8.984049
+        - - 52.842159
+          - -8.983791
+        - - 52.842148
+          - -8.98362
+        - - 52.842119
+          - -8.983486
+        - - 52.842065
+          - -8.983518
+        - - 52.842026
+          - -8.98338
+        - - 52.842014
+          - -8.983296
+  - id: 16
+    title: Celtic Rest
+    coords:
+      - 52.844034
+      - -8.981866
+    content:
+      - type: text
+        body: |
+          The final stop on the trail is this striking chair constructed
+          from oak and limestone. It brings together sculptural design and
+          practical function - a work of art that also invites you to sit.
+
+          Take a seat if you like - it is, after all, a place of rest.
+          From here you are just a short walk back to O'Connell Street
+          and the centre of town.
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/stop16-celticrest.jpg
+        caption: "\"Celtic Rest\" by Rory McNamara (2004)"
+    getting_here:
+      mode: walk
+      note: Up O'Connell Street to The Height, ~4 min
+      route:
+        - - 52.842014
+          - -8.983296
+        - - 52.842064
+          - -8.983555
+        - - 52.842127
+          - -8.98351
+        - - 52.842148
+          - -8.983542
+        - - 52.842248
+          - -8.98346
+        - - 52.842444
+          - -8.983317
+        - - 52.842642
+          - -8.983149
+        - - 52.842781
+          - -8.983048
+        - - 52.843217
+          - -8.982869
+        - - 52.843461
+          - -8.982775
+        - - 52.84362
+          - -8.982743
+        - - 52.843863
+          - -8.982711
+        - - 52.844085
+          - -8.982649
+        - - 52.84418
+          - -8.982593
+        - - 52.844198
+          - -8.982496
+        - - 52.844124
+          - -8.982099
+        - - 52.844051
+          - -8.981995
+        - - 52.844034
+          - -8.981866
       journey:
         - type: text
           body: |
@@ -644,36 +907,3 @@ stops:
         - type: image
           url: images/journey-15to16-oconnell-column.jpg
           caption: The O'Connell Monument at The Height
-      route:
-        - [52.842014, -8.983296]
-        - [52.842064, -8.983555]
-        - [52.842127, -8.983510]
-        - [52.842148, -8.983542]
-        - [52.842248, -8.983460]
-        - [52.842444, -8.983317]
-        - [52.842642, -8.983149]
-        - [52.842781, -8.983048]
-        - [52.843217, -8.982869]
-        - [52.843461, -8.982775]
-        - [52.843620, -8.982743]
-        - [52.843863, -8.982711]
-        - [52.844085, -8.982649]
-        - [52.844180, -8.982593]
-        - [52.844198, -8.982496]
-        - [52.844124, -8.982099]
-        - [52.844051, -8.981995]
-        - [52.844034, -8.981866]
-    coords: [52.844034, -8.981866]
-    content:
-      - type: text
-        body: |
-          The final stop on the trail is this striking chair constructed
-          from oak and limestone. It brings together sculptural design and
-          practical function - a work of art that also invites you to sit.
-
-          Take a seat if you like - it is, after all, a place of rest.
-          From here you are just a short walk back to O'Connell Street
-          and the centre of town.
-      - type: image
-        url: images/stop16-celticrest.jpg
-        caption: '"Celtic Rest" by Rory McNamara (2004)'
