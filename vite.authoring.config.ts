@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/maptour/authoring/' : '/',
   root: resolve(__dirname, 'authoring'),
   build: {
     outDir: resolve(__dirname, 'dist/authoring'),
