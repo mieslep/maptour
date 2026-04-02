@@ -113,8 +113,7 @@ All player UI labels (buttons, headings, status text) default to English and can
 
 ```bash
 npm install
-npm run dev              # player dev server
-npm run dev:authoring    # authoring tool dev server
+npm run dev          # demo available at http://.../demo/ , authoring available at http://.../authoring/
 npm test             # vitest unit tests
 npm run build        # production build → dist/
 ```
