@@ -97,7 +97,7 @@ Override CSS custom properties to match your site's brand:
 
 ## YAML reference
 
-The `demo/tour.yaml` file is a complete working example (Ennis Sculpture Trail, 16 stops). Use it as a starting point or reference for the YAML schema.
+The `demo/tour.yaml` file is a complete working example (Ennis Sculpture Trail). Use it as a starting point or reference for the YAML schema.
 
 Tour YAML is validated on load against a Zod schema (`src/schema.ts`). Validation errors are shown in the browser console with specific field paths.
 

@@ -129,7 +129,7 @@ stops:
           of 1916.
       - type: image
         url: https://images.ennistidytowns.ie/sculpture/stop2-sphere.jpg
-        caption: The Centurial Sphere (2016) by Paddy Murray
+        caption: "The Centurial Sphere (2016) by Paddy Murray. The steel is galvanized and lacquered to give it a patinated copper or verdigris appearance. "
       - type: image
         url: https://images.ennistidytowns.ie/sculpture/stop2-memorial.jpg
         caption: Easter Rising Memorial Stone (1966)
@@ -349,7 +349,7 @@ stops:
             economy. Bindon Street is one of Clare's best surviving
             Georgian streetscapes.
         - type: image
-          url: images/journey-5to6-georgian.jpg
+          url: https://images.ennistidytowns.ie/sculpture/journey-5to6-georgian.jpg
           caption: Georgian terraced houses on the route between stops 5 and 6
   - id: 7
     title: Figurative Sculptures, Harmony Row
@@ -422,7 +422,7 @@ stops:
           of Irish nationalism, and the Ennis example remains one of the
           best preserved.
       - type: image
-        url: images/stop8-maidoferin.jpg
+        url: https://images.ennistidytowns.ie/sculpture/stop8-maidoferin.jpg
         caption: The Maid of Erin monument (1897)
     getting_here:
       mode: walk
@@ -469,9 +469,7 @@ stops:
       - type: text
         body: |
           This piece celebrates Clare's historic win in the All-Ireland
-          Senior Hurling Championship final of 1995. It consists of three
-          over-lifesize stones, with the central figure reaching skyward
-          in triumph.
+          Senior Hurling Championship final of 1995. 
 
           Clare had not won an All-Ireland hurling title since its first in 
           1914 - an 81-year wait. When Ger Loughnane's team defeated Offaly 
@@ -655,7 +653,7 @@ stops:
             part of the flood plain and a valuable green space for birds 
             and other wildlife within the town.
         - type: image
-          url: images/journey-11to12-fergus.jpg
+          url: https://images.ennistidytowns.ie/sculpture/journey-11to12-fergus.jpg
           caption: The River Fergus and Post Office Field
   - id: 13
     title: Market Day
@@ -736,7 +734,7 @@ stops:
             forgotten back passages into attractive pedestrian routes that
             reveal the town's historic street pattern.
         - type: image
-          url: images/journey-12to13-bowway.jpg
+          url: https://images.ennistidytowns.ie/sculpture/journey-12to13-bowway.jpg
           caption: Enright's Bow - one of Ennis's restored bowways
   - id: 14
     title: Weathered Woman
@@ -902,8 +900,8 @@ stops:
             The square at the top of the street is known locally as
             "The Height".
         - type: image
-          url: images/journey-15to16-oconnell-st.jpg
+          url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-st.jpg
           caption: O'Connell Street, Ennis - the pedestrianised main street
         - type: image
-          url: images/journey-15to16-oconnell-column.jpg
+          url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-column.jpg
           caption: The O'Connell Monument at The Height

@@ -6,6 +6,8 @@ test-results/
 *.tsbuildinfo
 .DS_Store
 .env
+.claude/
+.specify/
 
 # Built files copied to demo/ during local dev
 demo/maptour.js
