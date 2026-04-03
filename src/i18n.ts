@@ -73,7 +73,7 @@ const DEFAULTS: Record<string, string> = {
 
   // Menu
   menu_getting_here: 'Getting Here',
-  menu_start_tour:   'Start Tour',
+  menu_start_tour:   'Tour Overview',
   menu_tour_stops:   'Tour Stops',
   menu_about:        'About',
   back:              'Back',

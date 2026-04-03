@@ -213,21 +213,21 @@
   z-index: 14;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 4px 12px;
   background: var(--maptour-surface);
   border-bottom: 1px solid var(--maptour-border);
 }
 
 .maptour-progress-bar__arrow {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: none;
   border: 1px solid var(--maptour-border);
   border-radius: 50%;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--maptour-text);
   display: flex;
   align-items: center;
@@ -251,16 +251,16 @@
 
 .maptour-progress-bar__track {
   flex: 1;
-  height: 6px;
+  height: 4px;
   background: var(--maptour-border);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
 .maptour-progress-bar__fill {
   height: 100%;
   background: var(--maptour-primary);
-  border-radius: 3px;
+  border-radius: 2px;
   transition: width 0.3s ease;
 }
 

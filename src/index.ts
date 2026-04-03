@@ -175,8 +175,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
     });
 
     // Inject the map open button into the card header after each render
+    // Only inject on stop cards (not system cards like About/Getting Here)
     const mapOpenBtn = mapPanel.getOpenButton();
     const injectMapButton = () => {
+      if (viewingSystemCard) return;
       const header = cardEl.querySelector('.maptour-card__header');
       if (header && !header.contains(mapOpenBtn)) {
         header.appendChild(mapOpenBtn);
@@ -187,7 +189,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
     // Update card view padding when progress bar shows/hides
     const updateCardViewPadding = () => {
-      cardView.style.paddingTop = progressBar.getElement().hidden ? '56px' : '100px';
+      cardView.style.paddingTop = progressBar.getElement().hidden ? '56px' : '92px';
     };
     // Observe progress bar hidden attribute changes
     const progressObserver = new MutationObserver(updateCardViewPadding);
@@ -197,12 +199,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
     const updateMapPanelTop = () => {
       const panelHeader = container.querySelector('.maptour-map-panel__header') as HTMLElement | null;
       if (panelHeader) {
-        panelHeader.style.top = progressBar.getElement().hidden ? '56px' : '100px';
+        panelHeader.style.top = progressBar.getElement().hidden ? '56px' : '92px';
       }
-      // Also update map pane top
       const mapPaneInPanel = container.querySelector('.maptour-map-panel .maptour-map-pane') as HTMLElement | null;
       if (mapPaneInPanel) {
-        mapPaneInPanel.style.top = progressBar.getElement().hidden ? '104px' : '148px';
+        mapPaneInPanel.style.top = progressBar.getElement().hidden ? '104px' : '140px';
       }
     };
     const mapPanelTopObserver = new MutationObserver(updateMapPanelTop);
