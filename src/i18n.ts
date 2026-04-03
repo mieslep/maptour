@@ -73,6 +73,9 @@ const DEFAULTS: Record<string, string> = {
 
   // Misc
   minimize:      'Minimize',
+  show_map:      'Show map',
+  show_stop:     'Show stop',
+  open_app_nav:  'Open app to bring me to',
 };
 
 /** Valid placeholder names per string key (for validation). */

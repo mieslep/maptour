@@ -109,6 +109,11 @@ export class MapView {
     });
   }
 
+  /** Force Leaflet to recalculate container size (e.g. after the map panel slides in). */
+  invalidateSize(): void {
+    this.map.invalidateSize();
+  }
+
   /** Set bottom padding (px) so panTo centres the stop in the visible map area above the sheet. */
   setMapPadding(bottom: number): void {
     this.paddingBottom = bottom;

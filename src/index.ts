@@ -11,6 +11,7 @@ import { Breadcrumb } from './breadcrumb/Breadcrumb';
 import { showError } from './errors/ErrorDisplay';
 import { JourneyStateManager } from './journey/JourneyStateManager';
 import { BottomSheet } from './layout/BottomSheet';
+import { MapPanel } from './layout/MapPanel';
 import { InTransitBar } from './layout/InTransitBar';
 import { StopListOverlay } from './layout/StopListOverlay';
 import { setStrings, t } from './i18n';
@@ -51,16 +52,18 @@ async function init(options: MapTourInitOptions): Promise<void> {
   container.innerHTML = '';
   container.className = (container.className + ' maptour-container').trim();
 
+  const isMobile = typeof window?.matchMedia === 'function'
+    && !window.matchMedia('(min-width: 768px)').matches;
+
   // Map pane
   const mapPane = document.createElement('div');
   mapPane.className = 'maptour-map-pane';
-  container.appendChild(mapPane);
 
-  // Sheet content (card + nav — lives inside the sheet, which is the content panel on desktop)
+  // Sheet content (card + nav)
   const sheetContentEl = document.createElement('div');
   sheetContentEl.className = 'maptour-sheet-content';
 
-  // Stop list (desktop: shown inside sheet; mobile: hidden in favour of FAB overlay)
+  // Stop list
   const stopListWrapper = document.createElement('div');
   stopListWrapper.className = 'maptour-stop-list-wrapper';
 
@@ -79,8 +82,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
   function setStopListOpen(open: boolean): void {
     stopListOpen = open;
     stopListEl.style.display = open ? '' : 'none';
+    // On mobile, hide the wrapper entirely when list is collapsed (toggle row is in title bar)
+    if (isMobile) stopListWrapper.style.display = open ? '' : 'none';
     stopListToggleBtn.setAttribute('aria-expanded', String(open));
-    // Update label: "All Stops" when open, "Stop N / M" when collapsed
     const label = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__label');
     if (label) label.textContent = open ? t('all_stops') : currentStopLabel;
     const icon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
@@ -103,19 +107,27 @@ async function init(options: MapTourInitOptions): Promise<void> {
   nextArrow.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
   nextArrow.setAttribute('aria-label', 'Next stop');
 
-  // Minimize button — collapses the sheet, tour stays active
-  const exitBtn = document.createElement('button');
-  exitBtn.className = 'maptour-exit-btn';
-  exitBtn.setAttribute('aria-label', t('minimize'));
-  exitBtn.title = t('minimize');
-  exitBtn.textContent = '✕';
-  exitBtn.addEventListener('click', () => {
-    sheet.setPosition('collapsed', true);
-  });
-
   // Header row: [◀ ▶] [STOP x/y ▼] [✕]
   const toggleRow = document.createElement('div');
   toggleRow.className = 'maptour-stop-list-header';
+
+  // Stop card
+  const cardEl = document.createElement('div');
+  cardEl.className = 'maptour-card';
+
+  // Nav element (detached — NavController renders into it but we use arrow buttons instead)
+  const navEl = document.createElement('div');
+
+  // Layout branching: mobile vs desktop
+  let sheet: BottomSheet | null = null;
+  let mapPanel: MapPanel | null = null;
+  let navController: NavController | null = null;
+
+  // Exit/map toggle button
+  const exitBtn = document.createElement('button');
+  exitBtn.className = 'maptour-exit-btn';
+  exitBtn.textContent = '✕';
+
   toggleRow.appendChild(prevArrow);
   toggleRow.appendChild(nextArrow);
   toggleRow.appendChild(stopListToggleBtn);
@@ -124,17 +136,69 @@ async function init(options: MapTourInitOptions): Promise<void> {
   stopListWrapper.appendChild(toggleRow);
   stopListWrapper.appendChild(stopListEl);
   sheetContentEl.appendChild(stopListWrapper);
-
-  // Stop card
-  const cardEl = document.createElement('div');
-  cardEl.className = 'maptour-card';
   sheetContentEl.appendChild(cardEl);
 
-  // Nav element (detached — NavController renders into it but we use arrow buttons instead)
-  const navEl = document.createElement('div');
+  if (isMobile) {
+    // Mobile: floating title bar sits outside the scrolling card view
+    toggleRow.classList.add('maptour-title-bar');
+    container.appendChild(toggleRow);
 
-  // Bottom sheet (wraps sheetContentEl; on desktop becomes the side panel)
-  const sheet = new BottomSheet(container, sheetContentEl);
+    const cardView = document.createElement('div');
+    cardView.className = 'maptour-card-view';
+    cardView.appendChild(stopListWrapper);
+    cardView.appendChild(cardEl);
+
+    container.appendChild(cardView);
+
+    // Map panel wraps the map pane and adds the close FAB
+    mapPanel = new MapPanel(container, mapPane);
+    let mapPanelCentred = false;
+    mapPanel.onToggle((isOpen) => {
+      mapView.invalidateSize();
+      if (isOpen && !mapPanelCentred) {
+        mapPanelCentred = true;
+        // Wait a frame for Leaflet to process the new container size before animating
+        requestAnimationFrame(() => {
+          const state = journeyState.getState();
+          if (state === 'at_stop') {
+            const idx = navController?.getCurrentIndex() ?? journeyState.getActiveStopIndex();
+            if (tour.stops[idx]) {
+              mapView.flyToStop(tour.stops[idx], 18);
+            }
+          } else if (state === 'tour_start') {
+            mapView.fitBounds();
+          }
+        });
+      }
+      if (!isOpen) {
+        mapPanelCentred = false;
+      }
+    });
+
+    // Inject the map open button into the card header after each render.
+    const mapOpenBtn = mapPanel.getOpenButton();
+    const injectMapButton = () => {
+      const header = cardEl.querySelector('.maptour-card__header');
+      if (header && !header.contains(mapOpenBtn)) {
+        header.appendChild(mapOpenBtn);
+      }
+    };
+    const cardObserver = new MutationObserver(injectMapButton);
+    cardObserver.observe(cardEl, { childList: true });
+
+    // On mobile, hide the exit button (no sheet to collapse, map toggle is on card header)
+    exitBtn.style.display = 'none';
+  } else {
+    // Desktop: existing side-by-side layout with BottomSheet as side panel
+    container.appendChild(mapPane);
+    sheet = new BottomSheet(container, sheetContentEl);
+
+    exitBtn.setAttribute('aria-label', t('minimize'));
+    exitBtn.title = t('minimize');
+    exitBtn.addEventListener('click', () => {
+      sheet!.setPosition('collapsed', true);
+    });
+  }
 
   // Mobile-only: In-transit bar and stop list overlay
   const transitBar = new InTransitBar(container);
@@ -146,6 +210,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // === Initialise core components ===
   const mapView = new MapView(mapPane, tour);
+
   const stopCard = new StopCard(cardEl);
   stopCard.setTourNavMode(tour.tour.nav_mode);
   // "Next stop" and "Finish Tour" both advance via NavController
@@ -162,11 +227,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const returning = breadcrumb.getVisited().size > 0;
 
   function setMobileMapPadding(): void {
-    if (window.innerWidth < 768) {
-      mapView.setMapPadding(container.offsetHeight * 0.75);
-    } else {
-      mapView.setMapPadding(0);
-    }
+    mapView.setMapPadding(0);
   }
 
   function updatePickerSelection(index: number): void {
@@ -195,7 +256,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
     if (state === 'tour_start') {
       arrowMode = 'picker';
       gpsPickerApplied = false;
-      sheet.setPosition('expanded', true);
+      if (sheet) sheet.setPosition('expanded', true);
+      if (mapPanel) mapPanel.hide();
       setMobileMapPadding();
       mapView.fitBounds();
       // Show "WELCOME" label, hide the expand/collapse icon
@@ -237,8 +299,12 @@ async function init(options: MapTourInitOptions): Promise<void> {
       arrowMode = 'nav';
       const toggleIcon = stopListToggleBtn.querySelector<HTMLElement>('.maptour-stop-list-toggle__icon');
       if (toggleIcon) toggleIcon.style.display = '';
-      sheet.setPosition('expanded', true);
-      if (window.innerWidth < 768) setStopListOpen(false);
+      if (sheet) sheet.setPosition('expanded', true);
+      if (mapPanel) {
+        mapPanel.hide();
+        mapPanel.setActiveStop(tour.stops[stopIndex], tour.tour.nav_mode);
+      }
+      if (isMobile) setStopListOpen(false);
       setMobileMapPadding();
       updateStopLabel(t('stop_n', { n: stopIndex + 1, total: tour.stops.length }));
       navController.goTo(stopIndex);
@@ -246,7 +312,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       // Update proximity detector to monitor the next stop from this one
       proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'in_transit') {
-      sheet.setPosition('collapsed', true);
+      if (sheet) sheet.setPosition('collapsed', true);
+      // On mobile, card view stays visible with transit bar overlay
       const nextIndex = tourReversed
         ? Math.max(stopIndex - 1, 0)
         : Math.min(stopIndex + 1, tour.stops.length - 1);
@@ -258,9 +325,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
       proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'tour_complete') {
       arrowMode = 'nav';
-      sheet.setPosition('expanded', true);
+      if (sheet) sheet.setPosition('expanded', true);
+      if (mapPanel) mapPanel.hide();
       setMobileMapPadding();
-      if (window.innerWidth < 768) setStopListOpen(false);
+      if (isMobile) setStopListOpen(false);
       updateStopLabel(t('complete'));
       prevArrow.disabled = true;
       nextArrow.disabled = true;
@@ -323,7 +391,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     }
   });
 
-  const navController = new NavController(
+  navController = new NavController(
     tour,
     mapView,
     stopCard,
@@ -332,15 +400,13 @@ async function init(options: MapTourInitOptions): Promise<void> {
     stopListEl,
     {
       onStopChange: (stop, index) => {
-        // On mobile, collapse stop list to give card content room
-        if (window.innerWidth < 768) {
-          setStopListOpen(false);
-        }
+        if (isMobile) setStopListOpen(false);
         updateStopLabel(t('stop_n', { n: index + 1, total: tour.stops.length }));
         prevArrow.disabled = index === tourStartIndex;
-        // Next always enabled — wraps around or triggers tour_complete
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
+        // Keep map panel nav bar in sync with current stop
+        if (mapPanel) mapPanel.setActiveStop(stop, tour.tour.nav_mode);
       },
       onNextFromLast: () => {
         // Mark the final stop visited — in reversed mode, the last stop in sequence is stop[0]

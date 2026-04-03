@@ -56,7 +56,7 @@ A person — typically on a mobile device — who arrives at a stop, opens the t
 MapTour must work as a static asset bundle. No Node.js server, no API, no build step required by the end-user. The distributable is a single JS file + one CSS file. A tour is a YAML file + a directory of linked media URLs.
 
 ### II. Responsive, Mobile-First
-UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44×44px. On small screens the map fills the full container with stop content presented as a draggable bottom sheet above it. All tour content — welcome, stops, and goodbye — renders as cards within the sheet. No modal overlays. On wider screens the layout places the map and stop card side-by-side. No hover-only interactions. The tour is circular: users may start at any stop and visit all stops in sequence, wrapping around to the beginning.
+UI is designed mobile-first (375px viewport baseline) and scales responsively to tablet and desktop. Touch targets minimum 44x44px. All tour content - welcome, stops, and goodbye - renders as cards. No modal overlays. On wider screens the layout places the map and stop card side-by-side. No hover-only interactions. The tour is circular: users may start at any stop and visit all stops in sequence, wrapping around to the beginning.
 
 ### III. Embeddability
 All CSS is namespaced under `.maptour-`. No modifications to `body`, `html`, or global element styles. Leaflet is bundled within the MapTour JS bundle. A host page with its own Leaflet must not conflict.
@@ -95,4 +95,4 @@ MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency imm
 
 This constitution governs all MapTour development. Amendments require a spec change approved by Phil before implementation. All architectural decisions must trace to a requirement in the spec or an explicit constitution principle.
 
-**Version**: 1.3.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-31
+**Version**: 1.3.1 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-04-02

@@ -97,8 +97,12 @@ export class NavButton {
       btn.setAttribute('aria-label', `${label}: ${this.stop.title}`);
     } else {
       btn.className = 'maptour-nav-btn';
-      btn.textContent = label;
-      btn.setAttribute('aria-label', `${label}: ${this.stop.title}`);
+      btn.innerHTML = `<i class="fa-solid fa-location-arrow" aria-hidden="true"></i>`
+        + `<span class="maptour-nav-btn__text">`
+        + `<span class="maptour-nav-btn__action">${t('open_app_nav')}</span>`
+        + `<span class="maptour-nav-btn__dest">${this.stop.title}</span>`
+        + `</span>`;
+      btn.setAttribute('aria-label', `${t('open_app_nav')} ${this.stop.title}`);
     }
     btn.addEventListener('click', () => this.handleClick());
 
@@ -113,6 +117,8 @@ export class NavButton {
       const [lat, lng] = this.stop.coords;
       window.open(buildDeepLink(savedApp, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
       this.onNavigateCallback?.();
+    } else if (this.pickerOverlay) {
+      this.hidePicker();
     } else {
       this.showPicker();
     }

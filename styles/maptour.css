@@ -19,9 +19,9 @@
 /* === Layout === */
 
 /*
- * Mobile (<768px): container is a positioning root that the integrator sizes.
- * Set height on the container element, e.g. height: 100vh or calc(100vh - 60px).
- * Map fills the container; bottom sheet and overlays use position:absolute inside it.
+ * Mobile (<768px): full-page card view with map toggle FAB.
+ * Floating title bar persists across card and map views.
+ * Map slides in from right as full-width panel.
  *
  * Desktop (>=768px): side-by-side flex layout, unchanged from v1.0.
  */
@@ -45,10 +45,228 @@
   overflow: hidden;
 }
 
-/* Mobile: content pane hidden — replaced by bottom sheet */
+/* Mobile: content pane hidden — replaced by card view */
 .maptour-content-pane {
   display: none;
 }
+
+/* === Mobile Card View (full-page cards, replaces bottom sheet on mobile) === */
+
+.maptour-card-view {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--maptour-surface);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-top: 52px; /* clear floating title bar */
+  display: flex;
+  flex-direction: column;
+}
+
+.maptour-card-view .maptour-card {
+  flex: 1;
+  min-height: 0;
+  padding-top: 0; /* header sits flush against title bar */
+}
+
+/* === Floating Title Bar (mobile) === */
+
+.maptour-title-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  background: var(--maptour-surface);
+  border-bottom: 1px solid var(--maptour-border);
+  margin: 0;
+  padding: 0;
+}
+
+/* === Map Panel (mobile slide-in) === */
+
+.maptour-map-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  transform: translateX(100%);
+  transition: transform 300ms ease-out;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.maptour-map-panel--open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* Map pane fills space below both headers (title bar 52px + map header ~48px) */
+.maptour-map-panel .maptour-map-pane {
+  position: absolute;
+  top: 100px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Map panel header — directions + close, below the floating title bar */
+.maptour-map-panel__header {
+  position: absolute;
+  top: 52px; /* match card-view padding-top to sit below title bar */
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--maptour-surface);
+  border-bottom: 1px solid var(--maptour-border);
+}
+
+.maptour-map-panel__header-nav {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+/* Picker drops down below the header, not inside the flex row */
+.maptour-map-panel__header-nav .maptour-nav-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-top: 4px;
+}
+
+.maptour-map-panel__nav-btn .maptour-nav-btn {
+  width: 100%;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--maptour-primary);
+  color: #ffffff;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.maptour-nav-btn__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.maptour-nav-btn__action {
+  font-weight: 400;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.maptour-nav-btn__dest {
+  font-weight: 600;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maptour-map-panel__nav-btn .maptour-nav-btn:hover {
+  opacity: 0.9;
+}
+
+.maptour-map-panel__nav-btn .maptour-nav-btn:focus-visible {
+  outline: 2px solid var(--maptour-text);
+  outline-offset: 2px;
+}
+
+/* Close button — matches map-open button size, inverted colours with X */
+.maptour-map-panel__close {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--maptour-surface);
+  color: var(--maptour-primary);
+  border: 1.5px solid var(--maptour-primary);
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.maptour-map-panel__close:hover {
+  background: var(--maptour-primary);
+  color: #ffffff;
+}
+
+.maptour-map-panel__close:focus-visible {
+  outline: 2px solid var(--maptour-text);
+  outline-offset: 2px;
+}
+
+
+/* Hide card's pin nav button on mobile — directions are on the map panel */
+.maptour-card__nav-icon {
+  display: none;
+}
+
+/* Card header sticky on mobile so title + map button stay visible while scrolling.
+   top: 0 here means top of the .maptour-card (scroll container), which sits
+   below the floating title bar thanks to the card-view padding-top. */
+.maptour-card-view .maptour-card__header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--maptour-surface);
+  padding: 8px 12px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--maptour-border);
+}
+
+/* Map open button in card header */
+.maptour-map-open-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--maptour-primary);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.15s;
+}
+
+.maptour-map-open-btn:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.maptour-map-open-btn:focus-visible {
+  outline: 2px solid var(--maptour-text);
+  outline-offset: 2px;
+}
+
+/* Stop list FAB hidden on mobile — moved to later in file to win cascade */
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-map-panel {
+    transition: none;
+  }
+}
+
 
 /* === Bottom Sheet === */
 
@@ -176,6 +394,28 @@
     position: sticky;
     bottom: 0;
   }
+
+  /* Hide mobile-only layout elements on desktop */
+  .maptour-card-view {
+    display: none;
+  }
+
+  .maptour-title-bar {
+    position: static;
+    box-shadow: none;
+  }
+
+  .maptour-map-panel,
+  .maptour-map-open-btn {
+    display: none;
+  }
+
+  /* Restore card nav icon on desktop */
+  .maptour-card__nav-icon {
+    display: block;
+  }
+
+  /* Stop list FAB is already hidden on desktop via existing rule */
 }
 
 /* === Stop List === */
@@ -184,6 +424,7 @@
   border-bottom: 1px solid var(--maptour-border);
   background: var(--maptour-surface-2);
 }
+
 
 .maptour-stop-list-header {
   display: flex;
@@ -1546,6 +1787,11 @@
 .maptour-stop-list-fab:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
+}
+
+/* Hidden on mobile — stop list accessible from title bar */
+.maptour-stop-list-fab {
+  display: none;
 }
 
 .maptour-stop-list-overlay__backdrop {
