@@ -71,6 +71,24 @@ const DEFAULTS: Record<string, string> = {
   image_error:       'Image could not be loaded',
   audio_error:       'Audio could not be loaded.',
 
+  // Menu
+  menu_getting_here: 'Getting Here',
+  menu_start_tour:   'Start Tour',
+  menu_tour_stops:   'Tour Stops',
+  menu_about:        'About',
+  back:              'Back',
+
+  // Getting Here card
+  getting_here_title: 'Getting Here',
+  how_to_get_here:    'How to get here',
+
+  // About card
+  about_heading:     'Powered by MapTour',
+  about_description: 'An open-source, embeddable map tour player for static websites.',
+
+  // Progress bar
+  progress_label:    'Tour progress',
+
   // Misc
   minimize:      'Minimize',
   show_map:      'Show map',

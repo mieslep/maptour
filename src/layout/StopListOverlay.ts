@@ -47,7 +47,7 @@ export class StopListOverlay {
     this.selectCallbacks.push(cb);
   }
 
-  private open(): void {
+  open(): void {
     this.renderList();
     this.backdrop.hidden = false;
     this.panel.hidden = false;

@@ -267,6 +267,8 @@ export class StopCard {
     onBegin: (index: number) => void;
     reversed?: boolean;
     onReverseToggle?: (reversed: boolean) => void;
+    gettingHereAvailable?: boolean;
+    onGettingHere?: () => void;
   }): void {
     this.container.innerHTML = '';
     this.container.scrollTop = 0;
@@ -343,6 +345,15 @@ export class StopCard {
     const stopLabel = `${options.stopCount} stop${options.stopCount !== 1 ? 's' : ''}`;
     meta.textContent = options.duration ? `${stopLabel} · ${options.duration}` : stopLabel;
     this.container.appendChild(meta);
+
+    // "How to get here" link
+    if (options.gettingHereAvailable && options.onGettingHere) {
+      const gettingHereLink = document.createElement('button');
+      gettingHereLink.className = 'maptour-card__getting-here-link';
+      gettingHereLink.innerHTML = '<i class="fa-solid fa-map-signs" aria-hidden="true"></i> ' + t('how_to_get_here');
+      gettingHereLink.addEventListener('click', options.onGettingHere);
+      this.container.appendChild(gettingHereLink);
+    }
 
     // Welcome content blocks
     if (options.welcome && options.welcome.length > 0) {
@@ -427,6 +438,97 @@ export class StopCard {
     indicator.appendChild(link);
 
     pickerRow.appendChild(indicator);
+  }
+
+  // === Getting Here card ===
+
+  renderGettingHere(options: {
+    blocks: ContentBlock[];
+    onBack: () => void;
+  }): void {
+    this.container.innerHTML = '';
+    this.container.scrollTop = 0;
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', t('getting_here_title'));
+
+    // Header with back button
+    const header = document.createElement('div');
+    header.className = 'maptour-card__header';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'maptour-card__back-btn';
+    backBtn.setAttribute('aria-label', t('back'));
+    backBtn.innerHTML = '<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';
+    backBtn.addEventListener('click', options.onBack);
+    header.appendChild(backBtn);
+
+    const title = document.createElement('h2');
+    title.className = 'maptour-card__title';
+    title.textContent = t('getting_here_title');
+    header.appendChild(title);
+
+    this.container.appendChild(header);
+
+    // Content blocks
+    const content = document.createElement('div');
+    content.className = 'maptour-card__content';
+    options.blocks.forEach((block) => {
+      content.appendChild(renderBlock(block, true));
+    });
+    this.container.appendChild(content);
+  }
+
+  // === About card ===
+
+  renderAbout(options: {
+    onBack: () => void;
+  }): void {
+    this.container.innerHTML = '';
+    this.container.scrollTop = 0;
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', t('menu_about'));
+
+    // Header with back button
+    const header = document.createElement('div');
+    header.className = 'maptour-card__header';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'maptour-card__back-btn';
+    backBtn.setAttribute('aria-label', t('back'));
+    backBtn.innerHTML = '<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';
+    backBtn.addEventListener('click', options.onBack);
+    header.appendChild(backBtn);
+
+    const title = document.createElement('h2');
+    title.className = 'maptour-card__title';
+    title.textContent = t('menu_about');
+    header.appendChild(title);
+
+    this.container.appendChild(header);
+
+    // Content
+    const content = document.createElement('div');
+    content.className = 'maptour-card__content';
+
+    const heading = document.createElement('h3');
+    heading.className = 'maptour-card__about-heading';
+    heading.textContent = t('about_heading');
+    content.appendChild(heading);
+
+    const desc = document.createElement('p');
+    desc.className = 'maptour-card__about-description';
+    desc.textContent = t('about_description');
+    content.appendChild(desc);
+
+    const link = document.createElement('a');
+    link.className = 'maptour-card__about-link';
+    link.href = 'https://github.com/mieslep/maptour';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'github.com/mieslep/maptour';
+    content.appendChild(link);
+
+    this.container.appendChild(content);
   }
 
   // === Goodbye card ===

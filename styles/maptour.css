@@ -106,7 +106,171 @@
   }
 }
 
-/* === Floating Title Bar (mobile) === */
+/* === Menu Bar === */
+
+.maptour-menu-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--maptour-surface);
+  border-bottom: 1px solid var(--maptour-border);
+}
+
+.maptour-menu-bar__hamburger {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: var(--maptour-radius);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--maptour-text);
+  transition: background 0.15s;
+}
+
+.maptour-menu-bar__hamburger:hover {
+  background: var(--maptour-border);
+}
+
+.maptour-menu-bar__hamburger:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-menu-bar__header {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Menu dropdown */
+.maptour-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  background: var(--maptour-surface);
+  border: 1px solid var(--maptour-border);
+  border-radius: var(--maptour-radius);
+  box-shadow: var(--maptour-shadow);
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.maptour-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--maptour-text);
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.maptour-menu-item:hover {
+  background: var(--maptour-surface-2);
+}
+
+.maptour-menu-item:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: -2px;
+}
+
+.maptour-menu-item i {
+  width: 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* === Progress Bar === */
+
+.maptour-progress-bar {
+  position: absolute;
+  top: 56px; /* below menu bar */
+  left: 0;
+  right: 0;
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--maptour-surface);
+  border-bottom: 1px solid var(--maptour-border);
+}
+
+.maptour-progress-bar__arrow {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--maptour-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.maptour-progress-bar__arrow:hover:not(:disabled) {
+  background: var(--maptour-border);
+}
+
+.maptour-progress-bar__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.maptour-progress-bar__arrow:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-progress-bar__track {
+  flex: 1;
+  height: 6px;
+  background: var(--maptour-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.maptour-progress-bar__fill {
+  height: 100%;
+  background: var(--maptour-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-progress-bar__fill {
+    transition: none;
+  }
+}
+
+/* === Floating Title Bar (mobile) — legacy, replaced by menu bar === */
 
 .maptour-title-bar {
   position: absolute;
@@ -444,6 +608,15 @@
   .maptour-map-panel,
   .maptour-map-open-btn {
     display: none;
+  }
+
+  /* Menu bar and progress bar are inline (not absolute) on desktop */
+  .maptour-menu-bar {
+    position: static;
+  }
+
+  .maptour-progress-bar {
+    position: static;
   }
 
   /* Restore card nav icon on desktop */
@@ -834,6 +1007,84 @@
 .maptour-card__arrived-btn:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
+}
+
+/* Back button in card header (system cards: Getting Here, About) */
+.maptour-card__back-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--maptour-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  margin-right: 8px;
+}
+
+.maptour-card__back-btn:hover {
+  background: var(--maptour-border);
+}
+
+.maptour-card__back-btn:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+/* "How to get here" link on welcome card */
+.maptour-card__getting-here-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  color: var(--maptour-primary);
+  text-decoration: underline;
+  transition: color 0.15s;
+  margin-bottom: 8px;
+}
+
+.maptour-card__getting-here-link:hover {
+  color: #1d4ed8;
+}
+
+.maptour-card__getting-here-link:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+/* About card */
+.maptour-card__about-heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--maptour-text);
+  margin: 0 0 8px;
+}
+
+.maptour-card__about-description {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #6b7280;
+  margin: 0 0 12px;
+}
+
+.maptour-card__about-link {
+  color: var(--maptour-primary);
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+.maptour-card__about-link:hover {
+  color: #1d4ed8;
 }
 
 /* === Welcome / Goodbye card elements === */
