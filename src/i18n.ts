@@ -76,6 +76,7 @@ const DEFAULTS: Record<string, string> = {
   show_map:      'Show map',
   show_stop:     'Show stop',
   open_app_nav:  'Open app to bring me to',
+  scroll_more:   'Scroll for more',
 };
 
 /** Valid placeholder names per string key (for validation). */

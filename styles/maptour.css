@@ -70,6 +70,42 @@
   padding-top: 0; /* header sits flush against title bar */
 }
 
+/* Scroll hint: fade gradient at bottom of card view */
+.maptour-scroll-hint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(transparent, var(--maptour-surface));
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s;
+}
+
+.maptour-scroll-hint--hidden {
+  opacity: 0;
+}
+
+/* Accessibility: replace gradient with explicit text indicator */
+@media (prefers-contrast: more) {
+  .maptour-scroll-hint {
+    background: var(--maptour-surface);
+    height: auto;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--maptour-text);
+    border-top: 1px solid var(--maptour-border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-scroll-hint {
+    transition: none;
+  }
+}
+
 /* === Floating Title Bar (mobile) === */
 
 .maptour-title-bar {

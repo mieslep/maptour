@@ -122,6 +122,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   let sheet: BottomSheet | null = null;
   let mapPanel: MapPanel | null = null;
   let navController: NavController | null = null;
+  let resetScrollHint: (() => void) | null = null;
 
   // Exit/map toggle button
   const exitBtn = document.createElement('button');
@@ -147,6 +148,37 @@ async function init(options: MapTourInitOptions): Promise<void> {
     cardView.className = 'maptour-card-view';
     cardView.appendChild(stopListWrapper);
     cardView.appendChild(cardEl);
+
+    // Scroll hint — fade gradient or explicit indicator for accessibility
+    const scrollHint = document.createElement('div');
+    scrollHint.className = 'maptour-scroll-hint';
+    const usesContrast = window.matchMedia?.('(prefers-contrast: more)').matches;
+    if (usesContrast) {
+      scrollHint.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i> ' + t('scroll_more');
+    }
+    cardView.appendChild(scrollHint);
+
+    // Hide scroll hint once user scrolls, show again on new stop
+    const updateScrollHint = () => {
+      const scrollable = cardEl;
+      const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 10;
+      const hasOverflow = scrollable.scrollHeight > scrollable.clientHeight + 10;
+      if (!hasOverflow || scrollable.scrollTop > 20 || atBottom) {
+        scrollHint.classList.add('maptour-scroll-hint--hidden');
+      } else {
+        scrollHint.classList.remove('maptour-scroll-hint--hidden');
+      }
+    };
+    cardEl.addEventListener('scroll', updateScrollHint, { passive: true });
+    // Also re-check when card content changes (StopCard re-renders)
+    const cardContentObserver = new MutationObserver(() => {
+      requestAnimationFrame(updateScrollHint);
+    });
+    cardContentObserver.observe(cardEl, { childList: true, subtree: true });
+    resetScrollHint = () => {
+      scrollHint.classList.remove('maptour-scroll-hint--hidden');
+      requestAnimationFrame(updateScrollHint);
+    };
 
     container.appendChild(cardView);
 
@@ -405,8 +437,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
         prevArrow.disabled = index === tourStartIndex;
         mapView.setVisitedStops(breadcrumb.getVisited());
         stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
-        // Keep map panel nav bar in sync with current stop
         if (mapPanel) mapPanel.setActiveStop(stop, tour.tour.nav_mode);
+        resetScrollHint?.();
       },
       onNextFromLast: () => {
         // Mark the final stop visited — in reversed mode, the last stop in sequence is stop[0]

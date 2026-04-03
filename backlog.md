@@ -218,22 +218,126 @@ When GPS is available and accurate, pre-selects the nearest tour stop on the wel
 
 ---
 
-## Backlog (post-v1.2, unsequenced)
+## Milestone: v1.3 — Mobile-first player and GPS
+
+### Font Awesome icons (small)
+
+Replaced emoji icons (person, nav arrows, etc.) with Font Awesome for consistency and rendering reliability across all platforms.
+
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### Journey card CTA with stop name (small)
+
+Updated "I've arrived" button text to "I've arrived at [stop name] →" so the user knows which stop they're arriving at. Uses i18n `arrived` key with `{stop}` placeholder.
+
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### Hide getting_here note after journey card (small)
+
+If the user has just seen a journey card with transit content, the getting_here note on the stop card is suppressed as redundant. `setSuppressGettingHereNote()` flag cleared on next navigation.
+
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-025 — Map zoom on welcome picker (small)
+
+Zoom and centre the map to the selected starting position when the user picks a stop on the welcome card. `flyToStop()` animates to stop at zoom 16.
+
+**Dependencies:** TOUR-021
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-028 — Show GPS position and heading during tour (small)
+
+GPS person icon visible on the map throughout the tour, not just on the welcome screen. Heading arrow rotates based on compass/movement. Z-index below pins so it doesn't interfere.
+
+**Dependencies:** TOUR-007
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-029 — Reverse tour direction (small)
+
+Toggle on welcome card lets user walk the tour in reverse. Journey cards sequence correctly regardless of direction. Map pin numbers reflect reversed order.
+
+**Dependencies:** TOUR-022
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-031 — GPS proximity arrival detection (small)
+
+Auto-reveal stop card when user enters detection radius. `arrival_radius` configurable at tour level (default 7.5m) and per-stop override. Accuracy guard and re-trigger protection.
+
+**Dependencies:** TOUR-028
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-032 — Adaptive GPS battery preservation (small)
+
+Three GPS modes (high accuracy, far cruise, stationary) with automatic transitions. Reduces polling frequency when stationary or far from next stop. Configurable via `gps.battery_saver` YAML block.
+
+**Dependencies:** TOUR-031
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-033 — Tour authoring editor enhancements (large)
+
+WYSIWYG preview with click-to-edit, device selector (real phone models), card consistency across welcome/goodbye/stop. Image padding, caption positioning, kebab→inline controls, route editing fixes.
+
+**Dependencies:** TOUR-022
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-034 — Zod schema validation + versioning (small)
+
+Replace hand-written validation with Zod schema. Add YAML schema versioning.
+
+**Dependencies:** none
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-036 — SRI hashes for player bundle (small)
+
+Subresource integrity hashes for player bundle. EMBED.md for embedding guidance.
+
+**Dependencies:** none
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-037 — Return-to-start option on last stop (small)
+
+Two-button footer on last stop: primary "Return to start →" CTA and secondary "Finish here".
+
+**Dependencies:** TOUR-020/021
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-038 — Mobile layout rework: full-page cards with map toggle (large)
+
+Replaced bottom-sheet-over-map layout with content-first full-page cards. Map accessed via toggle FAB, slides in as full-width panel. Floating title bar, sticky card headers, scroll hint gradient. Desktop layout unchanged.
+
+**Spec:** `specs/TOUR-038-*.md`
+**Dependencies:** TOUR-016
+**Status:** ✅ Implemented — merged to main
+
+---
+
+## Backlog (unsequenced)
 
 ### Player UX
 
-- **Reverse tour direction** — allow the user to walk the tour in reverse. Journey cards must be sequenced correctly (the journey content and getting_here notes flip to describe the reverse direction)
-- **Font Awesome icons** — replace emoji icons (person, nav arrows, etc.) with Font Awesome for consistency and rendering reliability
-- **Show user position during tour** — GPS person icon visible on the map throughout the tour, not just on the welcome screen. User can see where they are relative to the next stop
-- **Journey card CTA** — update the "I've arrived" button text to "I've arrived at [stop name]" so the user knows which stop they are arriving at
-- **Map zoom on welcome picker** — zoom in and centre the map to the selected starting position when the user picks a stop on the welcome card
-- **Hide getting_here note after journey card** — if the user has just seen a journey card with transit content, the getting_here note on the stop card is redundant and should be hidden
+- **Explicit scroll indicator** — `tour.scroll_hint: 'always'` option to show a persistent "Scroll for more" text+chevron instead of the subtle fade gradient. Aimed at older users or tours where accessibility is a priority. Default remains the gradient with automatic `prefers-contrast` fallback
 
-### Platform / GPS
-
-- **GPS proximity arrival detection** — auto-reveal stop card when user enters detection radius; `arrival_radius` configurable in YAML at tour level (default 50m) and per-stop override; requires accuracy guard (only trigger if `accuracy < radius * 2`) and re-trigger protection (must exit radius before re-entry counts); only triggers for next unvisited stop in sequence
-- **Battery preservation** — reduce GPS polling frequency when user has been stationary at a stop for a while, or when next stop is >500m away; pause high-accuracy mode in the background
-
-### Authoring
-
-- **Tour authoring UI** — web-based visual editor for creating and editing tours. Place stops on a map, configure stop content, provide an OpenRouteService API key for automatic foot-walking route generation, edit route points visually (drag, delete, insert, smooth, reduce). Outputs valid tour YAML. Replaces the need for hand-editing YAML or using the standalone route-editor
