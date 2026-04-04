@@ -219,6 +219,10 @@
   border-bottom: 1px solid var(--maptour-border);
 }
 
+.maptour-progress-bar[hidden] {
+  display: none;
+}
+
 .maptour-progress-bar__arrow {
   flex-shrink: 0;
   width: 28px;

@@ -97,13 +97,15 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // System card state — when set, we're viewing a non-stop card
   let viewingSystemCard: 'getting_here' | 'about' | null = null;
 
-  // Stop list open state (desktop inline)
+  // Stop list open state
   let stopListOpen = false;
   function setStopListOpen(open: boolean): void {
     stopListOpen = open;
     stopListEl.style.display = open ? '' : 'none';
-    if (isMobile) stopListWrapper.style.display = open ? '' : 'none';
+    stopListWrapper.style.display = open ? '' : 'none';
   }
+  // Start hidden
+  setStopListOpen(false);
 
   sheetContentEl.appendChild(stopListWrapper);
   sheetContentEl.appendChild(cardEl);
@@ -338,7 +340,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         mapPanel.hide();
         mapPanel.setActiveStop(tour.stops[stopIndex], tour.tour.nav_mode);
       }
-      if (isMobile) setStopListOpen(false);
+      setStopListOpen(false);
       setMobileMapPadding();
       navController.goTo(stopIndex);
       stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
@@ -409,7 +411,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     stopListEl,
     {
       onStopChange: (stop, index) => {
-        if (isMobile) setStopListOpen(false);
+        setStopListOpen(false);
         progressBar.setPrevDisabled(index === tourStartIndex);
         progressBar.update(breadcrumb.getVisited().size, tour.stops.length);
         mapView.setVisitedStops(breadcrumb.getVisited());
