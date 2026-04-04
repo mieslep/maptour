@@ -19,10 +19,10 @@ describe('OverviewControls', () => {
     expect(controls.getElement().hidden).toBe(true);
   });
 
-  it('update sets CTA text with stop name', () => {
+  it('update sets CTA text', () => {
     controls.update(0, 5, false, 'Trinity');
     const cta = controls.getElement().querySelector('.maptour-overview-controls__cta') as HTMLElement;
-    expect(cta.textContent).toContain('Trinity');
+    expect(cta.textContent).toContain('Begin Tour');
   });
 
   it('update sets fill width', () => {

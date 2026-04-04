@@ -121,6 +121,11 @@ export class MapPanel {
       && window.matchMedia(REDUCED_MOTION_QUERY).matches;
   }
 
+  /** Show or hide the header bar (nav button + close). Hidden during overview mode. */
+  setHeaderVisible(visible: boolean): void {
+    this.header.style.display = visible ? '' : 'none';
+  }
+
   getElement(): HTMLElement {
     return this.panel;
   }

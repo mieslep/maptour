@@ -233,7 +233,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // Overview controls (stop picker + direction toggle + begin tour)
   const overviewControls = new OverviewControls();
   if (isMobile && mapPanel) {
-    // Mobile: place at bottom of map panel
+    // Mobile: place at bottom of map panel, with close button
+    overviewControls.enableCloseButton();
+    overviewControls.onClose(() => mapPanel!.hide());
     mapPanel.getElement().appendChild(overviewControls.getElement());
   }
   // Desktop placement happens in tour_start handler (appended to card)
@@ -371,6 +373,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       tourReversed = false;
       overviewSelectedIndex = 0;
       gpsOverviewApplied = false;
+      if (mapPanel) mapPanel.setHeaderVisible(false);
       mapView.setOverviewMode(true);
       mapView.setChevronDirection(false);
       mapView.setSelectedPin(tour.stops[0].id);
@@ -414,6 +417,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       overviewControls.hide();
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) {
+        mapPanel.setHeaderVisible(true);
         mapPanel.hide();
         mapPanel.setActiveStop(tour.stops[stopIndex], tour.tour.nav_mode);
       }

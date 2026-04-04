@@ -1182,8 +1182,14 @@
   outline-offset: 2px;
 }
 
+.maptour-overview-controls__bottom {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .maptour-overview-controls__cta {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   min-height: 44px;
   background: var(--maptour-primary);
@@ -1202,6 +1208,31 @@
 }
 
 .maptour-overview-controls__cta:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-overview-controls__close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--maptour-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--maptour-surface);
+  color: var(--maptour-text);
+  border: 1px solid var(--maptour-border);
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.15s;
+}
+
+.maptour-overview-controls__close:hover {
+  background: var(--maptour-border);
+}
+
+.maptour-overview-controls__close:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
 }
@@ -1860,13 +1891,14 @@
 
 /* Directional chevrons on route polylines (overview mode) */
 .maptour-chevron {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--maptour-primary, #2563eb);
-  opacity: 0.5;
+  opacity: 0.7;
   line-height: 1;
   text-align: center;
   pointer-events: none;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
 }
 
 /* GPS position icon */

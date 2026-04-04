@@ -13,9 +13,12 @@ export class OverviewControls {
   private totalStops = 0;
   private reversed = false;
 
+  private closeBtn: HTMLButtonElement | null = null;
+
   private stopSelectCallbacks: Array<(index: number) => void> = [];
   private directionCallbacks: Array<(reversed: boolean) => void> = [];
   private beginCallbacks: Array<(index: number, reversed: boolean) => void> = [];
+  private closeCallbacks: Array<() => void> = [];
 
   constructor() {
     this.el = document.createElement('div');
@@ -64,13 +67,18 @@ export class OverviewControls {
     topRow.appendChild(this.dirToggle);
     this.el.appendChild(topRow);
 
-    // Bottom row: CTA
+    // Bottom row: CTA + optional close button
+    const bottomRow = document.createElement('div');
+    bottomRow.className = 'maptour-overview-controls__bottom';
+
     this.ctaBtn = document.createElement('button');
     this.ctaBtn.className = 'maptour-overview-controls__cta';
     this.ctaBtn.addEventListener('click', () => {
       this.beginCallbacks.forEach((cb) => cb(this.selectedIndex, this.reversed));
     });
-    this.el.appendChild(this.ctaBtn);
+    bottomRow.appendChild(this.ctaBtn);
+
+    this.el.appendChild(bottomRow);
   }
 
   update(selectedIndex: number, totalStops: number, reversed: boolean, stopName: string): void {
@@ -87,7 +95,25 @@ export class OverviewControls {
     this.nextBtn.disabled = selectedIndex === totalStops - 1;
 
     // Update CTA
-    this.ctaBtn.textContent = t('begin_from', { stop: stopName });
+    this.ctaBtn.textContent = t('begin_tour');
+  }
+
+  /** Add a close button to the right of the CTA (used on mobile map panel). */
+  enableCloseButton(): void {
+    if (this.closeBtn) return;
+    this.closeBtn = document.createElement('button');
+    this.closeBtn.className = 'maptour-overview-controls__close';
+    this.closeBtn.setAttribute('aria-label', 'Close map');
+    this.closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    this.closeBtn.addEventListener('click', () => {
+      this.closeCallbacks.forEach((cb) => cb());
+    });
+    const bottomRow = this.el.querySelector('.maptour-overview-controls__bottom');
+    if (bottomRow) bottomRow.appendChild(this.closeBtn);
+  }
+
+  onClose(cb: () => void): void {
+    this.closeCallbacks.push(cb);
   }
 
   onStopSelect(cb: (index: number) => void): void {
