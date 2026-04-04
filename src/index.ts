@@ -395,6 +395,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       tourReversed = false;
       overviewSelectedIndex = 0;
       gpsOverviewApplied = false;
+      currentTourOrder = computeTourOrder(0, false);
       if (mapPanel) mapPanel.setHeaderVisible(false);
       mapView.setOverviewMode(true);
       mapView.setChevronDirection(false);
@@ -403,6 +404,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.setPinNumberMap(null);
       overviewControls.update(0, tour.stops.length, false, tour.stops[0].title);
       overviewControls.show();
+      stopListOverlay.update(tour.stops, 0, breadcrumb.getVisited(), currentTourOrder);
+      navController?.setTourOrder(currentTourOrder);
 
       // On desktop, place overview controls after the card in the sheet content
       if (!isMobile) {
