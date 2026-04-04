@@ -9,6 +9,7 @@ export class StopListOverlay {
   private activeIndex = 0;
   private visitedIds: Set<number> = new Set();
   private stops: Stop[] = [];
+  private tourOrder: number[] = []; // indices into stops[] in tour traversal order
 
   constructor(container: HTMLElement) {
     // FAB — floating action button on the map
@@ -36,10 +37,11 @@ export class StopListOverlay {
     container.appendChild(this.panel);
   }
 
-  update(stops: Stop[], activeIndex: number, visitedIds: Set<number>): void {
+  update(stops: Stop[], activeIndex: number, visitedIds: Set<number>, tourOrder?: number[]): void {
     this.stops = stops;
     this.activeIndex = activeIndex;
     this.visitedIds = visitedIds;
+    this.tourOrder = tourOrder ?? stops.map((_, i) => i);
     if (!this.panel.hidden) this.renderList();
   }
 
@@ -88,12 +90,13 @@ export class StopListOverlay {
     list.setAttribute('role', 'list');
     list.setAttribute('aria-label', 'Tour stops');
 
-    this.stops.forEach((stop, index) => {
+    this.tourOrder.forEach((stopIndex, displayPosition) => {
+      const stop = this.stops[stopIndex];
       const item = document.createElement('button');
       item.className = 'maptour-stop-list__item';
       item.setAttribute('role', 'listitem');
-      item.setAttribute('aria-label', `Go to stop ${index + 1}: ${stop.title}`);
-      if (index === this.activeIndex) {
+      item.setAttribute('aria-label', `Stop ${displayPosition + 1}: ${stop.title}`);
+      if (stopIndex === this.activeIndex) {
         item.classList.add('maptour-stop-list__item--active');
         item.setAttribute('aria-current', 'true');
       }
@@ -104,7 +107,7 @@ export class StopListOverlay {
       const number = document.createElement('span');
       number.className = 'maptour-stop-list__number';
       number.setAttribute('aria-hidden', 'true');
-      number.textContent = String(index + 1);
+      number.textContent = String(stopIndex + 1);
 
       const titleEl = document.createElement('span');
       titleEl.className = 'maptour-stop-list__title';
@@ -114,7 +117,7 @@ export class StopListOverlay {
       item.appendChild(titleEl);
       item.addEventListener('click', () => {
         this.close();
-        this.selectCallbacks.forEach((cb) => cb(index));
+        this.selectCallbacks.forEach((cb) => cb(stopIndex));
       });
 
       list.appendChild(item);

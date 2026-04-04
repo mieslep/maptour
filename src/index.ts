@@ -262,6 +262,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   let tourReversed = false;
   let overviewSelectedIndex = 0;
   let gpsOverviewApplied = false;
+  let currentTourOrder: number[] = tour.stops.map((_, i) => i);
 
   function setMobileMapPadding(): void {
     mapView.setMapPadding(0);
@@ -270,6 +271,20 @@ async function init(options: MapTourInitOptions): Promise<void> {
   function getEndIndex(startIndex: number, reversed: boolean): number {
     const n = tour.stops.length;
     return reversed ? (startIndex + 1) % n : (startIndex - 1 + n) % n;
+  }
+
+  /** Compute circular tour order from a given start index and direction. */
+  function computeTourOrder(startIndex: number, reversed: boolean): number[] {
+    const n = tour.stops.length;
+    const order: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (reversed) {
+        order.push((startIndex - i + n) % n);
+      } else {
+        order.push((startIndex + i) % n);
+      }
+    }
+    return order;
   }
 
   function updateOverviewSelection(index: number): void {
@@ -293,9 +308,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
   overviewControls.onBegin((index, reversed) => {
     tourStartIndex = index;
     tourReversed = reversed;
+    currentTourOrder = computeTourOrder(index, reversed);
     stopCard.setStartingStop(index);
     navController.setStartIndex(index);
     navController.setReversed(reversed);
+    navController.setTourOrder(currentTourOrder);
     if (mapPanel) mapPanel.hide();
     journeyState.transition('at_stop', index);
   });
@@ -400,9 +417,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
         onBegin: () => {
           // Welcome card CTA uses current overview selection
           tourStartIndex = overviewSelectedIndex;
+          currentTourOrder = computeTourOrder(overviewSelectedIndex, tourReversed);
           stopCard.setStartingStop(overviewSelectedIndex);
           navController.setStartIndex(overviewSelectedIndex);
           navController.setReversed(tourReversed);
+          navController.setTourOrder(currentTourOrder);
           journeyState.transition('at_stop', overviewSelectedIndex);
         },
         onOpenMap: mapPanel ? () => mapPanel!.toggle() : undefined,
@@ -430,7 +449,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       setStopListOpen(false);
       setMobileMapPadding();
       navController.goTo(stopIndex);
-      stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited());
+      stopListOverlay.update(tour.stops, stopIndex, breadcrumb.getVisited(), currentTourOrder);
 
       // Show progress bar
       progressBar.show();
@@ -506,7 +525,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         progressBar.setPrevDisabled(index === tourStartIndex);
         progressBar.update(breadcrumb.getVisited().size, tour.stops.length);
         mapView.setVisitedStops(breadcrumb.getVisited());
-        stopListOverlay.update(tour.stops, index, breadcrumb.getVisited());
+        stopListOverlay.update(tour.stops, index, breadcrumb.getVisited(), currentTourOrder);
         if (mapPanel) mapPanel.setActiveStop(stop, tour.tour.nav_mode);
         resetScrollHint?.();
       },

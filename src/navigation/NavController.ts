@@ -16,6 +16,7 @@ export class NavController {
   private currentIndex: number;
   private startIndex = 0;
   private reversed = false;
+  private tourOrder: number[] = [];
   private inJourney = false;
   private journeyDestIndex = -1;
   private returningToStart = false;
@@ -44,6 +45,7 @@ export class NavController {
     this.stopListContainer = stopListContainer;
     this.callbacks = callbacks;
 
+    this.tourOrder = tour.stops.map((_, i) => i);
     this.renderNav();
     this.renderStopList();
     this.goTo(0);
@@ -62,6 +64,13 @@ export class NavController {
   /** Set reversed navigation mode. */
   setReversed(reversed: boolean): void {
     this.reversed = reversed;
+  }
+
+  /** Set the tour traversal order (indices into stops[]) and re-render the stop list. */
+  setTourOrder(order: number[]): void {
+    this.tourOrder = order;
+    this.renderStopList();
+    this.updateStopList();
   }
 
   /** Navigate back to the starting stop from the last stop. */
@@ -135,17 +144,18 @@ export class NavController {
     this.stopListContainer.setAttribute('role', 'list');
     this.stopListContainer.setAttribute('aria-label', 'Tour stops');
 
-    this.tour.stops.forEach((stop, index) => {
+    this.tourOrder.forEach((stopIndex) => {
+      const stop = this.tour.stops[stopIndex];
       const item = document.createElement('button');
       item.className = 'maptour-stop-list__item';
       item.setAttribute('role', 'listitem');
-      item.setAttribute('aria-label', `Go to stop ${index + 1}: ${stop.title}`);
+      item.setAttribute('aria-label', `Stop ${stopIndex + 1}: ${stop.title}`);
       item.dataset.stopId = String(stop.id);
-      item.dataset.stopIndex = String(index);
+      item.dataset.stopIndex = String(stopIndex);
 
       const number = document.createElement('span');
       number.className = 'maptour-stop-list__number';
-      number.textContent = String(index + 1);
+      number.textContent = String(stopIndex + 1);
       number.setAttribute('aria-hidden', 'true');
 
       const title = document.createElement('span');
@@ -154,7 +164,7 @@ export class NavController {
 
       item.appendChild(number);
       item.appendChild(title);
-      item.addEventListener('click', () => this.goTo(index));
+      item.addEventListener('click', () => this.goTo(stopIndex));
 
       this.stopListContainer.appendChild(item);
     });
@@ -164,10 +174,11 @@ export class NavController {
     const items = this.stopListContainer.querySelectorAll<HTMLElement>('.maptour-stop-list__item');
     const visited = this.breadcrumb.getVisited();
 
-    items.forEach((item, index) => {
-      item.classList.toggle('maptour-stop-list__item--active', index === this.currentIndex);
-      item.classList.toggle('maptour-stop-list__item--visited', visited.has(this.tour.stops[index].id));
-      item.setAttribute('aria-current', index === this.currentIndex ? 'true' : 'false');
+    items.forEach((item) => {
+      const stopIndex = Number(item.dataset.stopIndex);
+      item.classList.toggle('maptour-stop-list__item--active', stopIndex === this.currentIndex);
+      item.classList.toggle('maptour-stop-list__item--visited', visited.has(this.tour.stops[stopIndex].id));
+      item.setAttribute('aria-current', stopIndex === this.currentIndex ? 'true' : 'false');
     });
   }
 
