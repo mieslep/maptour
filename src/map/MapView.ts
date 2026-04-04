@@ -238,10 +238,13 @@ export class MapView {
     }
   }
 
-  /** Set the selected starting pin (green). Pass null to clear. */
+  /** Set the selected starting pin (green). Pass null to clear. Restarts pulse animation. */
   setSelectedPin(stopId: number | null): void {
     this.selectedStopId = stopId;
     this.renderPins();
+    if (this.overviewMode) {
+      this.startSequencePulse();
+    }
   }
 
   /** Set the end pin (red). Pass null to clear. */
@@ -250,22 +253,39 @@ export class MapView {
     this.renderPins();
   }
 
+  /** Start a single sequential pulse through all stops after a short delay. */
   private startSequencePulse(): void {
     this.stopSequencePulse();
     const stops = this.tour.stops;
     if (stops.length < 2) return;
 
+    // Build order starting from selected stop
+    const startIdx = this.selectedStopId !== null
+      ? stops.findIndex(s => s.id === this.selectedStopId)
+      : 0;
+    const order: number[] = [];
+    for (let i = 0; i < stops.length; i++) {
+      if (this.overviewReversed) {
+        order.push((startIdx - i + stops.length) % stops.length);
+      } else {
+        order.push((startIdx + i) % stops.length);
+      }
+    }
+
     let pulseIndex = 0;
-    const order = this.overviewReversed
-      ? stops.map((_, i) => stops.length - 1 - i)
-      : stops.map((_, i) => i);
 
     const pulse = () => {
       // Remove previous pulse class
-      const allPins = document.querySelectorAll('.maptour-pin');
-      allPins.forEach((el) => el.classList.remove('maptour-pin--seq-pulse'));
+      document.querySelectorAll('.maptour-pin--seq-pulse').forEach((el) => {
+        el.classList.remove('maptour-pin--seq-pulse');
+      });
 
-      // Apply pulse to current pin in sequence
+      if (pulseIndex >= stops.length) {
+        // Animation complete — one full loop done
+        this.stopSequencePulse();
+        return;
+      }
+
       const stopId = stops[order[pulseIndex]].id;
       const marker = this.markers.get(stopId);
       if (marker) {
@@ -274,11 +294,16 @@ export class MapView {
         if (pin) pin.classList.add('maptour-pin--seq-pulse');
       }
 
-      pulseIndex = (pulseIndex + 1) % stops.length;
+      pulseIndex++;
     };
 
-    pulse(); // Start immediately
-    this.sequencePulseTimer = setInterval(pulse, 300);
+    // Start after a short delay
+    this.sequencePulseTimer = setTimeout(() => {
+      pulse();
+      this.sequencePulseTimer = setInterval(() => {
+        pulse();
+      }, 300);
+    }, 500) as unknown as ReturnType<typeof setInterval>;
   }
 
   private stopSequencePulse(): void {

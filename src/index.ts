@@ -266,10 +266,16 @@ async function init(options: MapTourInitOptions): Promise<void> {
     mapView.setMapPadding(0);
   }
 
+  function getEndIndex(startIndex: number, reversed: boolean): number {
+    const n = tour.stops.length;
+    return reversed ? (startIndex + 1) % n : (startIndex - 1 + n) % n;
+  }
+
   function updateOverviewSelection(index: number): void {
     overviewSelectedIndex = index;
     const stop = tour.stops[index];
     mapView.setSelectedPin(stop.id);
+    mapView.setEndPin(tour.stops[getEndIndex(index, tourReversed)].id);
     mapView.flyToStop(stop, 16);
     overviewControls.update(index, tour.stops.length, tourReversed, stop.title);
   }
@@ -278,9 +284,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   overviewControls.onDirectionToggle((reversed) => {
     tourReversed = reversed;
     mapView.setChevronDirection(reversed);
-    // Update end pin marker
-    const endIndex = reversed ? 0 : tour.stops.length - 1;
-    mapView.setEndPin(tour.stops[endIndex].id);
+    mapView.setEndPin(tour.stops[getEndIndex(overviewSelectedIndex, reversed)].id);
     const stop = tour.stops[overviewSelectedIndex];
     overviewControls.update(overviewSelectedIndex, tour.stops.length, reversed, stop.title);
   });
@@ -371,7 +375,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.setOverviewMode(true);
       mapView.setChevronDirection(false);
       mapView.setSelectedPin(tour.stops[0].id);
-      mapView.setEndPin(tour.stops[tour.stops.length - 1].id);
+      mapView.setEndPin(tour.stops[getEndIndex(0, false)].id);
       mapView.setPinNumberMap(null);
       overviewControls.update(0, tour.stops.length, false, tour.stops[0].title);
       overviewControls.show();
