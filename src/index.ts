@@ -396,6 +396,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
         duration: tour.tour.duration,
         stopCount: tour.stops.length,
         welcome: tour.tour.welcome,
+        hideFooterCta: !isMobile,
         onBegin: () => {
           // Welcome card CTA uses current overview selection
           tourStartIndex = overviewSelectedIndex;

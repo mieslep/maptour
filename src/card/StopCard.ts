@@ -265,6 +265,7 @@ export class StopCard {
     onOpenMap?: () => void;
     gettingHereAvailable?: boolean;
     onGettingHere?: () => void;
+    hideFooterCta?: boolean;
   }): void {
     this.container.innerHTML = '';
     this.container.scrollTop = 0;
@@ -331,12 +332,14 @@ export class StopCard {
       this.container.appendChild(getStarted);
     }
 
-    // CTA button at bottom
-    const cta = document.createElement('button');
-    cta.className = 'maptour-card__cta';
-    cta.textContent = t('begin_tour');
-    cta.addEventListener('click', options.onBegin);
-    this.container.appendChild(cta);
+    // CTA button at bottom (hidden on desktop where overview controls provide it)
+    if (!options.hideFooterCta) {
+      const cta = document.createElement('button');
+      cta.className = 'maptour-card__cta';
+      cta.textContent = t('begin_tour');
+      cta.addEventListener('click', options.onBegin);
+      this.container.appendChild(cta);
+    }
   }
 
   // === Getting Here card ===
