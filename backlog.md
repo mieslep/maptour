@@ -341,20 +341,34 @@ Replace stop-list-header with hamburger menu bar + progress bar. Menu items: Get
 
 **Spec:** `specs/TOUR-039-*.md`
 **Dependencies:** TOUR-038
-**Status:** 🔧 In progress — branch `TOUR-039-menu-bar-progress`
+**Status:** ✅ Implemented — merged to main
 
 ---
 
 ### TOUR-040 — Tour Overview Map mode (medium)
 
-Two map modes: "overview" (during welcome) and "tour" (during stops). Overview mode adds: directional chevrons on route polylines, CW/CCW tour direction toggle, pin-tap to select starting stop, "Begin Tour" button on the map overlay. Tour mode remains clean (pins, route, GPS dot only). GPS nearest-stop pre-selection re-introduced via map. Authoring tool: position control for the get-started block on the welcome card.
+Overview map mode during welcome: sequential pin pulse to show direction, CW/CCW toggle, pin-tap to select starting stop, green start pin / red end pin, "Begin Tour" CTA. Tour mode remains clean. GPS nearest-stop pre-selection re-introduced. Desktop: overview controls at bottom of welcome card.
 
+**Spec:** `specs/TOUR-040-*.md`
 **Dependencies:** TOUR-039
-**Status:** Not yet specced
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-041 — Stop list ordered by tour direction (small)
+
+Stop list (menu and overlay) ordered by circular tour direction starting from the chosen stop. E.g. starting at stop 13 forward: 13, 14, 15, 16, 1, 2, ... 12. Updates live as user selects stops on overview map.
+
+**Dependencies:** TOUR-040
+**Status:** ✅ Implemented — merged to main
 
 ---
 
 ## Backlog (unsequenced)
+
+### Architecture
+
+- **TourSession refactor** — extract a single TourSession object that owns the user's choices (start index, direction, tour order, visited state). Currently tour order is duplicated across the orchestrator, NavController, and StopListOverlay with manual syncing. TourSession would be the single source of truth; components read from it at render time
 
 ### Player UX
 
