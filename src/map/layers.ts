@@ -27,13 +27,13 @@ export function createPinIcon(options: PinOptions): L.DivIcon {
   });
 }
 
-/** Create a chevron icon rotated to the given angle (degrees, 0=north). */
+/** Create a directional arrow icon rotated to the given angle (degrees, 0=north). */
 export function createChevronIcon(angle: number): L.DivIcon {
   return L.divIcon({
     className: '',
-    html: `<div class="maptour-chevron" style="transform: rotate(${angle}deg)">›</div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    html: `<div class="maptour-chevron" style="transform: rotate(${angle}deg)"><span class="maptour-chevron__arrow"></span></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
 }
 

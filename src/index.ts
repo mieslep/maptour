@@ -157,6 +157,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
     let mapPanelCentred = false;
     mapPanel.onToggle((isOpen) => {
       menuBar.close();
+      // Hide menu bar when map is open during overview (overview controls replace it)
+      if (journeyState.getState() === 'tour_start') {
+        menuBar.getElement().style.display = isOpen ? 'none' : '';
+      }
       mapView.invalidateSize();
       if (isOpen && !mapPanelCentred) {
         mapPanelCentred = true;
@@ -415,6 +419,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     } else if (state === 'at_stop') {
       mapView.setOverviewMode(false);
       overviewControls.hide();
+      menuBar.getElement().style.display = '';
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) {
         mapPanel.setHeaderVisible(true);

@@ -47,13 +47,13 @@ function interpolate(
  *
  * @param path Array of [lat, lng] coordinates
  * @param reversed If true, chevrons point in the reverse direction
- * @param intervalM Distance between chevrons in metres (default 60)
+ * @param intervalM Distance between chevrons in metres (default 35)
  * @returns Array of chevron placements with position and bearing angle
  */
 export function placeChevrons(
   path: [number, number][],
   reversed = false,
-  intervalM = 60,
+  intervalM = 35,
 ): ChevronPlacement[] {
   if (path.length < 2) return [];
 
