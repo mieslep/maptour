@@ -1889,25 +1889,21 @@
   }
 }
 
-/* Directional arrows on route polylines (overview mode) */
-.maptour-chevron {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
+/* Sequential pin pulse — shows tour direction in overview mode */
+.maptour-pin--seq-pulse {
+  animation: maptour-seq-pulse 0.5s ease-out;
 }
 
-.maptour-chevron__arrow {
-  display: block;
-  width: 0;
-  height: 0;
-  border-left: 6px solid var(--maptour-primary, #2563eb);
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  opacity: 0.8;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9));
+@keyframes maptour-seq-pulse {
+  0%   { transform: rotate(-45deg) scale(1); }
+  30%  { transform: rotate(-45deg) scale(0.6); }
+  100% { transform: rotate(-45deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-pin--seq-pulse {
+    animation: none;
+  }
 }
 
 /* GPS position icon */

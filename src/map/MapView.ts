@@ -1,8 +1,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Tour, Stop } from '../types';
-import { createPinIcon, createChevronIcon, getLegStyle } from './layers';
-import { placeChevrons } from './chevrons';
+import { createPinIcon, getLegStyle } from './layers';
 
 export class MapView {
   private map: L.Map;
@@ -17,9 +16,9 @@ export class MapView {
   private pinClickCallbacks: Array<(index: number) => void> = [];
   private pinNumberMap: Map<number, number> | null = null;
   private overviewMode = false;
-  private chevronLayer: L.LayerGroup | null = null;
-  private chevronReversed = false;
+  private overviewReversed = false;
   private selectedStopId: number | null = null;
+  private sequencePulseTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -215,23 +214,24 @@ export class MapView {
 
   // === Overview mode ===
 
-  /** Enable or disable overview mode (chevrons + selected pin halo). */
+  /** Enable or disable overview mode (sequential pin pulse + selected pin halo). */
   setOverviewMode(enabled: boolean): void {
     this.overviewMode = enabled;
     if (enabled) {
-      this.renderChevrons();
+      this.startSequencePulse();
     } else {
-      this.clearChevrons();
+      this.stopSequencePulse();
       this.selectedStopId = null;
       this.renderPins();
     }
   }
 
-  /** Set chevron direction. Only affects rendering when overview mode is active. */
+  /** Set tour direction for the sequential pulse animation. */
   setChevronDirection(reversed: boolean): void {
-    this.chevronReversed = reversed;
+    this.overviewReversed = reversed;
     if (this.overviewMode) {
-      this.renderChevrons();
+      this.stopSequencePulse();
+      this.startSequencePulse();
     }
   }
 
@@ -241,37 +241,46 @@ export class MapView {
     this.renderPins();
   }
 
-  private renderChevrons(): void {
-    this.clearChevrons();
-    this.chevronLayer = L.layerGroup();
+  private startSequencePulse(): void {
+    this.stopSequencePulse();
+    const stops = this.tour.stops;
+    if (stops.length < 2) return;
 
-    for (let i = 0; i < this.tour.stops.length - 1; i++) {
-      const current = this.tour.stops[i];
-      const next = this.tour.stops[i + 1];
-      const gettingHere = next.getting_here;
-      const path = gettingHere?.route && gettingHere.route.length > 0
-        ? gettingHere.route
-        : [current.coords, next.coords] as [number, number][];
+    let pulseIndex = 0;
+    const order = this.overviewReversed
+      ? stops.map((_, i) => stops.length - 1 - i)
+      : stops.map((_, i) => i);
 
-      const placements = placeChevrons(path, this.chevronReversed);
-      for (const p of placements) {
-        const marker = L.marker([p.lat, p.lng], {
-          icon: createChevronIcon(p.angle),
-          interactive: false,
-          zIndexOffset: -200,
-        });
-        this.chevronLayer.addLayer(marker);
+    const pulse = () => {
+      // Remove previous pulse class
+      const allPins = document.querySelectorAll('.maptour-pin');
+      allPins.forEach((el) => el.classList.remove('maptour-pin--seq-pulse'));
+
+      // Apply pulse to current pin in sequence
+      const stopId = stops[order[pulseIndex]].id;
+      const marker = this.markers.get(stopId);
+      if (marker) {
+        const el = (marker as L.Marker).getElement();
+        const pin = el?.querySelector('.maptour-pin');
+        if (pin) pin.classList.add('maptour-pin--seq-pulse');
       }
-    }
 
-    this.chevronLayer.addTo(this.map);
+      pulseIndex = (pulseIndex + 1) % stops.length;
+    };
+
+    pulse(); // Start immediately
+    this.sequencePulseTimer = setInterval(pulse, 600);
   }
 
-  private clearChevrons(): void {
-    if (this.chevronLayer) {
-      this.chevronLayer.remove();
-      this.chevronLayer = null;
+  private stopSequencePulse(): void {
+    if (this.sequencePulseTimer) {
+      clearInterval(this.sequencePulseTimer);
+      this.sequencePulseTimer = null;
     }
+    // Clean up any remaining pulse classes
+    document.querySelectorAll('.maptour-pin--seq-pulse').forEach((el) => {
+      el.classList.remove('maptour-pin--seq-pulse');
+    });
   }
 
   getMap(): L.Map {
