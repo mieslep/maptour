@@ -18,6 +18,7 @@ export class MapView {
   private overviewMode = false;
   private overviewReversed = false;
   private selectedStopId: number | null = null;
+  private endStopId: number | null = null;
   private sequencePulseTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(container: HTMLElement, tour: Tour) {
@@ -64,6 +65,7 @@ export class MapView {
           visited: this.visitedStopIds.has(stop.id),
           pulsing: stop.id === this.pulsingStopId,
           selected: stop.id === this.selectedStopId,
+          end: stop.id === this.endStopId,
         }),
         title: stop.title,
         alt: `Stop ${displayNumber}: ${stop.title}`,
@@ -222,6 +224,7 @@ export class MapView {
     } else {
       this.stopSequencePulse();
       this.selectedStopId = null;
+      this.endStopId = null;
       this.renderPins();
     }
   }
@@ -235,9 +238,15 @@ export class MapView {
     }
   }
 
-  /** Set the selected starting pin (pulsing halo). Pass null to clear. */
+  /** Set the selected starting pin (green). Pass null to clear. */
   setSelectedPin(stopId: number | null): void {
     this.selectedStopId = stopId;
+    this.renderPins();
+  }
+
+  /** Set the end pin (red). Pass null to clear. */
+  setEndPin(stopId: number | null): void {
+    this.endStopId = stopId;
     this.renderPins();
   }
 
@@ -269,7 +278,7 @@ export class MapView {
     };
 
     pulse(); // Start immediately
-    this.sequencePulseTimer = setInterval(pulse, 600);
+    this.sequencePulseTimer = setInterval(pulse, 300);
   }
 
   private stopSequencePulse(): void {

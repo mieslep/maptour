@@ -1094,9 +1094,6 @@
 /* === Overview Controls (start picker + direction + begin tour) === */
 
 .maptour-overview-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   padding: 10px 12px;
   background: var(--maptour-surface);
   border-top: 1px solid var(--maptour-border);
@@ -1106,66 +1103,21 @@
   display: none;
 }
 
-.maptour-overview-controls__top {
+.maptour-overview-controls__row {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.maptour-overview-controls__arrow {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: 1px solid var(--maptour-border);
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--maptour-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-
-.maptour-overview-controls__arrow:hover:not(:disabled) {
-  background: var(--maptour-border);
-}
-
-.maptour-overview-controls__arrow:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.maptour-overview-controls__arrow:focus-visible {
-  outline: 2px solid var(--maptour-primary);
-  outline-offset: 2px;
-}
-
-.maptour-overview-controls__track {
-  flex: 1;
-  height: 4px;
-  background: var(--maptour-border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.maptour-overview-controls__fill {
-  height: 100%;
-  background: var(--maptour-primary);
-  border-radius: 2px;
-  transition: width 0.3s ease;
+  gap: 8px;
 }
 
 .maptour-overview-controls__direction {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   background: none;
   border: 1px solid var(--maptour-border);
-  border-radius: 50%;
+  border-radius: var(--maptour-radius);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--maptour-text);
   display: flex;
   align-items: center;
@@ -1180,12 +1132,6 @@
 .maptour-overview-controls__direction:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
-}
-
-.maptour-overview-controls__bottom {
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 .maptour-overview-controls__cta {
@@ -1235,12 +1181,6 @@
 .maptour-overview-controls__close:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .maptour-overview-controls__fill {
-    transition: none;
-  }
 }
 
 /* Mobile: overview controls positioned at bottom of map panel */
@@ -1868,25 +1808,20 @@
   opacity: 0.8;
 }
 
-/* Selected starting pin (overview mode) — pulsing halo */
+/* Selected starting pin (overview mode) — green */
 .maptour-pin--selected {
-  background: var(--maptour-primary);
+  background: var(--maptour-accent, #16a34a);
   border-color: white;
   transform: rotate(-45deg) scale(1.2);
   z-index: 1000;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
-  animation: maptour-pin-selected-halo 2s ease-in-out infinite;
 }
 
-@keyframes maptour-pin-selected-halo {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3); }
-  50%      { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .maptour-pin--selected {
-    animation: none;
-  }
+/* End pin (overview mode) — red */
+.maptour-pin--end {
+  background: #dc2626;
+  border-color: white;
+  transform: rotate(-45deg) scale(1.2);
+  z-index: 999;
 }
 
 /* Sequential pin pulse — shows tour direction in overview mode */

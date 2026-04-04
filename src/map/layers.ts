@@ -7,13 +7,15 @@ export interface PinOptions {
   visited?: boolean;
   pulsing?: boolean;
   selected?: boolean;
+  end?: boolean;
 }
 
 export function createPinIcon(options: PinOptions): L.DivIcon {
-  const { number, active = false, visited = false, pulsing = false, selected = false } = options;
+  const { number, active = false, visited = false, pulsing = false, selected = false, end = false } = options;
 
   let classes = 'maptour-pin';
   if (selected) classes += ' maptour-pin--selected';
+  else if (end) classes += ' maptour-pin--end';
   else if (active) classes += ' maptour-pin--active';
   else if (pulsing) classes += ' maptour-pin--next';
   else if (visited) classes += ' maptour-pin--visited';

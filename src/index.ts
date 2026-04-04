@@ -275,22 +275,12 @@ async function init(options: MapTourInitOptions): Promise<void> {
   }
 
   // === Overview controls events ===
-  overviewControls.onStopSelect((index) => {
-    updateOverviewSelection(index);
-  });
-
   overviewControls.onDirectionToggle((reversed) => {
     tourReversed = reversed;
     mapView.setChevronDirection(reversed);
-    // Update pin numbers for reversed order
-    if (reversed) {
-      const mapping = new Map<number, number>();
-      tour.stops.forEach((_, i) => mapping.set(i, tour.stops.length - i));
-      mapView.setPinNumberMap(mapping);
-    } else {
-      mapView.setPinNumberMap(null);
-    }
-    // Update controls with current selection
+    // Update end pin marker
+    const endIndex = reversed ? 0 : tour.stops.length - 1;
+    mapView.setEndPin(tour.stops[endIndex].id);
     const stop = tour.stops[overviewSelectedIndex];
     overviewControls.update(overviewSelectedIndex, tour.stops.length, reversed, stop.title);
   });
@@ -381,6 +371,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.setOverviewMode(true);
       mapView.setChevronDirection(false);
       mapView.setSelectedPin(tour.stops[0].id);
+      mapView.setEndPin(tour.stops[tour.stops.length - 1].id);
       mapView.setPinNumberMap(null);
       overviewControls.update(0, tour.stops.length, false, tour.stops[0].title);
       overviewControls.show();

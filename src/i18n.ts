@@ -90,7 +90,7 @@ const DEFAULTS: Record<string, string> = {
   get_started_prompt: 'Open the map to explore stops and start your tour',
   begin_tour:         'Begin Tour',
   begin_from:         'Begin Tour from {stop}',
-  toggle_direction:   'Reverse tour direction',
+  change_direction:   'Change direction',
   stop_n_of_total:    'Stop {n} of {total}',
 
   // Progress bar
