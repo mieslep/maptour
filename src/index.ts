@@ -173,6 +173,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
             }
           } else if (state === 'tour_start') {
             mapView.fitBounds();
+            mapView.triggerSequencePulse();
           }
         });
       }
@@ -380,9 +381,12 @@ async function init(options: MapTourInitOptions): Promise<void> {
       overviewControls.update(0, tour.stops.length, false, tour.stops[0].title);
       overviewControls.show();
 
-      // On desktop, append overview controls to the card area
-      if (!isMobile && !cardEl.contains(overviewControls.getElement())) {
-        cardEl.appendChild(overviewControls.getElement());
+      // On desktop, append overview controls and trigger pulse (map is always visible)
+      if (!isMobile) {
+        if (!cardEl.contains(overviewControls.getElement())) {
+          cardEl.appendChild(overviewControls.getElement());
+        }
+        mapView.triggerSequencePulse();
       }
 
       stopCard.renderWelcome({

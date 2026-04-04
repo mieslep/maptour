@@ -216,12 +216,10 @@ export class MapView {
 
   // === Overview mode ===
 
-  /** Enable or disable overview mode (sequential pin pulse + selected pin halo). */
+  /** Enable or disable overview mode. Does NOT auto-start pulse — call triggerSequencePulse() separately. */
   setOverviewMode(enabled: boolean): void {
     this.overviewMode = enabled;
-    if (enabled) {
-      this.startSequencePulse();
-    } else {
+    if (!enabled) {
       this.stopSequencePulse();
       this.selectedStopId = null;
       // Keep endStopId — red end pin persists during tour
@@ -238,10 +236,17 @@ export class MapView {
     }
   }
 
-  /** Set the selected starting pin (green). Pass null to clear. Restarts pulse animation. */
+  /** Set the selected starting pin (green). Pass null to clear. Restarts pulse if in overview. */
   setSelectedPin(stopId: number | null): void {
     this.selectedStopId = stopId;
     this.renderPins();
+    if (this.overviewMode) {
+      this.triggerSequencePulse();
+    }
+  }
+
+  /** Start the sequential pulse animation (call when map becomes visible). */
+  triggerSequencePulse(): void {
     if (this.overviewMode) {
       this.startSequencePulse();
     }
@@ -302,7 +307,7 @@ export class MapView {
       pulse();
       this.sequencePulseTimer = setInterval(() => {
         pulse();
-      }, 300);
+      }, 600);
     }, 500) as unknown as ReturnType<typeof setInterval>;
   }
 
