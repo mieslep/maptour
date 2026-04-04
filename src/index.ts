@@ -290,19 +290,25 @@ async function init(options: MapTourInitOptions): Promise<void> {
   function updateOverviewSelection(index: number): void {
     overviewSelectedIndex = index;
     const stop = tour.stops[index];
+    currentTourOrder = computeTourOrder(index, tourReversed);
     mapView.setSelectedPin(stop.id);
     mapView.setEndPin(tour.stops[getEndIndex(index, tourReversed)].id);
     mapView.flyToStop(stop, 16);
     overviewControls.update(index, tour.stops.length, tourReversed, stop.title);
+    navController?.setTourOrder(currentTourOrder);
+    stopListOverlay.update(tour.stops, index, breadcrumb.getVisited(), currentTourOrder);
   }
 
   // === Overview controls events ===
   overviewControls.onDirectionToggle((reversed) => {
     tourReversed = reversed;
+    currentTourOrder = computeTourOrder(overviewSelectedIndex, reversed);
     mapView.setChevronDirection(reversed);
     mapView.setEndPin(tour.stops[getEndIndex(overviewSelectedIndex, reversed)].id);
     const stop = tour.stops[overviewSelectedIndex];
     overviewControls.update(overviewSelectedIndex, tour.stops.length, reversed, stop.title);
+    navController?.setTourOrder(currentTourOrder);
+    stopListOverlay.update(tour.stops, overviewSelectedIndex, breadcrumb.getVisited(), currentTourOrder);
   });
 
   overviewControls.onBegin((index, reversed) => {
