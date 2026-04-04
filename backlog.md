@@ -364,11 +364,21 @@ Stop list (menu and overlay) ordered by circular tour direction starting from th
 
 ---
 
+### TOUR-042 — Architecture refactor (large)
+
+TourSession as single source of truth for tour config + visited state. StopCard decomposed into CardHost + 6 focused renderers. NavController slimmed to emit events. Layout builders extracted. Journey handler extracted. index.ts reduced from 631 to ~305 lines.
+
+**Spec:** `specs/TOUR-042-*.md`
+**Dependencies:** none
+**Status:** ✅ Implemented — merged to main
+
+---
+
 ## Backlog (unsequenced)
 
 ### Architecture
 
-- **TourSession refactor** — extract a single TourSession object that owns the user's choices (start index, direction, tour order, visited state). Currently tour order is duplicated across the orchestrator, NavController, and StopListOverlay with manual syncing. TourSession would be the single source of truth; components read from it at render time
+- **Tour reversal mechanics** — direction toggle is hidden pending review. Journey cards, getting_here notes, and CTA buttons need correct behaviour in reverse direction. Needs spec work before re-enabling.
 
 ### Player UX
 
