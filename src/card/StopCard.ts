@@ -261,12 +261,8 @@ export class StopCard {
     duration?: string;
     stopCount: number;
     welcome?: ContentBlock[];
-    returning: boolean;
-    stops: Stop[];
-    selectedIndex: number;
-    onBegin: (index: number) => void;
-    reversed?: boolean;
-    onReverseToggle?: (reversed: boolean) => void;
+    onBegin: () => void;
+    onOpenMap?: () => void;
     gettingHereAvailable?: boolean;
     onGettingHere?: () => void;
   }): void {
@@ -274,56 +270,6 @@ export class StopCard {
     this.container.scrollTop = 0;
     this.container.setAttribute('role', 'region');
     this.container.setAttribute('aria-label', `Welcome: ${options.title}`);
-    this.welcomeBeginCallback = options.onBegin;
-    this.welcomeSelectedIndex = options.selectedIndex;
-
-    // Guided tip
-    const tip = document.createElement('p');
-    tip.className = 'maptour-card__tip';
-    tip.textContent = t('tip');
-    this.container.appendChild(tip);
-
-    // Picker row: [stop order (left)] [start-from selection (right)]
-    const pickerRow = document.createElement('div');
-    pickerRow.className = 'maptour-card__picker-row';
-
-    // Stop order toggle (left column, stacked label + button)
-    if (options.stopCount > 1 && options.onReverseToggle) {
-      let reversed = options.reversed ?? false;
-      const orderCol = document.createElement('div');
-      orderCol.className = 'maptour-card__stop-order';
-
-      const label = document.createElement('div');
-      label.className = 'maptour-card__stop-order-label';
-      label.textContent = t('stop_order');
-      orderCol.appendChild(label);
-
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'maptour-card__stop-order-btn';
-
-      function updateToggle(): void {
-        const first = reversed ? options.stopCount : 1;
-        const last = reversed ? 1 : options.stopCount;
-        toggleBtn.innerHTML = `${first} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${last}`;
-        toggleBtn.setAttribute('aria-label', `${t('stop_order')} ${first} to ${last}. Tap to reverse.`);
-      }
-      updateToggle();
-
-      toggleBtn.addEventListener('click', () => {
-        reversed = !reversed;
-        updateToggle();
-        options.onReverseToggle!(reversed);
-      });
-      orderCol.appendChild(toggleBtn);
-      pickerRow.appendChild(orderCol);
-    }
-
-    // Start-from selection (right column, spans both rows)
-    this.welcomeSelectionEl = document.createElement('div');
-    this.welcomeSelectionEl.className = 'maptour-card__start-from';
-    pickerRow.appendChild(this.welcomeSelectionEl);
-
-    this.container.appendChild(pickerRow);
 
     // Tour title
     const title = document.createElement('h1');
@@ -365,79 +311,32 @@ export class StopCard {
       this.container.appendChild(welcomeContent);
     }
 
+    // "Get started" block — prompt to open the map
+    if (options.onOpenMap) {
+      const getStarted = document.createElement('div');
+      getStarted.className = 'maptour-card__get-started';
+
+      const prompt = document.createElement('span');
+      prompt.className = 'maptour-card__get-started-text';
+      prompt.textContent = t('get_started_prompt');
+      getStarted.appendChild(prompt);
+
+      const mapBtn = document.createElement('button');
+      mapBtn.className = 'maptour-card__get-started-btn';
+      mapBtn.setAttribute('aria-label', t('show_map'));
+      mapBtn.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
+      mapBtn.addEventListener('click', options.onOpenMap);
+      getStarted.appendChild(mapBtn);
+
+      this.container.appendChild(getStarted);
+    }
+
     // CTA button at bottom
-    this.welcomeCtaEl = document.createElement('button');
-    this.welcomeCtaEl.className = 'maptour-card__cta';
-    this.welcomeCtaEl.addEventListener('click', () => {
-      this.welcomeBeginCallback?.(this.welcomeSelectedIndex);
-    });
-    this.container.appendChild(this.welcomeCtaEl);
-
-    // Set initial selection
-    this.updateWelcomeSelection(options.stops[options.selectedIndex], options.selectedIndex, options.stops.length, options.returning);
-  }
-
-  updateWelcomeSelection(stop: Stop, index: number, totalStops: number, returning = false): void {
-    this.welcomeSelectedIndex = index;
-
-    if (this.welcomeSelectionEl) {
-      this.welcomeSelectionEl.innerHTML = '';
-
-      const headerRow = document.createElement('div');
-      headerRow.className = 'maptour-card__start-from-header';
-
-      const textCol = document.createElement('div');
-      textCol.className = 'maptour-card__start-from-text';
-
-      const label = document.createElement('div');
-      label.className = 'maptour-card__start-from-label';
-      label.textContent = t('start_at', { n: index + 1, total: totalStops });
-      textCol.appendChild(label);
-
-      const stopName = document.createElement('div');
-      stopName.className = 'maptour-card__start-from-name';
-      stopName.textContent = stop.title;
-      textCol.appendChild(stopName);
-
-      headerRow.appendChild(textCol);
-      this.welcomeSelectionEl.appendChild(headerRow);
-    }
-
-    if (this.welcomeCtaEl) {
-      this.welcomeCtaEl.textContent = t('start_from', { stop: stop.title });
-    }
-  }
-
-  showNearestIndicator(stopIndex: number, stopName: string, onSelect?: (index: number) => void): void {
-    const pickerRow = this.container.querySelector('.maptour-card__picker-row');
-    if (!pickerRow) return;
-
-    // Remove any existing indicator
-    const existing = pickerRow.querySelector('.maptour-card__nearest');
-    if (existing) existing.remove();
-
-    const indicator = document.createElement('div');
-    indicator.className = 'maptour-card__nearest';
-
-    const icon = document.createElement('i');
-    icon.className = 'fa-solid fa-location-dot';
-    icon.setAttribute('aria-hidden', 'true');
-    indicator.appendChild(icon);
-    indicator.appendChild(document.createTextNode(' ' + t('nearest_to_you')));
-
-    const link = document.createElement('a');
-    link.className = 'maptour-card__nearest-link';
-    link.href = '#';
-    link.textContent = t('stop_label', { n: stopIndex + 1, stop: stopName });
-    if (onSelect) {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        onSelect(stopIndex);
-      });
-    }
-    indicator.appendChild(link);
-
-    pickerRow.appendChild(indicator);
+    const cta = document.createElement('button');
+    cta.className = 'maptour-card__cta';
+    cta.textContent = t('begin_tour');
+    cta.addEventListener('click', options.onBegin);
+    this.container.appendChild(cta);
   }
 
   // === Getting Here card ===

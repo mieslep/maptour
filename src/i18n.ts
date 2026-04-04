@@ -86,6 +86,10 @@ const DEFAULTS: Record<string, string> = {
   about_heading:     'Powered by MapTour',
   about_description: 'An open-source, embeddable map tour player for static websites.',
 
+  // Welcome card
+  get_started_prompt: 'Open the map to explore stops and start your tour',
+  begin_tour:         'Begin Tour',
+
   // Progress bar
   progress_label:    'Tour progress',
 

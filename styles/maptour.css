@@ -1087,6 +1087,51 @@
   color: #1d4ed8;
 }
 
+/* "Get started" block on welcome card — map prompt */
+.maptour-card__get-started {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  background: var(--maptour-surface-2);
+  border: 1px solid var(--maptour-border);
+  border-radius: var(--maptour-radius);
+}
+
+.maptour-card__get-started-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--maptour-text);
+  line-height: 1.4;
+}
+
+.maptour-card__get-started-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--maptour-primary);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.15s;
+}
+
+.maptour-card__get-started-btn:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.maptour-card__get-started-btn:focus-visible {
+  outline: 2px solid var(--maptour-text);
+  outline-offset: 2px;
+}
+
 /* === Welcome / Goodbye card elements === */
 
 .maptour-card__description {

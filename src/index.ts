@@ -5,7 +5,6 @@ import { MapView } from './map/MapView';
 import { StopCard } from './card/StopCard';
 import { NavController } from './navigation/NavController';
 import { GpsTracker } from './gps/GpsTracker';
-import { nearestStop } from './gps/nearestStop';
 import { ProximityDetector } from './gps/proximityDetector';
 import { Breadcrumb } from './breadcrumb/Breadcrumb';
 import { showError } from './errors/ErrorDisplay';
@@ -240,25 +239,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const breadcrumb = new Breadcrumb(tour.tour.id);
   const gpsTracker = new GpsTracker();
 
-  // Arrow mode: 'picker' during welcome (cycle stops to choose start), 'nav' during tour
-  let arrowMode: 'nav' | 'picker' = 'nav';
-  let pickerIndex = 0;
   let tourStartIndex = 0;
-  let gpsPickerApplied = false;
   let tourReversed = false;
-  const returning = breadcrumb.getVisited().size > 0;
 
   function setMobileMapPadding(): void {
     mapView.setMapPadding(0);
-  }
-
-  function updatePickerSelection(index: number): void {
-    pickerIndex = index;
-    const stop = tour.stops[index];
-    stopCard.updateWelcomeSelection(stop, index, tour.stops.length, returning);
-    mapView.flyToStop(stop, 16);
-    progressBar.setPrevDisabled(index === 0);
-    progressBar.setNextDisabled(index === tour.stops.length - 1);
   }
 
   // Helper to dismiss system card and return to current state
@@ -289,16 +274,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       });
     } else if (action === 'start_tour') {
       viewingSystemCard = null;
-      // Pre-set picker to current stop if mid-tour
-      const currentIdx = journeyState.getState() === 'at_stop'
-        ? journeyState.getActiveStopIndex()
-        : 0;
-      pickerIndex = currentIdx;
       journeyState.transition('tour_start');
-      // After welcome renders, select the current stop
-      if (currentIdx > 0) {
-        updatePickerSelection(currentIdx);
-      }
     } else if (action === 'tour_stops') {
       if (isMobile) {
         stopListOverlay.open();
@@ -315,35 +291,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
   });
 
   // === Progress bar arrows ===
-  progressBar.onPrev(() => {
-    if (arrowMode === 'picker') {
-      if (tourReversed) {
-        if (pickerIndex < tour.stops.length - 1) updatePickerSelection(pickerIndex + 1);
-      } else {
-        if (pickerIndex > 0) updatePickerSelection(pickerIndex - 1);
-      }
-    } else {
-      navController.prev();
-    }
-  });
-  progressBar.onNext(() => {
-    if (arrowMode === 'picker') {
-      if (tourReversed) {
-        if (pickerIndex > 0) updatePickerSelection(pickerIndex - 1);
-      } else {
-        if (pickerIndex < tour.stops.length - 1) updatePickerSelection(pickerIndex + 1);
-      }
-    } else {
-      navController.next();
-    }
-  });
-
-  // Pin click on map selects that stop during welcome picker
-  mapView.onPinClick((index) => {
-    if (arrowMode === 'picker') {
-      updatePickerSelection(index);
-    }
-  });
+  progressBar.onPrev(() => navController.prev());
+  progressBar.onNext(() => navController.next());
 
   // === State change handler ===
   journeyState.onStateChange((state, stopIndex) => {
@@ -352,37 +301,26 @@ async function init(options: MapTourInitOptions): Promise<void> {
     viewingSystemCard = null;
 
     if (state === 'tour_start') {
-      arrowMode = 'picker';
-      gpsPickerApplied = false;
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) mapPanel.hide();
       setMobileMapPadding();
       mapView.fitBounds();
       progressBar.hide();
 
-      // Reset reverse state on fresh tour start
       tourReversed = false;
-      pickerIndex = 0;
       stopCard.renderWelcome({
         title: tour.tour.title,
         description: tour.tour.description,
         duration: tour.tour.duration,
         stopCount: tour.stops.length,
         welcome: tour.tour.welcome,
-        returning,
-        stops: tour.stops,
-        selectedIndex: 0,
-        reversed: false,
-        onReverseToggle: (reversed) => {
-          tourReversed = reversed;
-          navController.setReversed(reversed);
+        onBegin: () => {
+          tourStartIndex = 0;
+          stopCard.setStartingStop(0);
+          navController.setStartIndex(0);
+          journeyState.transition('at_stop', 0);
         },
-        onBegin: (idx) => {
-          tourStartIndex = idx;
-          stopCard.setStartingStop(idx);
-          navController.setStartIndex(idx);
-          journeyState.transition('at_stop', idx);
-        },
+        onOpenMap: mapPanel ? () => mapPanel!.toggle() : undefined,
         gettingHereAvailable: hasGettingHere,
         onGettingHere: hasGettingHere ? () => {
           viewingSystemCard = 'getting_here';
@@ -393,10 +331,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
           });
         } : undefined,
       });
-      // Centre map on first stop
       mapView.setActiveStop(tour.stops[0]);
     } else if (state === 'at_stop') {
-      arrowMode = 'nav';
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) {
         mapPanel.hide();
@@ -432,7 +368,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
       proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'tour_complete') {
-      arrowMode = 'nav';
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) mapPanel.hide();
       setMobileMapPadding();
@@ -526,20 +461,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
         }
 
         proximityDetector?.checkPosition(pos);
-
-        if (!gpsPickerApplied && arrowMode === 'picker') {
-          const maxAccuracy = tour.tour.gps?.max_accuracy ?? 50;
-          const maxDistance = tour.tour.gps?.max_distance ?? 500;
-          if (pos.accuracy <= maxAccuracy) {
-            const nearResult = nearestStop(pos.lat, pos.lng, tour.stops);
-            if (nearResult.distance <= maxDistance) {
-              gpsPickerApplied = true;
-              stopCard.showNearestIndicator(nearResult.index, tour.stops[nearResult.index].title, (idx) => {
-                updatePickerSelection(idx);
-              });
-            }
-          }
-        }
       } else {
         mapView.clearGpsPosition();
       }
