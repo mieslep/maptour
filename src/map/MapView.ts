@@ -1,7 +1,8 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Tour, Stop } from '../types';
-import { createPinIcon, getLegStyle } from './layers';
+import { createPinIcon, createChevronIcon, getLegStyle } from './layers';
+import { placeChevrons } from './chevrons';
 
 export class MapView {
   private map: L.Map;
@@ -15,6 +16,10 @@ export class MapView {
   private paddingBottom = 0;
   private pinClickCallbacks: Array<(index: number) => void> = [];
   private pinNumberMap: Map<number, number> | null = null;
+  private overviewMode = false;
+  private chevronLayer: L.LayerGroup | null = null;
+  private chevronReversed = false;
+  private selectedStopId: number | null = null;
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -59,6 +64,7 @@ export class MapView {
           active: stop.id === this.activeStopId,
           visited: this.visitedStopIds.has(stop.id),
           pulsing: stop.id === this.pulsingStopId,
+          selected: stop.id === this.selectedStopId,
         }),
         title: stop.title,
         alt: `Stop ${displayNumber}: ${stop.title}`,
@@ -205,6 +211,67 @@ export class MapView {
 
   onPinClick(cb: (index: number) => void): void {
     this.pinClickCallbacks.push(cb);
+  }
+
+  // === Overview mode ===
+
+  /** Enable or disable overview mode (chevrons + selected pin halo). */
+  setOverviewMode(enabled: boolean): void {
+    this.overviewMode = enabled;
+    if (enabled) {
+      this.renderChevrons();
+    } else {
+      this.clearChevrons();
+      this.selectedStopId = null;
+      this.renderPins();
+    }
+  }
+
+  /** Set chevron direction. Only affects rendering when overview mode is active. */
+  setChevronDirection(reversed: boolean): void {
+    this.chevronReversed = reversed;
+    if (this.overviewMode) {
+      this.renderChevrons();
+    }
+  }
+
+  /** Set the selected starting pin (pulsing halo). Pass null to clear. */
+  setSelectedPin(stopId: number | null): void {
+    this.selectedStopId = stopId;
+    this.renderPins();
+  }
+
+  private renderChevrons(): void {
+    this.clearChevrons();
+    this.chevronLayer = L.layerGroup();
+
+    for (let i = 0; i < this.tour.stops.length - 1; i++) {
+      const current = this.tour.stops[i];
+      const next = this.tour.stops[i + 1];
+      const gettingHere = next.getting_here;
+      const path = gettingHere?.route && gettingHere.route.length > 0
+        ? gettingHere.route
+        : [current.coords, next.coords] as [number, number][];
+
+      const placements = placeChevrons(path, this.chevronReversed);
+      for (const p of placements) {
+        const marker = L.marker([p.lat, p.lng], {
+          icon: createChevronIcon(p.angle),
+          interactive: false,
+          zIndexOffset: -200,
+        });
+        this.chevronLayer.addLayer(marker);
+      }
+    }
+
+    this.chevronLayer.addTo(this.map);
+  }
+
+  private clearChevrons(): void {
+    if (this.chevronLayer) {
+      this.chevronLayer.remove();
+      this.chevronLayer = null;
+    }
   }
 
   getMap(): L.Map {

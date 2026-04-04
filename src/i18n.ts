@@ -86,9 +86,12 @@ const DEFAULTS: Record<string, string> = {
   about_heading:     'Powered by MapTour',
   about_description: 'An open-source, embeddable map tour player for static websites.',
 
-  // Welcome card
+  // Welcome card / overview
   get_started_prompt: 'Open the map to explore stops and start your tour',
   begin_tour:         'Begin Tour',
+  begin_from:         'Begin Tour from {stop}',
+  toggle_direction:   'Reverse tour direction',
+  stop_n_of_total:    'Stop {n} of {total}',
 
   // Progress bar
   progress_label:    'Tour progress',
@@ -112,6 +115,8 @@ const PLACEHOLDERS: Record<string, string[]> = {
   transit_label: ['n', 'stop'],
   stop_label:    ['n', 'stop'],
   gallery_counter: ['n', 'total'],
+  begin_from:      ['stop'],
+  stop_n_of_total: ['n', 'total'],
 };
 
 let strings: Record<string, string> = { ...DEFAULTS };

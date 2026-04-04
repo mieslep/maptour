@@ -1091,6 +1091,136 @@
   color: #1d4ed8;
 }
 
+/* === Overview Controls (start picker + direction + begin tour) === */
+
+.maptour-overview-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--maptour-surface);
+  border-top: 1px solid var(--maptour-border);
+}
+
+.maptour-overview-controls[hidden] {
+  display: none;
+}
+
+.maptour-overview-controls__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.maptour-overview-controls__arrow {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--maptour-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.maptour-overview-controls__arrow:hover:not(:disabled) {
+  background: var(--maptour-border);
+}
+
+.maptour-overview-controls__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.maptour-overview-controls__arrow:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-overview-controls__track {
+  flex: 1;
+  height: 4px;
+  background: var(--maptour-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.maptour-overview-controls__fill {
+  height: 100%;
+  background: var(--maptour-primary);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.maptour-overview-controls__direction {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--maptour-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--maptour-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.maptour-overview-controls__direction:hover {
+  background: var(--maptour-border);
+}
+
+.maptour-overview-controls__direction:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+.maptour-overview-controls__cta {
+  width: 100%;
+  padding: 12px;
+  min-height: 44px;
+  background: var(--maptour-primary);
+  color: white;
+  border: none;
+  border-radius: var(--maptour-radius);
+  font-family: var(--maptour-font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.maptour-overview-controls__cta:hover {
+  background: #1d4ed8;
+}
+
+.maptour-overview-controls__cta:focus-visible {
+  outline: 2px solid var(--maptour-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-overview-controls__fill {
+    transition: none;
+  }
+}
+
+/* Mobile: overview controls positioned at bottom of map panel */
+.maptour-map-panel .maptour-overview-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+}
+
 /* "Get started" block on welcome card — map prompt */
 .maptour-card__get-started {
   display: flex;
@@ -1705,6 +1835,38 @@
 .maptour-pin--visited {
   background: #9ca3af;
   opacity: 0.8;
+}
+
+/* Selected starting pin (overview mode) — pulsing halo */
+.maptour-pin--selected {
+  background: var(--maptour-primary);
+  border-color: white;
+  transform: rotate(-45deg) scale(1.2);
+  z-index: 1000;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
+  animation: maptour-pin-selected-halo 2s ease-in-out infinite;
+}
+
+@keyframes maptour-pin-selected-halo {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3); }
+  50%      { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-pin--selected {
+    animation: none;
+  }
+}
+
+/* Directional chevrons on route polylines (overview mode) */
+.maptour-chevron {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--maptour-primary, #2563eb);
+  opacity: 0.5;
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
 }
 
 /* GPS position icon */

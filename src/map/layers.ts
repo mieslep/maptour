@@ -6,13 +6,15 @@ export interface PinOptions {
   active?: boolean;
   visited?: boolean;
   pulsing?: boolean;
+  selected?: boolean;
 }
 
 export function createPinIcon(options: PinOptions): L.DivIcon {
-  const { number, active = false, visited = false, pulsing = false } = options;
+  const { number, active = false, visited = false, pulsing = false, selected = false } = options;
 
   let classes = 'maptour-pin';
-  if (active)   classes += ' maptour-pin--active';
+  if (selected) classes += ' maptour-pin--selected';
+  else if (active) classes += ' maptour-pin--active';
   else if (pulsing) classes += ' maptour-pin--next';
   else if (visited) classes += ' maptour-pin--visited';
 
@@ -22,6 +24,16 @@ export function createPinIcon(options: PinOptions): L.DivIcon {
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -32],
+  });
+}
+
+/** Create a small chevron icon rotated to the given angle (degrees, 0=north). */
+export function createChevronIcon(angle: number): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: `<div class="maptour-chevron" style="transform: rotate(${angle}deg)">›</div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
   });
 }
 

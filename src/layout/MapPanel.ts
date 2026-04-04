@@ -121,6 +121,10 @@ export class MapPanel {
       && window.matchMedia(REDUCED_MOTION_QUERY).matches;
   }
 
+  getElement(): HTMLElement {
+    return this.panel;
+  }
+
   destroy(): void {
     this.panel.remove();
     this.openBtn.remove();

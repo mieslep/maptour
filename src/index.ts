@@ -5,6 +5,7 @@ import { MapView } from './map/MapView';
 import { StopCard } from './card/StopCard';
 import { NavController } from './navigation/NavController';
 import { GpsTracker } from './gps/GpsTracker';
+import { nearestStop } from './gps/nearestStop';
 import { ProximityDetector } from './gps/proximityDetector';
 import { Breadcrumb } from './breadcrumb/Breadcrumb';
 import { showError } from './errors/ErrorDisplay';
@@ -15,6 +16,7 @@ import { MenuBar } from './layout/MenuBar';
 import { ProgressBar } from './layout/ProgressBar';
 import { InTransitBar } from './layout/InTransitBar';
 import { StopListOverlay } from './layout/StopListOverlay';
+import { OverviewControls } from './layout/OverviewControls';
 import { setStrings, t } from './i18n';
 import type { MapTourInitOptions } from './types';
 
@@ -228,6 +230,14 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const transitBar = new InTransitBar(container);
   const stopListOverlay = new StopListOverlay(container);
 
+  // Overview controls (stop picker + direction toggle + begin tour)
+  const overviewControls = new OverviewControls();
+  if (isMobile && mapPanel) {
+    // Mobile: place at bottom of map panel
+    mapPanel.getElement().appendChild(overviewControls.getElement());
+  }
+  // Desktop placement happens in tour_start handler (appended to card)
+
   // === Journey state ===
   const storage = (() => { try { return localStorage; } catch { return null; } })();
   const journeyState = new JourneyStateManager(tour.tour.id, tour.stops.length, storage);
@@ -243,10 +253,51 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   let tourStartIndex = 0;
   let tourReversed = false;
+  let overviewSelectedIndex = 0;
+  let gpsOverviewApplied = false;
 
   function setMobileMapPadding(): void {
     mapView.setMapPadding(0);
   }
+
+  function updateOverviewSelection(index: number): void {
+    overviewSelectedIndex = index;
+    const stop = tour.stops[index];
+    mapView.setSelectedPin(stop.id);
+    mapView.flyToStop(stop, 16);
+    overviewControls.update(index, tour.stops.length, tourReversed, stop.title);
+  }
+
+  // === Overview controls events ===
+  overviewControls.onStopSelect((index) => {
+    updateOverviewSelection(index);
+  });
+
+  overviewControls.onDirectionToggle((reversed) => {
+    tourReversed = reversed;
+    mapView.setChevronDirection(reversed);
+    // Update pin numbers for reversed order
+    if (reversed) {
+      const mapping = new Map<number, number>();
+      tour.stops.forEach((_, i) => mapping.set(i, tour.stops.length - i));
+      mapView.setPinNumberMap(mapping);
+    } else {
+      mapView.setPinNumberMap(null);
+    }
+    // Update controls with current selection
+    const stop = tour.stops[overviewSelectedIndex];
+    overviewControls.update(overviewSelectedIndex, tour.stops.length, reversed, stop.title);
+  });
+
+  overviewControls.onBegin((index, reversed) => {
+    tourStartIndex = index;
+    tourReversed = reversed;
+    stopCard.setStartingStop(index);
+    navController.setStartIndex(index);
+    navController.setReversed(reversed);
+    if (mapPanel) mapPanel.hide();
+    journeyState.transition('at_stop', index);
+  });
 
   // Helper to dismiss system card and return to current state
   function dismissSystemCard(): void {
@@ -296,6 +347,13 @@ async function init(options: MapTourInitOptions): Promise<void> {
   progressBar.onPrev(() => navController.prev());
   progressBar.onNext(() => navController.next());
 
+  // Pin click on map: during overview, select starting stop
+  mapView.onPinClick((index) => {
+    if (journeyState.getState() === 'tour_start') {
+      updateOverviewSelection(index);
+    }
+  });
+
   // === State change handler ===
   journeyState.onStateChange((state, stopIndex) => {
     transitBar.hide();
@@ -309,7 +367,22 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.fitBounds();
       progressBar.hide();
 
+      // Enable overview mode
       tourReversed = false;
+      overviewSelectedIndex = 0;
+      gpsOverviewApplied = false;
+      mapView.setOverviewMode(true);
+      mapView.setChevronDirection(false);
+      mapView.setSelectedPin(tour.stops[0].id);
+      mapView.setPinNumberMap(null);
+      overviewControls.update(0, tour.stops.length, false, tour.stops[0].title);
+      overviewControls.show();
+
+      // On desktop, append overview controls to the card area
+      if (!isMobile && !cardEl.contains(overviewControls.getElement())) {
+        cardEl.appendChild(overviewControls.getElement());
+      }
+
       stopCard.renderWelcome({
         title: tour.tour.title,
         description: tour.tour.description,
@@ -317,10 +390,12 @@ async function init(options: MapTourInitOptions): Promise<void> {
         stopCount: tour.stops.length,
         welcome: tour.tour.welcome,
         onBegin: () => {
-          tourStartIndex = 0;
-          stopCard.setStartingStop(0);
-          navController.setStartIndex(0);
-          journeyState.transition('at_stop', 0);
+          // Welcome card CTA uses current overview selection
+          tourStartIndex = overviewSelectedIndex;
+          stopCard.setStartingStop(overviewSelectedIndex);
+          navController.setStartIndex(overviewSelectedIndex);
+          navController.setReversed(tourReversed);
+          journeyState.transition('at_stop', overviewSelectedIndex);
         },
         onOpenMap: mapPanel ? () => mapPanel!.toggle() : undefined,
         gettingHereAvailable: hasGettingHere,
@@ -335,6 +410,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       });
       mapView.setActiveStop(tour.stops[0]);
     } else if (state === 'at_stop') {
+      mapView.setOverviewMode(false);
+      overviewControls.hide();
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) {
         mapPanel.hide();
@@ -354,6 +431,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       // Update proximity detector to monitor the next stop from this one
       proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'in_transit') {
+      mapView.setOverviewMode(false);
+      overviewControls.hide();
       if (sheet) sheet.setPosition('collapsed', true);
       const nextIndex = tourReversed
         ? Math.max(stopIndex - 1, 0)
@@ -370,6 +449,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
       proximityDetector?.setCurrentStop(stopIndex);
     } else if (state === 'tour_complete') {
+      mapView.setOverviewMode(false);
+      overviewControls.hide();
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) mapPanel.hide();
       setMobileMapPadding();
@@ -463,6 +544,19 @@ async function init(options: MapTourInitOptions): Promise<void> {
         }
 
         proximityDetector?.checkPosition(pos);
+
+        // GPS pre-selection during overview (once per overview entry)
+        if (!gpsOverviewApplied && journeyState.getState() === 'tour_start') {
+          const maxAccuracy = tour.tour.gps?.max_accuracy ?? 50;
+          const maxDistance = tour.tour.gps?.max_distance ?? 500;
+          if (pos.accuracy <= maxAccuracy) {
+            const result = nearestStop(pos.lat, pos.lng, tour.stops);
+            if (result.distance <= maxDistance) {
+              gpsOverviewApplied = true;
+              updateOverviewSelection(result.index);
+            }
+          }
+        }
       } else {
         mapView.clearGpsPosition();
       }
