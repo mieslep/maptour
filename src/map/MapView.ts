@@ -224,7 +224,7 @@ export class MapView {
     } else {
       this.stopSequencePulse();
       this.selectedStopId = null;
-      this.endStopId = null;
+      // Keep endStopId — red end pin persists during tour
       this.renderPins();
     }
   }
