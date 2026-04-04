@@ -1,31 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Tour, Stop } from '../../src/types';
-
-// Mock out the dependencies that use DOM/Leaflet
-vi.mock('../../src/map/MapView', () => ({
-  MapView: vi.fn().mockImplementation(() => ({
-    setActiveStop: vi.fn(),
-    setVisitedStops: vi.fn(),
-    updateGpsPosition: vi.fn(),
-    clearGpsPosition: vi.fn(),
-    destroy: vi.fn(),
-  })),
-}));
-
-vi.mock('../../src/card/StopCard', () => ({
-  StopCard: vi.fn().mockImplementation(() => ({
-    render: vi.fn(),
-    update: vi.fn(),
-    setSuppressGettingHereNote: vi.fn(),
-    onReturnToStart: vi.fn(),
-    renderJourney: vi.fn(),
-  })),
-}));
-
 import { NavController } from '../../src/navigation/NavController';
-import { MapView } from '../../src/map/MapView';
-import { StopCard } from '../../src/card/StopCard';
-import { Breadcrumb } from '../../src/breadcrumb/Breadcrumb';
+import { TourSession } from '../../src/session/TourSession';
 
 function createTour(stopCount = 3): Tour {
   return {
@@ -49,88 +25,74 @@ function createTourWithJourney(stopCount = 3, journeyOnStop = 1): Tour {
   return tour;
 }
 
-function createNavController(tour: Tour, callbacks = {}) {
-  const navEl = document.createElement('div');
-  const stopListEl = document.createElement('div');
-  document.body.appendChild(navEl);
-  document.body.appendChild(stopListEl);
-
-  const mapView = new MapView(document.createElement('div'), tour);
-  const stopCard = new StopCard(document.createElement('div'));
-  const breadcrumb = new Breadcrumb(tour.tour.id);
-
-  return { nav: new NavController(tour, mapView, stopCard, breadcrumb, navEl, stopListEl, callbacks), stopCard, breadcrumb };
+function setup(tour: Tour, callbacks = {}) {
+  const session = new TourSession(tour.tour.id, tour.stops.length);
+  const nav = new NavController(tour, session, callbacks);
+  return { nav, session };
 }
 
 describe('NavController', () => {
   beforeEach(() => {
-    document.body.innerHTML = '';
     localStorage.clear();
-    vi.clearAllMocks();
   });
 
   // === Basic navigation ===
 
   it('starts at index 0', () => {
-    const { nav } = createNavController(createTour(3));
+    const { nav } = setup(createTour(3));
     expect(nav.getCurrentIndex()).toBe(0);
     expect(nav.getCurrentStop().id).toBe(1);
   });
 
-  it('advances to next stop', () => {
-    const { nav } = createNavController(createTour(3));
+  it('advances to next stop and emits onNavigate', () => {
+    const onNavigate = vi.fn();
+    const tour = createTour(3);
+    const { nav } = setup(tour, { onNavigate });
     nav.next();
     expect(nav.getCurrentIndex()).toBe(1);
+    expect(onNavigate).toHaveBeenCalledWith(tour.stops[1], 1);
   });
 
   it('goes back with prev', () => {
-    const { nav } = createNavController(createTour(3));
+    const { nav } = setup(createTour(3));
     nav.next();
     nav.prev();
     expect(nav.getCurrentIndex()).toBe(0);
   });
 
   it('does not go before first stop', () => {
-    const { nav } = createNavController(createTour(3));
+    const { nav } = setup(createTour(3));
     nav.prev();
     expect(nav.getCurrentIndex()).toBe(0);
   });
 
-  it('calls onNextFromLast on last stop', () => {
-    const onNextFromLast = vi.fn();
-    const { nav } = createNavController(createTour(3), { onNextFromLast });
+  it('calls onTourEnd on last stop', () => {
+    const onTourEnd = vi.fn();
+    const { nav } = setup(createTour(3), { onTourEnd });
     nav.next(); // 0 → 1
     nav.next(); // 1 → 2 (last)
-    nav.next(); // triggers onNextFromLast
-    expect(onNextFromLast).toHaveBeenCalledOnce();
+    nav.next(); // triggers onTourEnd
+    expect(onTourEnd).toHaveBeenCalledOnce();
     expect(nav.getCurrentIndex()).toBe(2); // stays at last
   });
 
   it('jumps directly to any stop', () => {
-    const { nav } = createNavController(createTour(5));
+    const { nav } = setup(createTour(5));
     nav.goTo(4);
     expect(nav.getCurrentIndex()).toBe(4);
     expect(nav.getCurrentStop().id).toBe(5);
   });
 
   it('ignores out-of-range goTo', () => {
-    const { nav } = createNavController(createTour(3));
+    const { nav } = setup(createTour(3));
     nav.goTo(-1);
     expect(nav.getCurrentIndex()).toBe(0);
     nav.goTo(100);
     expect(nav.getCurrentIndex()).toBe(0);
   });
 
-  it('calls onStopChange callback on navigation', () => {
-    const tour = createTour(3);
-    const onStopChange = vi.fn();
-    const { nav } = createNavController(tour, { onStopChange });
-    nav.next();
-    expect(onStopChange).toHaveBeenCalledWith(tour.stops[1], 1);
-  });
-
   it('works with a single stop tour', () => {
-    const { nav } = createNavController(createTour(1));
+    const { nav } = setup(createTour(1));
     nav.next();
     nav.prev();
     expect(nav.getCurrentIndex()).toBe(0);
@@ -139,22 +101,22 @@ describe('NavController', () => {
   // === Custom start index (circular tour) ===
 
   it('treats startIndex stop as last when reached circularly', () => {
-    const onNextFromLast = vi.fn();
+    const onTourEnd = vi.fn();
     const tour = createTour(4); // stops 0,1,2,3
-    const { nav } = createNavController(tour, { onNextFromLast });
-    nav.setStartIndex(1); // start at stop 1
+    const { nav, session } = setup(tour, { onTourEnd });
+    session.setStartIndex(1);
     nav.goTo(1);
     nav.next(); // 1 → 2
     nav.next(); // 2 → 3
     nav.next(); // 3 → 0 (wraps)
     expect(nav.getCurrentIndex()).toBe(0);
     nav.next(); // 0 is the stop before startIndex=1, so this is last
-    expect(onNextFromLast).toHaveBeenCalledOnce();
+    expect(onTourEnd).toHaveBeenCalledOnce();
   });
 
   it('prev does not go before custom startIndex', () => {
-    const { nav } = createNavController(createTour(4));
-    nav.setStartIndex(2);
+    const { nav, session } = setup(createTour(4));
+    session.setStartIndex(2);
     nav.goTo(2);
     nav.prev(); // already at start
     expect(nav.getCurrentIndex()).toBe(2);
@@ -164,9 +126,9 @@ describe('NavController', () => {
 
   it('navigates backwards in reversed mode', () => {
     const tour = createTour(4);
-    const { nav } = createNavController(tour);
-    nav.setStartIndex(0);
-    nav.setReversed(true);
+    const { nav, session } = setup(tour);
+    session.setStartIndex(0);
+    session.setReversed(true);
     nav.goTo(0);
     nav.next(); // reversed: 0 → 3
     expect(nav.getCurrentIndex()).toBe(3);
@@ -176,9 +138,9 @@ describe('NavController', () => {
 
   it('prev in reversed mode goes toward higher indices', () => {
     const tour = createTour(4);
-    const { nav } = createNavController(tour);
-    nav.setStartIndex(0);
-    nav.setReversed(true);
+    const { nav, session } = setup(tour);
+    session.setStartIndex(0);
+    session.setReversed(true);
     nav.goTo(0);
     nav.next(); // 0 → 3
     nav.next(); // 3 → 2
@@ -186,47 +148,47 @@ describe('NavController', () => {
     expect(nav.getCurrentIndex()).toBe(3);
   });
 
-  it('calls onNextFromLast in reversed mode at correct stop', () => {
-    const onNextFromLast = vi.fn();
+  it('calls onTourEnd in reversed mode at correct stop', () => {
+    const onTourEnd = vi.fn();
     const tour = createTour(4); // stops 0,1,2,3
-    const { nav } = createNavController(tour, { onNextFromLast });
-    nav.setStartIndex(0);
-    nav.setReversed(true);
+    const { nav, session } = setup(tour, { onTourEnd });
+    session.setStartIndex(0);
+    session.setReversed(true);
     nav.goTo(0);
     nav.next(); // 0 → 3
     nav.next(); // 3 → 2
     nav.next(); // 2 → 1 (stop before startIndex=0 in reverse)
     expect(nav.getCurrentIndex()).toBe(1);
     nav.next(); // 1 is last in reverse (next would be 0 = startIndex)
-    expect(onNextFromLast).toHaveBeenCalledOnce();
+    expect(onTourEnd).toHaveBeenCalledOnce();
   });
 
   // === Journey cards ===
 
-  it('shows journey card when next stop has journey content', () => {
+  it('emits onJourneyStart when next stop has journey content', () => {
     const tour = createTourWithJourney(3, 1); // journey on stop index 1
-    const onJourneyChange = vi.fn();
-    const { nav, stopCard } = createNavController(tour, { onJourneyChange });
-    nav.next(); // 0 → journey card for stop 1
-    expect(stopCard.renderJourney).toHaveBeenCalledOnce();
-    expect(onJourneyChange).toHaveBeenCalledWith(true);
+    const onJourneyStart = vi.fn();
+    const { nav } = setup(tour, { onJourneyStart });
+    nav.next(); // 0 → journey for stop 1
+    expect(onJourneyStart).toHaveBeenCalledOnce();
+    expect(onJourneyStart).toHaveBeenCalledWith(tour.stops[1], 1);
+    expect(nav.isInJourney()).toBe(true);
   });
 
-  it('journey "arrived" callback advances to destination', () => {
+  it('completeJourney advances to destination and emits onNavigate', () => {
     const tour = createTourWithJourney(3, 1);
-    const { nav, stopCard } = createNavController(tour);
-
-    nav.next(); // triggers renderJourney
-    // Simulate "I've arrived" callback
-    const arrivedCb = (stopCard.renderJourney as any).mock.calls[0][1];
-    arrivedCb();
+    const onNavigate = vi.fn();
+    const { nav } = setup(tour, { onNavigate, onJourneyStart: vi.fn() });
+    nav.next(); // triggers journey
+    nav.completeJourney(); // "I've arrived"
     expect(nav.getCurrentIndex()).toBe(1);
+    expect(nav.isInJourney()).toBe(false);
+    expect(onNavigate).toHaveBeenCalledWith(tour.stops[1], 1);
   });
 
   it('next during journey skips to destination', () => {
     const tour = createTourWithJourney(3, 1);
-    const { nav } = createNavController(tour);
-
+    const { nav } = setup(tour, { onJourneyStart: vi.fn() });
     nav.next(); // triggers journey
     nav.next(); // should skip to destination
     expect(nav.getCurrentIndex()).toBe(1);
@@ -234,8 +196,7 @@ describe('NavController', () => {
 
   it('prev during journey returns to origin', () => {
     const tour = createTourWithJourney(3, 1);
-    const { nav } = createNavController(tour);
-
+    const { nav } = setup(tour, { onJourneyStart: vi.fn() });
     nav.next(); // triggers journey (origin = stop 0)
     nav.prev(); // should go back to origin
     expect(nav.getCurrentIndex()).toBe(0);
@@ -245,71 +206,94 @@ describe('NavController', () => {
 
   it('returnToStart navigates to start index', () => {
     const tour = createTour(4);
-    const { nav } = createNavController(tour);
-    nav.setStartIndex(0);
-    nav.goTo(3); // at last stop
+    const { nav, session } = setup(tour);
+    session.setStartIndex(0);
+    nav.goTo(3);
     nav.returnToStart();
     expect(nav.getCurrentIndex()).toBe(0);
   });
 
   it('returnToStart makes start stop the last stop', () => {
-    const onNextFromLast = vi.fn();
+    const onTourEnd = vi.fn();
     const tour = createTour(4);
-    const { nav } = createNavController(tour, { onNextFromLast });
-    nav.setStartIndex(0);
+    const { nav, session } = setup(tour, { onTourEnd });
+    session.setStartIndex(0);
     nav.goTo(3);
     nav.returnToStart(); // now at stop 0 with returningToStart=true
     nav.next(); // stop 0 should be treated as last stop
-    expect(onNextFromLast).toHaveBeenCalledOnce();
+    expect(onTourEnd).toHaveBeenCalledOnce();
   });
 
-  it('returnToStart disables the return-to-start callback on StopCard', () => {
-    const tour = createTour(3);
-    const { nav, stopCard } = createNavController(tour);
-    nav.returnToStart();
-    expect(stopCard.onReturnToStart).toHaveBeenCalledWith(null);
-  });
-
-  it('returnToStart shows journey card if start stop has journey content', () => {
+  it('returnToStart emits onJourneyStart if start stop has journey content', () => {
     const tour = createTourWithJourney(4, 0); // journey on stop 0 (start)
-    const onJourneyChange = vi.fn();
-    const { nav, stopCard } = createNavController(tour, { onJourneyChange });
+    const onJourneyStart = vi.fn();
+    const { nav } = setup(tour, { onJourneyStart });
     nav.goTo(3);
     nav.returnToStart();
-    expect(stopCard.renderJourney).toHaveBeenCalledOnce();
-    expect(onJourneyChange).toHaveBeenCalledWith(true);
+    expect(onJourneyStart).toHaveBeenCalledOnce();
+    expect(onJourneyStart).toHaveBeenCalledWith(tour.stops[0], 0);
   });
 
   it('returnToStart goes directly if no journey content', () => {
-    const tour = createTour(4); // no journey on any stop
-    const { nav, stopCard } = createNavController(tour);
+    const tour = createTour(4);
+    const onNavigate = vi.fn();
+    const onJourneyStart = vi.fn();
+    const { nav } = setup(tour, { onNavigate, onJourneyStart });
     nav.goTo(3);
+    onNavigate.mockClear();
     nav.returnToStart();
     expect(nav.getCurrentIndex()).toBe(0);
-    expect(stopCard.renderJourney).not.toHaveBeenCalled();
+    expect(onJourneyStart).not.toHaveBeenCalled();
+    expect(onNavigate).toHaveBeenCalledWith(tour.stops[0], 0);
   });
 
-  it('setStartIndex resets returningToStart flag', () => {
-    const onNextFromLast = vi.fn();
+  it('resetReturnState clears returningToStart flag', () => {
+    const onTourEnd = vi.fn();
     const tour = createTour(4);
-    const { nav } = createNavController(tour, { onNextFromLast });
+    const { nav } = setup(tour, { onTourEnd });
     nav.goTo(3);
     nav.returnToStart(); // sets returningToStart
-    nav.setStartIndex(0); // resets it
+    nav.resetReturnState(); // clears it
     nav.goTo(0);
-    nav.next(); // should NOT trigger onNextFromLast (stop 0 is no longer "last")
+    nav.next(); // should NOT trigger onTourEnd (stop 0 is no longer "last")
     expect(nav.getCurrentIndex()).toBe(1);
-    expect(onNextFromLast).not.toHaveBeenCalled();
+    expect(onTourEnd).not.toHaveBeenCalled();
   });
 
-  // === Breadcrumb integration ===
+  // === Visited state via TourSession ===
 
-  it('marks stops as visited when navigating forward', () => {
+  it('marks stops as visited in session when navigating forward', () => {
     const tour = createTour(3);
-    const { nav, breadcrumb } = createNavController(tour);
+    const { nav, session } = setup(tour);
     nav.next(); // leaving stop 0, marks it visited
-    expect(breadcrumb.getVisited().has(1)).toBe(true); // stop id=1
+    expect(session.getVisited().has(1)).toBe(true); // stop id=1
     nav.next();
-    expect(breadcrumb.getVisited().has(2)).toBe(true);
+    expect(session.getVisited().has(2)).toBe(true);
+  });
+
+  // === getNextStop ===
+
+  it('getNextStop returns next stop in sequence', () => {
+    const tour = createTour(4);
+    const { nav } = setup(tour);
+    expect(nav.getNextStop(0)?.id).toBe(2); // stop at index 1
+    expect(nav.getNextStop(2)?.id).toBe(4); // stop at index 3
+  });
+
+  it('getNextStop returns undefined for last tour stop', () => {
+    const tour = createTour(4);
+    const { nav, session } = setup(tour);
+    session.setStartIndex(0);
+    // Forward: last stop before wrapping to 0 is stop 3
+    expect(nav.getNextStop(3)).toBeUndefined();
+  });
+
+  it('getNextStop works in reversed mode', () => {
+    const tour = createTour(4);
+    const { nav, session } = setup(tour);
+    session.setStartIndex(0);
+    session.setReversed(true);
+    // Reversed from 0: next is 3
+    expect(nav.getNextStop(0)?.id).toBe(4); // stop at index 3
   });
 });

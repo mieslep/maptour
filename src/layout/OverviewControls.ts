@@ -43,6 +43,8 @@ export class OverviewControls {
       this.beginCallbacks.forEach((cb) => cb(this.selectedIndex, this.reversed));
     });
 
+    // Direction toggle hidden pending reversal mechanics review
+    this.dirToggle.hidden = true;
     this.row.appendChild(this.dirToggle);
     this.row.appendChild(this.ctaBtn);
     this.el.appendChild(this.row);
