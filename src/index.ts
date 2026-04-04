@@ -381,10 +381,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
       overviewControls.update(0, tour.stops.length, false, tour.stops[0].title);
       overviewControls.show();
 
-      // On desktop, append overview controls and trigger pulse (map is always visible)
+      // On desktop, place overview controls after the card in the sheet content
       if (!isMobile) {
-        if (!cardEl.contains(overviewControls.getElement())) {
-          cardEl.appendChild(overviewControls.getElement());
+        const ocEl = overviewControls.getElement();
+        if (!sheetContentEl.contains(ocEl)) {
+          sheetContentEl.appendChild(ocEl);
         }
         mapView.triggerSequencePulse();
       }
