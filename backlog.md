@@ -335,6 +335,25 @@ Replaced bottom-sheet-over-map layout with content-first full-page cards. Map ac
 
 ---
 
+### TOUR-039 — Menu bar, progress bar, and system cards (medium)
+
+Replace stop-list-header with hamburger menu bar + progress bar. Menu items: Getting Here (YAML content card), Tour Overview, Tour Stops, About (hardcoded branding). Progress bar shows visited/total with prev/next arrows during active tour. Welcome card simplified: stop picker removed, replaced with "get started" map prompt. New YAML fields: `tour.header_html`, `tour.getting_here`.
+
+**Spec:** `specs/TOUR-039-*.md`
+**Dependencies:** TOUR-038
+**Status:** 🔧 In progress — branch `TOUR-039-menu-bar-progress`
+
+---
+
+### TOUR-040 — Tour Overview Map mode (medium)
+
+Two map modes: "overview" (during welcome) and "tour" (during stops). Overview mode adds: directional chevrons on route polylines, CW/CCW tour direction toggle, pin-tap to select starting stop, "Begin Tour" button on the map overlay. Tour mode remains clean (pins, route, GPS dot only). GPS nearest-stop pre-selection re-introduced via map. Authoring tool: position control for the get-started block on the welcome card.
+
+**Dependencies:** TOUR-039
+**Status:** Not yet specced
+
+---
+
 ## Backlog (unsequenced)
 
 ### Player UX
