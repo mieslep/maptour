@@ -25,6 +25,8 @@ import { OverviewControls } from './layout/OverviewControls';
 import { buildMobileLayout } from './layout/buildMobileLayout';
 import { buildDesktopLayout } from './layout/buildDesktopLayout';
 import { createJourneyHandler } from './orchestrator/journeyHandler';
+import { GuidanceBanner } from './waypoint/GuidanceBanner';
+import { ArrivingBanner } from './card/ArrivingBanner';
 import { setStrings, t } from './i18n';
 import type { MapTourInitOptions } from './types';
 
@@ -89,6 +91,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // === UI components ===
   const transitBar = new InTransitBar(container);
+  const guidanceBanner = new GuidanceBanner();
+  const arrivingBanner = new ArrivingBanner();
+  mapPane.appendChild(guidanceBanner.getElement());
+  container.appendChild(arrivingBanner.getElement());
   const stopListOverlay = new StopListOverlay(container);
   const overviewControls = new OverviewControls();
   const mapView = new MapView(mapPane, tour);
@@ -224,7 +230,18 @@ async function init(options: MapTourInitOptions): Promise<void> {
       navController.prev();
     }
   });
-  tourFooter.onNext(() => navController.next());
+  tourFooter.onNext(() => {
+    const currentIdx = navController.getCurrentIndex();
+    const nextStop = navController.getNextStop(currentIdx);
+    if (nextStop?.getting_here?.waypoints?.length) {
+      // Enter waypoint transit mode
+      session.markVisited(tour.stops[currentIdx].id);
+      tourFooter.update(session.getVisited().size, tour.stops.length);
+      journeyState.transition('in_transit', currentIdx);
+    } else {
+      navController.next();
+    }
+  });
   tourFooter.onFinish(async () => {
     // Mark the current stop as visited before finishing
     const currentStop = tour.stops[navController.getCurrentIndex()];
@@ -334,10 +351,12 @@ async function init(options: MapTourInitOptions): Promise<void> {
   journeyState.onStateChange(createJourneyHandler({
     tour, session, mapView, navController, sheet, mapPanel, menuBar,
     tourFooter, overviewControls, stopListOverlay, transitBar,
+    cardHost, journeyCardRenderer, guidanceBanner, arrivingBanner,
     sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
     renderWelcome, renderGoodbye,
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },
     onOverviewEnter: () => { gpsOverviewApplied = false; },
+    transitionToStop: (stopIndex) => { journeyState.transition('at_stop', stopIndex); },
   }));
 
   // === GPS (deferred — starts on user action) ===

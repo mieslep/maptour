@@ -10,6 +10,11 @@ import type { TourFooter } from '../layout/TourFooter';
 import type { OverviewControls } from '../layout/OverviewControls';
 import type { StopListOverlay } from '../layout/StopListOverlay';
 import type { InTransitBar } from '../layout/InTransitBar';
+import type { CardHost } from '../card/CardHost';
+import type { JourneyCardRenderer } from '../card/JourneyCardRenderer';
+import type { GuidanceBanner } from '../waypoint/GuidanceBanner';
+import type { ArrivingBanner } from '../card/ArrivingBanner';
+import { WaypointTracker } from '../waypoint/WaypointTracker';
 
 export interface JourneyHandlerDeps {
   tour: Tour;
@@ -23,6 +28,10 @@ export interface JourneyHandlerDeps {
   overviewControls: OverviewControls;
   stopListOverlay: StopListOverlay;
   transitBar: InTransitBar;
+  cardHost: CardHost;
+  journeyCardRenderer: JourneyCardRenderer;
+  guidanceBanner: GuidanceBanner;
+  arrivingBanner: ArrivingBanner;
   sheetContentEl: HTMLElement | null;
   isMobile: boolean;
   setStopListOpen: (open: boolean) => void;
@@ -31,6 +40,7 @@ export interface JourneyHandlerDeps {
   renderGoodbye: () => void;
   onStopActivated?: (stopIndex: number) => void;
   onOverviewEnter?: () => void;
+  transitionToStop: (stopIndex: number) => void;
 }
 
 /**
@@ -38,15 +48,36 @@ export interface JourneyHandlerDeps {
  *
  * For `at_stop`: handles layout transitions, then delegates to navController.goTo()
  * which triggers the onNavigate callback for card rendering and component updates.
+ *
+ * For `in_transit`: if the destination stop has waypoints, enters waypoint transit mode.
+ * Otherwise, shows the InTransitBar.
  */
 export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyState, stopIndex: number) => void {
   const {
     tour, session, mapView, navController,
     sheet, mapPanel, menuBar, tourFooter, overviewControls,
-    stopListOverlay, transitBar, sheetContentEl,
+    stopListOverlay, transitBar, cardHost, journeyCardRenderer,
+    guidanceBanner, arrivingBanner, sheetContentEl,
     isMobile, setStopListOpen, setViewingSystemCard,
     renderWelcome, renderGoodbye, onStopActivated, onOverviewEnter,
+    transitionToStop,
   } = deps;
+
+  let activeWaypointTracker: WaypointTracker | null = null;
+
+  // Wire "I'm here" button to advance the waypoint tracker
+  tourFooter.onImHere(() => {
+    if (activeWaypointTracker && !activeWaypointTracker.isComplete()) {
+      activeWaypointTracker.advance();
+    }
+  });
+
+  function cleanupWaypointTransit(): void {
+    activeWaypointTracker = null;
+    guidanceBanner.hide();
+    mapView.clearWaypoints();
+    tourFooter.exitWaypointMode();
+  }
 
   return (state: JourneyState, stopIndex: number) => {
     transitBar.hide();
@@ -54,6 +85,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     setViewingSystemCard(null);
 
     if (state === 'tour_start') {
+      cleanupWaypointTransit();
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) mapPanel.hide();
       mapView.setMapPadding(0);
@@ -82,6 +114,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       mapView.setActiveStop(tour.stops[0]);
 
     } else if (state === 'at_stop') {
+      cleanupWaypointTransit();
       // Layout transitions
       mapView.setOverviewMode(false);
       overviewControls.hide();
@@ -100,20 +133,83 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       onStopActivated?.(stopIndex);
 
     } else if (state === 'in_transit') {
-      mapView.setOverviewMode(false);
-      overviewControls.hide();
-      if (sheet) sheet.setPosition('collapsed', true);
+      // Determine the destination stop
+      const currentStop = tour.stops[stopIndex];
       const nextIndex = session.reversed
-        ? Math.max(stopIndex - 1, 0)
-        : Math.min(stopIndex + 1, tour.stops.length - 1);
-      const nextStop = tour.stops[nextIndex];
-      const nextDisplayNum = session.reversed ? (tour.stops.length - nextIndex) : (nextIndex + 1);
-      transitBar.show(nextDisplayNum, nextStop.title);
-      mapView.setPulsingPin(nextStop.id);
-      tourFooter.hide();
+        ? (stopIndex - 1 + tour.stops.length) % tour.stops.length
+        : (stopIndex + 1) % tour.stops.length;
+      const destinationStop = tour.stops[nextIndex];
+
+      const waypoints = destinationStop.getting_here?.waypoints;
+
+      if (waypoints && waypoints.length > 0) {
+        // === Waypoint transit mode ===
+        mapView.setOverviewMode(false);
+        overviewControls.hide();
+        if (sheet) sheet.setPosition('collapsed', true);
+        if (mapPanel) mapPanel.hide();
+
+        // Create waypoint tracker
+        activeWaypointTracker = new WaypointTracker(waypoints, {
+          onAdvance: (nextWaypoint) => {
+            // Update map markers and zoom to next segment
+            const progress = activeWaypointTracker!.getProgress();
+            mapView.setWaypoints(waypoints, progress.current);
+            const bounds = activeWaypointTracker!.getSegmentBounds();
+            mapView.zoomToSegment(bounds.from, bounds.to);
+            // Update guidance banner
+            guidanceBanner.setWaypoint(nextWaypoint);
+            // Update footer progress
+            tourFooter.updateWaypointProgress(progress);
+          },
+          onJourneyCard: (waypoint, onDismiss) => {
+            // Show journey card for this waypoint
+            guidanceBanner.hide();
+            cardHost.render((c) => journeyCardRenderer.renderWaypoint(c, waypoint, () => {
+              // On continue: dismiss card, resume waypoint transit
+              onDismiss();
+              // Re-show guidance banner for next waypoint if not complete
+              if (!activeWaypointTracker!.isComplete()) {
+                const currentWp = activeWaypointTracker!.getCurrentWaypoint();
+                guidanceBanner.setWaypoint(currentWp);
+                if (sheet) sheet.setPosition('collapsed', true);
+              }
+            }));
+            if (sheet) sheet.setPosition('expanded', true);
+          },
+          onComplete: () => {
+            // All waypoints cleared — show destination stop with arriving banner
+            cleanupWaypointTransit();
+            arrivingBanner.show(destinationStop.title);
+            transitionToStop(nextIndex);
+          },
+        });
+
+        // Initial state: zoom to first segment, show guidance
+        const firstWaypoint = waypoints[0];
+        mapView.setWaypoints(waypoints, 0);
+        mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords);
+        guidanceBanner.setWaypoint(firstWaypoint);
+
+        // Set footer to waypoint mode
+        tourFooter.enterWaypointMode(activeWaypointTracker.getProgress());
+        tourFooter.show();
+
+      } else {
+        // === No waypoints — show transit bar (existing behaviour) ===
+        mapView.setOverviewMode(false);
+        overviewControls.hide();
+        if (sheet) sheet.setPosition('collapsed', true);
+        const nextDisplayNum = session.reversed ? (tour.stops.length - nextIndex) : (nextIndex + 1);
+        transitBar.show(nextDisplayNum, destinationStop.title);
+        mapView.setPulsingPin(destinationStop.id);
+        tourFooter.hide();
+      }
+
       onStopActivated?.(stopIndex);
 
     } else if (state === 'tour_complete') {
+      cleanupWaypointTransit();
       mapView.setOverviewMode(false);
       overviewControls.hide();
       if (sheet) sheet.setPosition('expanded', true);
