@@ -2794,6 +2794,8 @@ export class TourEditor {
 
     const stop = this.tour.stops[stopIdx];
     if (!stop.getting_here?.waypoints?.length) return;
+    const route = stop.getting_here.route;
+    if (!route?.length) return;
 
     stop.getting_here.waypoints.forEach((wp, wpIdx) => {
       const m = L.circleMarker([wp.coords[0], wp.coords[1]], {
@@ -2806,8 +2808,46 @@ export class TourEditor {
         bubblingMouseEvents: false,
       }).addTo(this.map);
 
+      let wpJustDragged = false;
+
+      // Drag support: mousedown → mousemove → mouseup, snap to polyline
+      m.on('mousedown', (e) => {
+        wpJustDragged = false;
+        pushUndo(this.tour, this.dirtyLegs); // snapshot before drag
+        this.map.dragging.disable();
+        L.DomEvent.stopPropagation(e);
+
+        const onMove = (ev: L.LeafletMouseEvent) => {
+          wpJustDragged = true;
+          // Snap to nearest point on route polyline
+          const snapped = this.snapToPolyline(ev.latlng, route);
+          m.setLatLng([snapped.coords[0], snapped.coords[1]]);
+          m.setStyle({ fillColor: '#a855f7', radius: 9 }); // highlight during drag
+        };
+
+        const onUp = (ev: L.LeafletMouseEvent) => {
+          this.map.dragging.enable();
+          this.map.off('mousemove', onMove);
+          this.map.off('mouseup', onUp);
+
+          if (wpJustDragged) {
+            const snapped = this.snapToPolyline(ev.latlng, route);
+            this.withUndo(() => {
+              wp.coords = snapped.coords;
+              this.sortWaypointsByPosition(stop.getting_here!.waypoints!, route);
+            });
+            this.renderWaypointMarkers(stopIdx);
+          }
+          setTimeout(() => { wpJustDragged = false; }, 50);
+        };
+
+        this.map.on('mousemove', onMove);
+        this.map.on('mouseup', onUp);
+      });
+
       m.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
+        if (wpJustDragged) return;
         this.showWaypointModal(stop, stopIdx, wpIdx);
       });
 
