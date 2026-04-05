@@ -5,42 +5,71 @@ import { downloadYaml } from '../yaml-io';
 import { generateRoute, generateAllRoutes } from '../ors';
 import { renderContentBlockEditor } from './content-blocks';
 
-// i18n default keys for the string overrides editor
+// i18n default keys for the string overrides editor.
+// IMPORTANT: Keep sorted alphabetically. Must match DEFAULTS in src/i18n.ts —
+// if you add/remove a key there, update this list too. A test enforces parity.
 const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
-  welcome:         { default: 'Welcome', desc: 'Header label on welcome screen' },
-  en_route:        { default: 'En route', desc: 'Header label during journey between stops' },
-  complete:        { default: 'Complete', desc: 'Header label on goodbye screen' },
-  all_stops:       { default: 'All Stops', desc: 'Stop list toggle label when expanded' },
-  stop_n:          { default: 'Stop {n} / {total}', desc: 'Header label showing current stop. Placeholders: {n}, {total}' },
-  start_at:        { default: 'Start at Stop {n} / {total}:', desc: 'Welcome card stop selector label. Placeholders: {n}, {total}' },
-  start_from:      { default: 'Start from {stop}', desc: 'CTA button on welcome card. Placeholder: {stop}' },
-  tip:             { default: 'Select a stop on the map or use the arrows above to change your starting point', desc: 'Hint text on welcome card' },
-  next_stop:       { default: 'Next: {stop}', desc: 'Footer showing next stop name. Placeholder: {stop}' },
-  next_btn:        { default: 'Next →', desc: 'Next button text' },
-  finish_tour:     { default: 'Finish Tour', desc: 'Button on last stop to end tour' },
-  arrived:         { default: "I've arrived at {stop} →", desc: 'Journey card CTA. Placeholder: {stop}' },
-  tour_complete:   { default: 'Tour complete!', desc: 'Goodbye screen heading' },
-  stops_visited:   { default: '{n} / {total} stops visited', desc: 'Goodbye screen stats. Placeholders: {n}, {total}' },
-  revisit:         { default: 'Revisit tour', desc: 'Button to restart tour from goodbye screen' },
-  close:           { default: 'Close', desc: 'Close button on goodbye screen' },
-  walk_me:         { default: 'Walk me there', desc: 'Nav button for walk mode' },
-  drive_me:        { default: 'Drive me there', desc: 'Nav button for drive mode' },
-  transit_dir:     { default: 'Get transit directions', desc: 'Nav button for transit mode' },
-  cycle_dir:       { default: 'Get cycling directions', desc: 'Nav button for cycle mode' },
-  directions_to:   { default: 'Directions to this stop', desc: 'Generic nav button label' },
-  picker_title:    { default: 'Open directions in:', desc: 'Nav app picker dialog title' },
-  picker_cancel:   { default: 'Cancel', desc: 'Nav app picker cancel button' },
-  stop_order:      { default: 'Stop order:', desc: 'Label for forward/reverse toggle' },
-  im_here:         { default: "I'm here", desc: 'Transit bar arrival button' },
-  all_stops_title: { default: 'All stops', desc: 'Stop list overlay title' },
-  tour_load_error: { default: 'Tour could not load', desc: 'Error screen heading' },
-  image_error:     { default: 'Image could not be loaded', desc: 'Image fallback text' },
-  audio_error:     { default: 'Audio could not be loaded.', desc: 'Audio fallback text' },
-  transit_label:   { default: 'Stop {n}: {stop}', desc: 'Transit bar label. Placeholders: {n}, {stop}' },
-  nearest_to_you:  { default: 'Nearest to you: ', desc: 'GPS nearest stop indicator prefix' },
-  stop_label:      { default: 'Stop {n} — {stop}', desc: 'Stop reference in nearest indicator. Placeholders: {n}, {stop}' },
-  gallery_counter: { default: '{n} / {total}', desc: 'Gallery image counter. Placeholders: {n}, {total}' },
-  minimize:        { default: 'Minimize', desc: 'Minimize button tooltip' },
+  about_description:  { default: 'An open-source, embeddable map tour player for static websites.', desc: 'About card description' },
+  about_heading:      { default: 'Powered by MapTour', desc: 'About card heading' },
+  all_stops:          { default: 'All Stops', desc: 'Stop list toggle label when expanded' },
+  all_stops_title:    { default: 'All stops', desc: 'Stop list overlay title' },
+  arrived:            { default: "I've arrived at {stop} →", desc: 'Journey card CTA. Placeholder: {stop}' },
+  audio_error:        { default: 'Audio could not be loaded.', desc: 'Audio fallback text' },
+  back:               { default: 'Back', desc: 'Back button in menus' },
+  begin_from:         { default: 'Begin Tour from {stop}', desc: 'Welcome card CTA with stop name. Placeholder: {stop}' },
+  begin_tour:         { default: 'Begin Tour', desc: 'Welcome card CTA button' },
+  change_direction:   { default: 'Change direction', desc: 'Direction toggle label' },
+  close:              { default: 'Close', desc: 'Close button on goodbye screen' },
+  complete:           { default: 'Complete', desc: 'Header label on goodbye screen' },
+  cycle_dir:          { default: 'Get cycling directions', desc: 'Nav button for cycle mode' },
+  directions_to:      { default: 'Directions to this stop', desc: 'Generic nav button label' },
+  drive_me:           { default: 'Drive me there', desc: 'Nav button for drive mode' },
+  en_route:           { default: 'En route', desc: 'Header label during journey between stops' },
+  end_tour:           { default: 'End Tour', desc: 'Footer button when returning to start' },
+  finish_here:        { default: 'Finish here', desc: 'Secondary finish option (legacy)' },
+  finish_modal_body:  { default: 'Would you like to return to the start?', desc: 'Finish modal body text' },
+  finish_modal_no:    { default: 'End tour', desc: 'Finish modal "end tour" button' },
+  finish_modal_title: { default: 'Tour finished!', desc: 'Finish modal heading' },
+  finish_modal_yes:   { default: 'Return to start', desc: 'Finish modal "return" button' },
+  finish_tour:        { default: 'Finish Tour', desc: 'Footer button on last stop' },
+  gallery_counter:    { default: '{n} / {total}', desc: 'Gallery image counter. Placeholders: {n}, {total}' },
+  get_started_prompt: { default: 'Open the map to explore stops and start your tour', desc: 'Welcome card prompt text' },
+  getting_here_title: { default: 'Getting Here', desc: 'Getting Here card heading' },
+  how_to_get_here:    { default: 'How to get here', desc: 'Getting Here card subheading' },
+  im_here:            { default: "I'm here", desc: 'Transit bar arrival button' },
+  image_error:        { default: 'Image could not be loaded', desc: 'Image fallback text' },
+  menu_about:         { default: 'About', desc: 'Menu item: about' },
+  menu_getting_here:  { default: 'Getting Here', desc: 'Menu item: getting here' },
+  menu_start_tour:    { default: 'Tour Overview', desc: 'Menu item: tour overview' },
+  menu_tour_stops:    { default: 'Tour Stops', desc: 'Menu item: tour stops' },
+  minimize:           { default: 'Minimize', desc: 'Minimize button tooltip' },
+  nearest_to_you:     { default: 'Nearest to you: ', desc: 'GPS nearest stop indicator prefix' },
+  next_btn:           { default: 'Next →', desc: 'Next button text (legacy)' },
+  next_journey:       { default: 'Next: Journey to {stop}', desc: 'Footer label when next stop has a journey. Placeholder: {stop}' },
+  next_stop:          { default: 'Next: {stop}', desc: 'Footer showing next stop name. Placeholder: {stop}' },
+  open_app_nav:       { default: 'Open app to bring me to', desc: 'Full nav button label prefix' },
+  picker_cancel:      { default: 'Cancel', desc: 'Nav app picker cancel button' },
+  picker_title:       { default: 'Open directions in:', desc: 'Nav app picker dialog title' },
+  progress_label:     { default: 'Tour progress', desc: 'Aria label for progress track' },
+  return_to_start:    { default: 'Return to start →', desc: 'Return to start button (legacy)' },
+  revisit:            { default: 'Revisit tour', desc: 'Button to restart tour from goodbye screen' },
+  scroll_more:        { default: 'Scroll for more', desc: 'Scroll hint text (high contrast mode)' },
+  show_map:           { default: 'Show map', desc: 'Map toggle button' },
+  show_stop:          { default: 'Show stop', desc: 'Stop toggle button' },
+  start_at:           { default: 'Start at Stop {n} / {total}:', desc: 'Welcome card stop selector label. Placeholders: {n}, {total}' },
+  start_from:         { default: 'Start from {stop}', desc: 'CTA button on welcome card. Placeholder: {stop}' },
+  stop_label:         { default: 'Stop {n} — {stop}', desc: 'Stop reference in nearest indicator. Placeholders: {n}, {stop}' },
+  stop_n:             { default: 'Stop {n} / {total}', desc: 'Header label showing current stop. Placeholders: {n}, {total}' },
+  stop_n_of_total:    { default: 'Stop {n} of {total}', desc: 'Stop counter in overview. Placeholders: {n}, {total}' },
+  stop_order:         { default: 'Stop order:', desc: 'Label for forward/reverse toggle' },
+  stops_visited:      { default: '{n} / {total} stops visited', desc: 'Goodbye screen stats. Placeholders: {n}, {total}' },
+  tip:                { default: 'Select a stop on the map or use the arrows above to change your starting point', desc: 'Hint text on welcome card' },
+  tour_complete:      { default: 'Tour complete!', desc: 'Goodbye screen heading' },
+  tour_load_error:    { default: 'Tour could not load', desc: 'Error screen heading' },
+  transit_dir:        { default: 'Get transit directions', desc: 'Nav button for transit mode' },
+  transit_label:      { default: 'Stop {n}: {stop}', desc: 'Transit bar label. Placeholders: {n}, {stop}' },
+  walk_me:            { default: 'Walk me there', desc: 'Nav button for walk mode' },
+  welcome:            { default: 'Welcome', desc: 'Header label on welcome screen' },
 };
 
 export interface EditorCallbacks {
@@ -1627,6 +1656,31 @@ export class TourEditor {
     };
     navRow.appendChild(navSelect);
     content.appendChild(navRow);
+
+    // Boolean toggles
+    const toggles: Array<{ label: string; key: 'nudge_return' | 'require_scroll'; tip: string }> = [
+      { label: 'Require Scroll', key: 'require_scroll', tip: 'Prevent advancing to next stop until the user has scrolled to the bottom of the content.' },
+      { label: 'Nudge Return', key: 'nudge_return', tip: 'When finishing the tour, make "Return to start" the primary action instead of "End tour".' },
+    ];
+    toggles.forEach(tgl => {
+      const row = document.createElement('div');
+      row.className = 'input-row';
+      row.style.alignItems = 'center';
+      const label = document.createElement('label');
+      label.className = 'input-label';
+      label.style.paddingTop = '0';
+      label.innerHTML = tgl.label + makeTip(tgl.tip);
+      row.appendChild(label);
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = meta[tgl.key] === true;
+      cb.onchange = () => {
+        meta[tgl.key] = cb.checked || undefined;
+        this.changed();
+      };
+      row.appendChild(cb);
+      content.appendChild(row);
+    });
 
     // GPS config
     const gpsFields: Array<{ label: string; key: keyof NonNullable<typeof meta.gps>; placeholder: string; tip: string }> = [

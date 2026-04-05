@@ -1,5 +1,4 @@
 import type { Stop, LegMode } from '../types';
-import { t } from '../i18n';
 import { renderBlock } from './blocks/renderBlock';
 import { NavButton } from './NavButton';
 import { NavAppPreference } from '../navigation/NavAppPreference';
@@ -14,8 +13,6 @@ const MODE_ICON: Record<LegMode, string> = {
 export class StopCardRenderer {
   private readonly navPreference: NavAppPreference;
   private tourNavMode: LegMode | undefined;
-  private nextCallback: (() => void) | null = null;
-  private returnToStartCallback: (() => void) | null = null;
   private startingStopIndex = 0;
   private suppressGettingHereNote = false;
 
@@ -35,15 +32,7 @@ export class StopCardRenderer {
     this.suppressGettingHereNote = suppress;
   }
 
-  onNext(cb: () => void): void {
-    this.nextCallback = cb;
-  }
-
-  onReturnToStart(cb: (() => void) | null): void {
-    this.returnToStartCallback = cb;
-  }
-
-  render(container: HTMLElement, stop: Stop, stopNumber: number, totalStops: number, nextStop?: Stop): void {
+  render(container: HTMLElement, stop: Stop, stopNumber: number, totalStops: number): void {
     container.setAttribute('role', 'region');
     container.setAttribute('aria-label', `Stop ${stopNumber}: ${stop.title}`);
 
@@ -86,53 +75,5 @@ export class StopCardRenderer {
       content.appendChild(renderBlock(block, true));
     });
     container.appendChild(content);
-
-    // Footer
-    if (nextStop) {
-      const footer = document.createElement('div');
-      footer.className = 'maptour-card__next-stop';
-
-      const label = document.createElement('div');
-      label.className = 'maptour-card__next-stop-label';
-      label.textContent = t('next_stop', { stop: nextStop.title });
-      footer.appendChild(label);
-
-      const nextBtn = document.createElement('button');
-      nextBtn.className = 'maptour-card__next-btn';
-      nextBtn.textContent = t('next_btn');
-      nextBtn.setAttribute('aria-label', t('next_stop', { stop: nextStop.title }));
-      nextBtn.addEventListener('click', () => this.nextCallback?.());
-      footer.appendChild(nextBtn);
-
-      container.appendChild(footer);
-    } else if (this.returnToStartCallback) {
-      const footer = document.createElement('div');
-      footer.className = 'maptour-card__finish';
-
-      const returnBtn = document.createElement('button');
-      returnBtn.className = 'maptour-card__finish-btn';
-      returnBtn.textContent = t('return_to_start');
-      returnBtn.addEventListener('click', () => this.returnToStartCallback?.());
-      footer.appendChild(returnBtn);
-
-      const finishLink = document.createElement('button');
-      finishLink.className = 'maptour-card__finish-link';
-      finishLink.textContent = t('finish_here');
-      finishLink.addEventListener('click', () => this.nextCallback?.());
-      footer.appendChild(finishLink);
-
-      container.appendChild(footer);
-    } else {
-      const footer = document.createElement('div');
-      footer.className = 'maptour-card__finish';
-
-      const btn = document.createElement('button');
-      btn.className = 'maptour-card__finish-btn';
-      btn.textContent = t('finish_tour');
-      btn.addEventListener('click', () => this.nextCallback?.());
-      footer.appendChild(btn);
-
-      container.appendChild(footer);
-    }
   }
 }

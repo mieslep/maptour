@@ -29,6 +29,8 @@ export interface TourMeta {
   gps?: GpsConfig;          // GPS behaviour tuning
   header_html?: string;      // custom HTML for menu bar header area (sanitised on render)
   getting_here?: ContentBlock[];  // content blocks for "Getting Here" card (directions to tour start)
+  nudge_return?: boolean;          // if true, "Return to start" is the primary action in the finish modal (default false)
+  require_scroll?: boolean;        // if true, user must scroll to bottom of stop content before advancing (default false)
 }
 
 export interface TextBlock {

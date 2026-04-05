@@ -76,6 +76,8 @@ export interface TourMeta {
   welcome?: ContentBlock[];
   goodbye?: ContentBlock[];
   gps?: GpsConfig;
+  nudge_return?: boolean;
+  require_scroll?: boolean;
 }
 
 export interface Tour {

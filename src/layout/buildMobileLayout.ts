@@ -6,11 +6,10 @@ export interface MobileLayoutDeps {
   container: HTMLElement;
   mapPane: HTMLElement;
   menuBarEl: HTMLElement;
-  progressBarEl: HTMLElement;
 }
 
 export function buildMobileLayout(deps: MobileLayoutDeps): LayoutComponents {
-  const { container, mapPane, menuBarEl, progressBarEl } = deps;
+  const { container, mapPane, menuBarEl } = deps;
 
   // Card element
   const cardEl = document.createElement('div');
@@ -65,26 +64,6 @@ export function buildMobileLayout(deps: MobileLayoutDeps): LayoutComponents {
   // Map panel
   const mapPanel = new MapPanel(container, mapPane);
 
-  // Card view padding observer — updates when progress bar shows/hides
-  const updateCardViewPadding = () => {
-    cardView.style.paddingTop = progressBarEl.hidden ? '56px' : '92px';
-  };
-  const progressObserver = new MutationObserver(updateCardViewPadding);
-  progressObserver.observe(progressBarEl, { attributes: true, attributeFilter: ['hidden'] });
-
-  // Map panel header position observer
-  const updateMapPanelTop = () => {
-    const panelHeader = container.querySelector('.maptour-map-panel__header') as HTMLElement | null;
-    if (panelHeader) {
-      panelHeader.style.top = progressBarEl.hidden ? '56px' : '92px';
-    }
-    const mapPaneInPanel = container.querySelector('.maptour-map-panel .maptour-map-pane') as HTMLElement | null;
-    if (mapPaneInPanel) {
-      mapPaneInPanel.style.top = progressBarEl.hidden ? '104px' : '140px';
-    }
-  };
-  const mapPanelTopObserver = new MutationObserver(updateMapPanelTop);
-  mapPanelTopObserver.observe(progressBarEl, { attributes: true, attributeFilter: ['hidden'] });
 
   return {
     mapPanel,

@@ -18,7 +18,7 @@ import { renderGoodbyeCard } from './card/GoodbyeCard';
 import { renderGettingHereCard } from './card/GettingHereCard';
 import { renderAboutCard } from './card/AboutCard';
 import { MenuBar } from './layout/MenuBar';
-import { ProgressBar } from './layout/ProgressBar';
+import { TourFooter } from './layout/TourFooter';
 import { InTransitBar } from './layout/InTransitBar';
 import { StopListOverlay } from './layout/StopListOverlay';
 import { OverviewControls } from './layout/OverviewControls';
@@ -60,15 +60,23 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const hasGettingHere = !!(tour.tour.getting_here && tour.tour.getting_here.length > 0);
   const menuBar = new MenuBar(container, tour.tour.header_html);
   menuBar.setGettingHereVisible(hasGettingHere);
-  const progressBar = new ProgressBar();
-  container.appendChild(progressBar.getElement());
+  const tourFooter = new TourFooter();
 
   // === Layout ===
   const mapPane = document.createElement('div');
   mapPane.className = 'maptour-map-pane';
-  const layoutDeps = { container, mapPane, menuBarEl: menuBar.getElement(), progressBarEl: progressBar.getElement() };
+  const layoutDeps = { container, mapPane, menuBarEl: menuBar.getElement() };
   const layout = isMobile ? buildMobileLayout(layoutDeps) : buildDesktopLayout(layoutDeps);
   const { mapPanel, sheet, sheetContentEl, cardEl, stopListWrapper, stopListEl, resetScrollHint } = layout;
+
+  // Append tour footer after card element in the appropriate container
+  if (isMobile) {
+    // In mobile, card-view contains: stopListWrapper, cardEl, scrollHint — insert footer after cardEl
+    cardEl.parentElement!.insertBefore(tourFooter.getElement(), cardEl.nextSibling);
+  } else if (sheetContentEl) {
+    // In desktop, sheet-content contains: menuBar, stopListWrapper, cardEl — append footer after cardEl
+    sheetContentEl.appendChild(tourFooter.getElement());
+  }
 
   // === Card system ===
   const cardHost = new CardHost(cardEl);
@@ -85,9 +93,32 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const mapView = new MapView(mapPane, tour);
   const gpsTracker = new GpsTracker();
 
+  // === Scroll gate (require_scroll) ===
+  const requireScroll = tour.tour.require_scroll === true;
+  // On mobile, card-view scrolls; on desktop, the sheet wrapper scrolls
+  const scrollContainer = isMobile
+    ? (cardEl.closest('.maptour-card-view') as HTMLElement ?? cardEl)
+    : (cardEl.closest('.maptour-sheet') as HTMLElement ?? cardEl);
+  const checkAtBottom = () => scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 10;
+  const updateScrollGate = () => {
+    if (!requireScroll) return;
+    requestAnimationFrame(() => {
+      const hasOverflow = scrollContainer.scrollHeight > scrollContainer.clientHeight + 10;
+      tourFooter.setScrollGate(hasOverflow && !checkAtBottom());
+    });
+  };
+  if (requireScroll) {
+    scrollContainer.addEventListener('scroll', () => {
+      if (tourFooter.isScrollGated() && checkAtBottom()) {
+        tourFooter.setScrollGate(false);
+      }
+    }, { passive: true });
+  }
+
   // === Shared state ===
   let viewingSystemCard: string | null = null;
   let gpsOverviewApplied = false;
+  let isReturningToStart = false;
   let stopListOpen = false;
   const setStopListOpen = (open: boolean) => {
     stopListOpen = open;
@@ -145,22 +176,29 @@ async function init(options: MapTourInitOptions): Promise<void> {
     onNavigate: (stop, index) => {
       setStopListOpen(false);
       const nextStop = navController.getNextStop(index);
-      cardHost.render((c) => stopCardRenderer.render(c, stop, index + 1, tour.stops.length, nextStop));
+      cardHost.render((c) => stopCardRenderer.render(c, stop, index + 1, tour.stops.length));
       stopCardRenderer.setSuppressGettingHereNote(false);
       mapView.setActiveStop(stop);
       mapView.setVisitedStops(session.getVisited());
-      progressBar.setPrevDisabled(index === session.startIndex);
-      progressBar.setNextDisabled(false);
-      progressBar.update(session.getVisited().size, tour.stops.length);
+      tourFooter.update(session.getVisited().size, tour.stops.length);
+      if (nextStop) {
+        const hasJourney = !!(nextStop.getting_here?.journey && nextStop.getting_here.journey.length > 0);
+        tourFooter.setNextStop(nextStop.title, hasJourney);
+      } else {
+        tourFooter.setLastStop(isReturningToStart);
+      }
       stopListOverlay.update(tour.stops, index, session.getVisited(), session.tourOrder);
       if (mapPanel) mapPanel.setActiveStop(stop, tour.tour.nav_mode);
       resetScrollHint?.();
+      updateScrollGate();
     },
     onJourneyStart: (destinationStop) => {
+      tourFooter.setNextStop(destinationStop.title);
       cardHost.render((c) => journeyCardRenderer.render(c, destinationStop, () => {
         stopCardRenderer.setSuppressGettingHereNote(true);
         navController.completeJourney();
       }));
+      tourFooter.setScrollGate(false);
     },
     onTourEnd: () => {
       const lastIdx = session.reversed ? 0 : tour.stops.length - 1;
@@ -169,13 +207,29 @@ async function init(options: MapTourInitOptions): Promise<void> {
     },
   });
 
-  stopCardRenderer.onNext(() => navController.next());
-  if (tour.stops.length > 1) {
-    stopCardRenderer.onReturnToStart(() => {
-      stopCardRenderer.onReturnToStart(null);
+  tourFooter.onPrev(() => {
+    const idx = navController.getCurrentIndex();
+    if (idx === session.startIndex) {
+      journeyState.transition('tour_start');
+    } else {
+      navController.prev();
+    }
+  });
+  tourFooter.onNext(() => navController.next());
+  tourFooter.onFinish(async () => {
+    if (isReturningToStart) {
+      // Already returning — just end the tour, no modal
+      journeyState.transition('tour_complete');
+      return;
+    }
+    const returnToStart = await TourFooter.showFinishModal(container, tour.tour.nudge_return === true);
+    if (returnToStart) {
+      isReturningToStart = true;
       navController.returnToStart();
-    });
-  }
+    } else {
+      journeyState.transition('tour_complete');
+    }
+  });
 
   // === Overview controls ===
   overviewControls.onDirectionToggle((reversed) => {
@@ -210,7 +264,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     gettingHereAvailable: hasGettingHere,
     onGettingHere: hasGettingHere ? () => {
       viewingSystemCard = 'getting_here';
-      progressBar.hide();
+      tourFooter.hide();
       cardHost.render((c) => renderGettingHereCard(c, { blocks: tour.tour.getting_here!, onBack: dismissSystemCard }));
     } : undefined,
   }));
@@ -234,19 +288,17 @@ async function init(options: MapTourInitOptions): Promise<void> {
   menuBar.onAction((action) => {
     if (mapPanel) mapPanel.hide();
     if (action === 'getting_here') {
-      viewingSystemCard = 'getting_here'; progressBar.hide();
+      viewingSystemCard = 'getting_here'; tourFooter.hide();
       cardHost.render((c) => renderGettingHereCard(c, { blocks: tour.tour.getting_here!, onBack: dismissSystemCard }));
     } else if (action === 'start_tour') { viewingSystemCard = null; journeyState.transition('tour_start'); }
     else if (action === 'tour_stops') { stopListOverlay.open(); }
     else if (action === 'about') {
-      viewingSystemCard = 'about'; progressBar.hide();
+      viewingSystemCard = 'about'; tourFooter.hide();
       cardHost.render((c) => renderAboutCard(c, { onBack: dismissSystemCard }));
     }
   });
 
   // === Event wiring ===
-  progressBar.onPrev(() => navController.prev());
-  progressBar.onNext(() => navController.next());
   mapView.onPinClick((index) => { if (journeyState.getState() === 'tour_start') updateOverviewSelection(index); });
   transitBar.onArrived(() => {
     const cur = journeyState.getActiveStopIndex();
@@ -258,7 +310,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   // === Journey state handler ===
   journeyState.onStateChange(createJourneyHandler({
     tour, session, mapView, navController, sheet, mapPanel, menuBar,
-    progressBar, overviewControls, stopListOverlay, transitBar,
+    tourFooter, overviewControls, stopListOverlay, transitBar,
     sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
     renderWelcome, renderGoodbye,
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },

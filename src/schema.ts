@@ -116,6 +116,8 @@ export const TourMetaSchema = z.object({
   gps: GpsConfigSchema.optional(),
   header_html: z.string().optional(),
   getting_here: z.array(ContentBlockSchema).optional(),
+  nudge_return: z.boolean().optional(),
+  require_scroll: z.boolean().optional(),
 });
 
 // ---- Top-level tour file ----

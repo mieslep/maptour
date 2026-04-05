@@ -5,6 +5,8 @@
  * via `tour.strings` in their YAML file.
  *
  * Dynamic placeholders use named tokens: {stop}, {n}, {total}.
+ *
+ * IMPORTANT: Keep DEFAULTS and PLACEHOLDERS sorted alphabetically by key.
  */
 
 export interface StringOverrides {
@@ -12,111 +14,83 @@ export interface StringOverrides {
 }
 
 const DEFAULTS: Record<string, string> = {
-  // Header labels
-  welcome:       'Welcome',
-  en_route:      'En route',
-  complete:      'Complete',
-  all_stops:     'All Stops',
-  stop_n:        'Stop {n} / {total}',
-
-  // Welcome card
-  start_at:      'Start at Stop {n} / {total}:',
-  start_from:    'Start from {stop}',
-  tip:           'Select a stop on the map or use the arrows above to change your starting point',
-
-  // Stop card footer
-  next_stop:     'Next: {stop}',
-  next_btn:      'Next →',
-  finish_tour:   'Finish Tour',
-  return_to_start: 'Return to start →',
-  finish_here:   'Finish here',
-
-  // Journey card
-  arrived:       "I've arrived at {stop} →",
-
-  // Goodbye card
-  tour_complete: 'Tour complete!',
-  stops_visited: '{n} / {total} stops visited',
-  revisit:       'Revisit tour',
-  close:         'Close',
-
-  // Nav buttons
-  walk_me:       'Walk me there',
-  drive_me:      'Drive me there',
-  transit_dir:   'Get transit directions',
-  cycle_dir:     'Get cycling directions',
-  directions_to: 'Directions to this stop',
-  picker_title:  'Open directions in:',
-  picker_cancel: 'Cancel',
-
-  // Stop order toggle
-  stop_order:        'Stop order:',
-
-  // Transit bar
-  im_here:           "I'm here",
-  transit_label:     'Stop {n}: {stop}',
-
-  // Nearest indicator
-  nearest_to_you:    'Nearest to you: ',
-  stop_label:        'Stop {n} — {stop}',
-
-  // Gallery
-  gallery_counter:   '{n} / {total}',
-
-  // Stop list overlay
+  about_description: 'An open-source, embeddable map tour player for static websites.',
+  about_heading:     'Powered by MapTour',
+  all_stops:         'All Stops',
   all_stops_title:   'All stops',
-
-  // Error messages
-  tour_load_error:   'Tour could not load',
-  image_error:       'Image could not be loaded',
+  arrived:           "I've arrived at {stop} →",
   audio_error:       'Audio could not be loaded.',
-
-  // Menu
+  back:              'Back',
+  begin_from:        'Begin Tour from {stop}',
+  begin_tour:        'Begin Tour',
+  change_direction:  'Change direction',
+  close:             'Close',
+  complete:          'Complete',
+  cycle_dir:         'Get cycling directions',
+  directions_to:     'Directions to this stop',
+  drive_me:          'Drive me there',
+  en_route:          'En route',
+  end_tour:          'End Tour',
+  finish_here:       'Finish here',
+  finish_modal_body: 'Would you like to return to the start?',
+  finish_modal_no:   'End tour',
+  finish_modal_title:'Tour finished!',
+  finish_modal_yes:  'Return to start',
+  finish_tour:       'Finish Tour',
+  gallery_counter:   '{n} / {total}',
+  get_started_prompt:'Open the map to explore stops and start your tour',
+  getting_here_title:'Getting Here',
+  how_to_get_here:   'How to get here',
+  im_here:           "I'm here",
+  image_error:       'Image could not be loaded',
+  menu_about:        'About',
   menu_getting_here: 'Getting Here',
   menu_start_tour:   'Tour Overview',
   menu_tour_stops:   'Tour Stops',
-  menu_about:        'About',
-  back:              'Back',
-
-  // Getting Here card
-  getting_here_title: 'Getting Here',
-  how_to_get_here:    'How to get here',
-
-  // About card
-  about_heading:     'Powered by MapTour',
-  about_description: 'An open-source, embeddable map tour player for static websites.',
-
-  // Welcome card / overview
-  get_started_prompt: 'Open the map to explore stops and start your tour',
-  begin_tour:         'Begin Tour',
-  begin_from:         'Begin Tour from {stop}',
-  change_direction:   'Change direction',
-  stop_n_of_total:    'Stop {n} of {total}',
-
-  // Progress bar
+  minimize:          'Minimize',
+  nearest_to_you:    'Nearest to you: ',
+  next_btn:          'Next →',
+  next_journey:      'Next: Journey to {stop}',
+  next_stop:         'Next: {stop}',
+  open_app_nav:      'Open app to bring me to',
+  picker_cancel:     'Cancel',
+  picker_title:      'Open directions in:',
   progress_label:    'Tour progress',
-
-  // Misc
-  minimize:      'Minimize',
-  show_map:      'Show map',
-  show_stop:     'Show stop',
-  open_app_nav:  'Open app to bring me to',
-  scroll_more:   'Scroll for more',
+  return_to_start:   'Return to start →',
+  revisit:           'Revisit tour',
+  scroll_more:       'Scroll for more',
+  show_map:          'Show map',
+  show_stop:         'Show stop',
+  start_at:          'Start at Stop {n} / {total}:',
+  start_from:        'Start from {stop}',
+  stop_label:        'Stop {n} — {stop}',
+  stop_n:            'Stop {n} / {total}',
+  stop_n_of_total:   'Stop {n} of {total}',
+  stop_order:        'Stop order:',
+  stops_visited:     '{n} / {total} stops visited',
+  tip:               'Select a stop on the map or use the arrows above to change your starting point',
+  tour_complete:     'Tour complete!',
+  tour_load_error:   'Tour could not load',
+  transit_dir:       'Get transit directions',
+  transit_label:     'Stop {n}: {stop}',
+  walk_me:           'Walk me there',
+  welcome:           'Welcome',
 };
 
 /** Valid placeholder names per string key (for validation). */
 const PLACEHOLDERS: Record<string, string[]> = {
-  stop_n:        ['n', 'total'],
-  start_at:      ['n', 'total'],
-  start_from:    ['stop'],
-  next_stop:     ['stop'],
-  stops_visited: ['n', 'total'],
-  arrived:       ['stop'],
-  transit_label: ['n', 'stop'],
-  stop_label:    ['n', 'stop'],
-  gallery_counter: ['n', 'total'],
+  arrived:         ['stop'],
   begin_from:      ['stop'],
+  gallery_counter: ['n', 'total'],
+  next_journey:    ['stop'],
+  next_stop:       ['stop'],
+  start_at:        ['n', 'total'],
+  start_from:      ['stop'],
+  stop_label:      ['n', 'stop'],
+  stop_n:          ['n', 'total'],
   stop_n_of_total: ['n', 'total'],
+  stops_visited:   ['n', 'total'],
+  transit_label:   ['n', 'stop'],
 };
 
 let strings: Record<string, string> = { ...DEFAULTS };

@@ -6,7 +6,7 @@ import type { NavController } from '../navigation/NavController';
 import type { BottomSheet } from '../layout/BottomSheet';
 import type { MapPanel } from '../layout/MapPanel';
 import type { MenuBar } from '../layout/MenuBar';
-import type { ProgressBar } from '../layout/ProgressBar';
+import type { TourFooter } from '../layout/TourFooter';
 import type { OverviewControls } from '../layout/OverviewControls';
 import type { StopListOverlay } from '../layout/StopListOverlay';
 import type { InTransitBar } from '../layout/InTransitBar';
@@ -19,7 +19,7 @@ export interface JourneyHandlerDeps {
   sheet: BottomSheet | null;
   mapPanel: MapPanel | null;
   menuBar: MenuBar;
-  progressBar: ProgressBar;
+  tourFooter: TourFooter;
   overviewControls: OverviewControls;
   stopListOverlay: StopListOverlay;
   transitBar: InTransitBar;
@@ -42,7 +42,7 @@ export interface JourneyHandlerDeps {
 export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyState, stopIndex: number) => void {
   const {
     tour, session, mapView, navController,
-    sheet, mapPanel, menuBar, progressBar, overviewControls,
+    sheet, mapPanel, menuBar, tourFooter, overviewControls,
     stopListOverlay, transitBar, sheetContentEl,
     isMobile, setStopListOpen, setViewingSystemCard,
     renderWelcome, renderGoodbye, onStopActivated, onOverviewEnter,
@@ -58,7 +58,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       if (mapPanel) mapPanel.hide();
       mapView.setMapPadding(0);
       mapView.fitBounds();
-      progressBar.hide();
+      tourFooter.hide();
 
       session.reset();
       onOverviewEnter?.();
@@ -93,7 +93,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       }
       setStopListOpen(false);
       mapView.setMapPadding(0);
-      progressBar.show();
+      tourFooter.show();
 
       // Delegate card rendering and component updates to navController → onNavigate
       navController.goTo(stopIndex);
@@ -110,9 +110,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       const nextDisplayNum = session.reversed ? (tour.stops.length - nextIndex) : (nextIndex + 1);
       transitBar.show(nextDisplayNum, nextStop.title);
       mapView.setPulsingPin(nextStop.id);
-      progressBar.show();
-      progressBar.setPrevDisabled(true);
-      progressBar.setNextDisabled(true);
+      tourFooter.hide();
       onStopActivated?.(stopIndex);
 
     } else if (state === 'tour_complete') {
@@ -121,7 +119,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) mapPanel.hide();
       mapView.setMapPadding(0);
-      progressBar.hide();
+      tourFooter.hide();
       renderGoodbye();
     }
   };

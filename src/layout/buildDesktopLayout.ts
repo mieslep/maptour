@@ -5,11 +5,10 @@ export interface DesktopLayoutDeps {
   container: HTMLElement;
   mapPane: HTMLElement;
   menuBarEl: HTMLElement;
-  progressBarEl: HTMLElement;
 }
 
 export function buildDesktopLayout(deps: DesktopLayoutDeps): LayoutComponents {
-  const { container, mapPane, menuBarEl, progressBarEl } = deps;
+  const { container, mapPane, menuBarEl } = deps;
 
   // Card element
   const cardEl = document.createElement('div');
@@ -26,7 +25,6 @@ export function buildDesktopLayout(deps: DesktopLayoutDeps): LayoutComponents {
   const sheetContentEl = document.createElement('div');
   sheetContentEl.className = 'maptour-sheet-content';
   sheetContentEl.appendChild(menuBarEl);
-  sheetContentEl.appendChild(progressBarEl);
   sheetContentEl.appendChild(stopListWrapper);
   sheetContentEl.appendChild(cardEl);
 

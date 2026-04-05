@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { StopCardRenderer } from '../../src/card/StopCardRenderer';
 import type { Stop } from '../../src/types';
 
@@ -36,35 +36,10 @@ describe('StopCardRenderer', () => {
     expect(container.querySelector('.maptour-card__content')).toBeTruthy();
   });
 
-  it('renders next stop footer when nextStop provided', () => {
-    const nextStop = makeStop({ id: 2, title: 'Stop Two' });
-    renderer.render(container, makeStop(), 1, 5, nextStop);
-    expect(container.querySelector('.maptour-card__next-stop')).toBeTruthy();
-  });
-
-  it('fires next callback on next button click', () => {
-    const onNext = vi.fn();
-    renderer.onNext(onNext);
-    const nextStop = makeStop({ id: 2, title: 'Stop Two' });
-    renderer.render(container, makeStop(), 1, 5, nextStop);
-    const btn = container.querySelector('.maptour-card__next-btn') as HTMLButtonElement;
-    btn.click();
-    expect(onNext).toHaveBeenCalledOnce();
-  });
-
-  it('renders return-to-start and finish-here on last stop', () => {
-    const onReturn = vi.fn();
-    renderer.onReturnToStart(onReturn);
-    renderer.render(container, makeStop(), 5, 5); // no nextStop
-    expect(container.querySelector('.maptour-card__finish-btn')).toBeTruthy();
-    expect(container.querySelector('.maptour-card__finish-link')).toBeTruthy();
-  });
-
-  it('renders finish tour button when no returnToStart callback', () => {
-    renderer.render(container, makeStop(), 5, 5); // no nextStop, no returnToStart
-    const btn = container.querySelector('.maptour-card__finish-btn');
-    expect(btn?.textContent).toBeTruthy();
-    expect(container.querySelector('.maptour-card__finish-link')).toBeNull();
+  it('does not render footer (footer moved to TourFooter)', () => {
+    renderer.render(container, makeStop(), 1, 5);
+    expect(container.querySelector('.maptour-card__next-stop')).toBeNull();
+    expect(container.querySelector('.maptour-card__finish')).toBeNull();
   });
 
   it('shows getting_here note when not on starting stop', () => {
