@@ -77,11 +77,12 @@
 
 /* Scroll hint: fade gradient at bottom of card view */
 .maptour-scroll-hint {
-  position: absolute;
-  bottom: 0;
+  position: sticky;
+  bottom: 44px; /* above the tour footer */
   left: 0;
   right: 0;
   height: 48px;
+  margin-top: -48px;
   background: linear-gradient(transparent, var(--maptour-surface));
   pointer-events: none;
   z-index: 3;
