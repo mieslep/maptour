@@ -43,6 +43,7 @@ tour:
 
         For more about Ennis and what else to see, visit
         [visitennis.ie](https://visitennis.ie).
+  require_scroll: true
 stops:
   - id: 1
     title: Trinity
