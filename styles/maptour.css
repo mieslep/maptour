@@ -2596,3 +2596,20 @@
   flex: 1;
   min-width: 0;
 }
+
+/* === Waypoint markers === */
+
+.maptour-waypoint-marker--active {
+  transition: fill-opacity 0.3s, stroke-opacity 0.3s;
+}
+
+.maptour-waypoint-marker--passed {
+  transition: fill-opacity 0.3s, stroke-opacity 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maptour-waypoint-marker--active,
+  .maptour-waypoint-marker--passed {
+    transition: none;
+  }
+}

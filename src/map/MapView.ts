@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Tour, Stop } from '../types';
+import type { Tour, Stop, Waypoint } from '../types';
 import { createPinIcon, getLegStyle } from './layers';
 
 export class MapView {
@@ -20,6 +20,8 @@ export class MapView {
   private selectedStopId: number | null = null;
   private endStopId: number | null = null;
   private sequencePulseTimer: ReturnType<typeof setInterval> | null = null;
+  private waypointLayer: L.LayerGroup | null = null;
+  private waypointMarkers: L.CircleMarker[] = [];
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -340,11 +342,96 @@ export class MapView {
     return el;
   }
 
+  // === Waypoint markers ===
+
+  /**
+   * Render waypoint markers on the map.
+   * Active (next target) marker is highlighted, passed are dimmed, future are subtle.
+   */
+  setWaypoints(waypoints: Waypoint[], activeIndex: number): void {
+    this.clearWaypoints();
+
+    this.waypointLayer = L.layerGroup().addTo(this.map);
+    this.waypointMarkers = waypoints.map((wp, i) => {
+      let className: string;
+      let fillColor: string;
+      let fillOpacity: number;
+      let color: string;
+
+      if (i < activeIndex) {
+        // Passed
+        className = 'maptour-waypoint-marker maptour-waypoint-marker--passed';
+        fillColor = '#9ca3af';
+        fillOpacity = 0.4;
+        color = '#9ca3af';
+      } else if (i === activeIndex) {
+        // Active (next target)
+        className = 'maptour-waypoint-marker maptour-waypoint-marker--active';
+        fillColor = '#7c3aed';
+        fillOpacity = 0.9;
+        color = '#7c3aed';
+      } else {
+        // Future
+        className = 'maptour-waypoint-marker maptour-waypoint-marker--future';
+        fillColor = 'transparent';
+        fillOpacity = 0;
+        color = '#7c3aed';
+      }
+
+      const marker = L.circleMarker(wp.coords, {
+        radius: 6,
+        fillColor,
+        fillOpacity,
+        color,
+        weight: 2,
+        opacity: i < activeIndex ? 0.4 : 0.7,
+        className,
+      });
+
+      marker.addTo(this.waypointLayer!);
+      return marker;
+    });
+  }
+
+  /** Remove all waypoint markers from the map. */
+  clearWaypoints(): void {
+    if (this.waypointLayer) {
+      this.waypointLayer.remove();
+      this.waypointLayer = null;
+    }
+    this.waypointMarkers = [];
+  }
+
+  /** Fit map bounds to show the segment between two points. */
+  zoomToSegment(from: [number, number], to: [number, number]): void {
+    const bounds = L.latLngBounds([from, to]);
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      this.map.fitBounds(bounds, {
+        paddingTopLeft: [40, 40],
+        paddingBottomRight: [40, 40 + this.paddingBottom],
+        animate: false,
+      });
+    } else {
+      this.map.flyToBounds(bounds, {
+        paddingTopLeft: [40, 40],
+        paddingBottomRight: [40, 40 + this.paddingBottom],
+        duration: 0.6,
+      });
+    }
+  }
+
+  /** Check if map is currently showing waypoint markers. */
+  hasWaypoints(): boolean {
+    return this.waypointMarkers.length > 0;
+  }
+
   getMap(): L.Map {
     return this.map;
   }
 
   destroy(): void {
+    this.clearWaypoints();
     this.map.remove();
   }
 }
