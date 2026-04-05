@@ -482,6 +482,12 @@
   left: 0;
   right: 0;
   bottom: 0;
+  transition: top 0.25s ease;
+}
+
+/* Full height when header is hidden (overview/welcome mode) */
+.maptour-map-panel--full-height .maptour-map-pane {
+  top: 0;
 }
 
 /* Map panel header — directions + close, below the floating title bar */

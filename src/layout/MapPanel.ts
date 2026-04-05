@@ -124,6 +124,7 @@ export class MapPanel {
   /** Show or hide the header bar (nav button + close). Hidden during overview mode. */
   setHeaderVisible(visible: boolean): void {
     this.header.style.display = visible ? '' : 'none';
+    this.panel.classList.toggle('maptour-map-panel--full-height', !visible);
   }
 
   getElement(): HTMLElement {
