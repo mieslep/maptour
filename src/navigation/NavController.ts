@@ -113,6 +113,7 @@ export class NavController {
 
   /** Navigate back to the starting stop from the last stop. */
   returnToStart(): void {
+    this.session.markVisited(this.currentStop.id);
     this.returningToStart = true;
     const startStop = this.tour.stops[this.session.startIndex];
 

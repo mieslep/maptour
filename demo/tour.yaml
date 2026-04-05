@@ -68,96 +68,27 @@ stops:
     getting_here:
       mode: walk
       route:
-        - - 52.844034
-          - -8.981866
-        - - 52.84405030411838
-          - -8.98199343077261
-        - - 52.84412289347634
-          - -8.98209991361877
-        - - 52.844196432659324
-          - -8.982496907574799
-        - - 52.84431600807743
-          - -8.982592334337012
-        - - 52.84447812045452
-          - -8.982747687851763
-        - - 52.84460130249754
-          - -8.982562723517034
-        - - 52.844726074791744
-          - -8.98236984100683
-        - - 52.844799096880955
-          - -8.982236079881694
-        - - 52.84503415648426
-          - -8.982020918862514
-        - - 52.84529410190351
-          - -8.981835872287451
-        - - 52.845391957001105
-          - -8.981806530119215
-        - - 52.84566588260411
-          - -8.981753158506885
-        - - 52.84592045364437
-          - -8.981763981331902
-        - - 52.846101895648346
-          - -8.981804383647235
-        - - 52.84621202500438
-          - -8.981876255805
-        - - 52.84626636798792
-          - -8.98193390058481
-        - - 52.8463303092641
-          - -8.982378251057828
+        - - 52.846129
+          - -8.981962
+        - - 52.84614258208592
+          - -8.981921636089371
+        - - 52.846194406317345
+          - -8.981972585460314
+        - - 52.846225176925486
+          - -8.982007445556203
+        - - 52.84627052304512
+          - -8.982299734052589
+        - - 52.846286718076364
+          - -8.98236945424439
+        - - 52.846291576584576
+          - -8.98243917443619
+        - - 52.84627052304512
+          - -8.982546436269724
+        - - 52.84626566453457
+          - -8.982613474915677
         - - 52.846411
           - -8.982617
   - id: 2
-    title: The Centurial Sphere & Easter Rising Memorial
-    coords:
-      - 52.846129
-      - -8.981962
-    content:
-      - type: text
-        body: |
-          Located at Club Bridge, this stop features two commemorative pieces
-          marking the Easter Rising.
-
-          The **Easter Rising Memorial Stone** was erected in 1966 to mark
-          the 50th anniversary of the 1916 Rising.
-
-          **The Centurial Sphere** (2016), designed and crafted by Paddy and
-          Conor Murray of Kilkee Forge, was commissioned by Clare County
-          Council as the centrepiece of its Centenary Programme in Clare.
-          The illuminated steel sphere carries lines from poems and songs
-          about and from different parts of Clare, celebrating the county's
-          cultural tradition - a tradition cherished by the men and women
-          of 1916.
-      - type: image
-        url: https://images.ennistidytowns.ie/sculpture/stop2-sphere.jpg
-        caption: "The Centurial Sphere (2016) by Paddy Murray. The steel is galvanized and lacquered to give it a patinated copper or verdigris appearance. "
-      - type: image
-        url: https://images.ennistidytowns.ie/sculpture/stop2-memorial.jpg
-        caption: Easter Rising Memorial Stone (1966)
-    getting_here:
-      mode: walk
-      note: Continue along the path, ~2 min
-      route:
-        - - 52.846411
-          - -8.982617
-        - - 52.846386
-          - -8.982567
-        - - 52.846308
-          - -8.982578
-        - - 52.846264
-          - -8.982557
-        - - 52.846284
-          - -8.982426
-        - - 52.846267
-          - -8.982286
-        - - 52.846233
-          - -8.98208
-        - - 52.846212
-          - -8.981994
-        - - 52.846175
-          - -8.98196
-        - - 52.846129
-          - -8.981962
-  - id: 3
     title: Bláth na hÍnse
     coords:
       - 52.845062
@@ -180,33 +111,35 @@ stops:
       mode: walk
       note: Continue along the path, ~3 min
       route:
-        - - 52.846129
-          - -8.981962
-        - - 52.846084
-          - -8.981928
-        - - 52.845981
-          - -8.981879
-        - - 52.845867
-          - -8.98185
-        - - 52.845647
-          - -8.981852
-        - - 52.845509
-          - -8.981893
-        - - 52.84543
-          - -8.981917
-        - - 52.845449
-          - -8.982212
-        - - 52.845467
-          - -8.982343
-        - - 52.845326
-          - -8.982464
-        - - 52.845128
-          - -8.982663
-        - - 52.84512
-          - -8.982898
+        - - 52.846411
+          - -8.982617
+        - - 52.84626628257487
+          - -8.982611072567158
+        - - 52.846267225732454
+          - -8.982814668445215
+        - - 52.84627728370818
+          - -8.983001691843343
+        - - 52.846175659980986
+          - -8.983006426494475
+        - - 52.84610764063518
+          - -8.983046649682056
+        - - 52.84603077368331
+          - -8.983147196376985
+        - - 52.845955483568716
+          - -8.983324133306313
+        - - 52.84584942052736
+          - -8.983334853189493
+        - - 52.84579839031225
+          - -8.983279887799975
+        - - 52.84569245969629
+          - -8.98299695420792
+        - - 52.84553374595728
+          - -8.983163210049893
+        - - 52.845255185747355
+          - -8.983291924250132
         - - 52.845062
           - -8.983044
-  - id: 4
+  - id: 3
     title: Contentment is Wealth
     coords:
       - 52.844562
@@ -246,7 +179,7 @@ stops:
           - -8.983599
         - - 52.844562
           - -8.983567
-  - id: 5
+  - id: 4
     title: Sleepy Head - Helping Hands
     coords:
       - 52.844473
@@ -282,7 +215,7 @@ stops:
           - -8.984188
         - - 52.844473
           - -8.984257
-  - id: 6
+  - id: 5
     title: Clara
     coords:
       - 52.845447
@@ -351,7 +284,7 @@ stops:
         - type: image
           url: https://images.ennistidytowns.ie/sculpture/journey-5to6-georgian.jpg
           caption: Georgian terraced houses on the route between stops 5 and 6
-  - id: 7
+  - id: 6
     title: Figurative Sculptures, Harmony Row
     coords:
       - 52.846143
@@ -398,7 +331,7 @@ stops:
           - -8.9845
         - - 52.846143
           - -8.984485
-  - id: 8
+  - id: 7
     title: A Fishy Tail
     coords:
       - 52.846979
@@ -460,7 +393,7 @@ stops:
           - -8.988565
         - - 52.846979
           - -8.988706
-  - id: 9
+  - id: 8
     title: Memory of Meaning
     coords:
       - 52.846547
@@ -508,7 +441,7 @@ stops:
           - -8.989678
         - - 52.846547
           - -8.989682
-  - id: 10
+  - id: 9
     title: Four Minds
     coords:
       - 52.84652
@@ -549,7 +482,7 @@ stops:
           - -8.989154
         - - 52.84652
           - -8.989155
-  - id: 11
+  - id: 10
     title: Dreamboat
     coords:
       - 52.846404
@@ -592,7 +525,7 @@ stops:
           - -8.988569
         - - 52.846404
           - -8.988386
-  - id: 12
+  - id: 11
     title: Embrace Nature
     coords:
       - 52.844301
@@ -655,7 +588,7 @@ stops:
         - type: image
           url: https://images.ennistidytowns.ie/sculpture/journey-11to12-fergus.jpg
           caption: The River Fergus and Post Office Field
-  - id: 13
+  - id: 12
     title: Market Day
     coords:
       - 52.843121
@@ -736,7 +669,7 @@ stops:
         - type: image
           url: https://images.ennistidytowns.ie/sculpture/journey-12to13-bowway.jpg
           caption: Enright's Bow - one of Ennis's restored bowways
-  - id: 14
+  - id: 13
     title: Weathered Woman
     coords:
       - 52.842067
@@ -778,7 +711,7 @@ stops:
           - -8.985087
         - - 52.842067
           - -8.984443
-  - id: 15
+  - id: 14
     title: Hands
     coords:
       - 52.842014
@@ -822,7 +755,7 @@ stops:
           - -8.98338
         - - 52.842014
           - -8.983296
-  - id: 16
+  - id: 15
     title: Celtic Rest
     coords:
       - 52.844034
@@ -844,40 +777,32 @@ stops:
       mode: walk
       note: Up O'Connell Street to The Height, ~4 min
       route:
-        - - 52.842014
-          - -8.983296
-        - - 52.842064
-          - -8.983555
-        - - 52.842127
-          - -8.98351
-        - - 52.842148
-          - -8.983542
-        - - 52.842248
-          - -8.98346
-        - - 52.842444
-          - -8.983317
-        - - 52.842642
-          - -8.983149
-        - - 52.842781
-          - -8.983048
-        - - 52.843217
-          - -8.982869
-        - - 52.843461
-          - -8.982775
-        - - 52.84362
-          - -8.982743
-        - - 52.843863
-          - -8.982711
-        - - 52.844085
-          - -8.982649
-        - - 52.84418
-          - -8.982593
-        - - 52.844198
-          - -8.982496
-        - - 52.844124
-          - -8.982099
-        - - 52.844051
-          - -8.981995
+        - - 52.842037
+          - -8.98328
+        - - 52.842039
+          - -8.983288
+        - - 52.842108
+          - -8.983578
+        - - 52.842147
+          - -8.983546
+        - - 52.842796
+          - -8.983043
+        - - 52.843128
+          - -8.982897
+        - - 52.843405
+          - -8.982794
+        - - 52.843587
+          - -8.982746
+        - - 52.843877
+          - -8.982709
+        - - 52.844219
+          - -8.982603
+        - - 52.844116
+          - -8.982085
+        - - 52.844046
+          - -8.98198
+        - - 52.844017
+          - -8.98188
         - - 52.844034
           - -8.981866
       journey:
@@ -905,3 +830,62 @@ stops:
         - type: image
           url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-column.jpg
           caption: The O'Connell Monument at The Height
+  - id: 16
+    title: The Centurial Sphere & Easter Rising Memorial
+    coords:
+      - 52.846129
+      - -8.981962
+    content:
+      - type: text
+        body: |
+          Located at Club Bridge, this stop features two commemorative pieces
+          marking the Easter Rising.
+
+          The **Easter Rising Memorial Stone** was erected in 1966 to mark
+          the 50th anniversary of the 1916 Rising.
+
+          **The Centurial Sphere** (2016), designed and crafted by Paddy and
+          Conor Murray of Kilkee Forge, was commissioned by Clare County
+          Council as the centrepiece of its Centenary Programme in Clare.
+          The illuminated steel sphere carries lines from poems and songs
+          about and from different parts of Clare, celebrating the county's
+          cultural tradition - a tradition cherished by the men and women
+          of 1916.
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/stop2-sphere.jpg
+        caption: "The Centurial Sphere (2016) by Paddy Murray. The steel is galvanized and lacquered to give it a patinated copper or verdigris appearance. "
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/stop2-memorial.jpg
+        caption: Easter Rising Memorial Stone (1966)
+    getting_here:
+      mode: walk
+      note: Continue along the path, ~2 min
+      route:
+        - - 52.844034
+          - -8.981866
+        - - 52.84404149961178
+          - -8.98197520367278
+        - - 52.84411782527365
+          - -8.982085375516467
+        - - 52.84420588733749
+          - -8.982530283661333
+        - - 52.84445793911501
+          - -8.982776994831346
+        - - 52.844507933287694
+          - -8.982728654388417
+        - - 52.84480438945061
+          - -8.982227136014687
+        - - 52.84491276689715
+          - -8.982119982278943
+        - - 52.84529967900665
+          - -8.981827873503395
+        - - 52.8456301590702
+          - -8.981762024426105
+        - - 52.84585152345755
+          - -8.98174758363792
+        - - 52.846078831862506
+          - -8.981786819918664
+        - - 52.84616557340253
+          - -8.981841373414124
+        - - 52.846129
+          - -8.981962

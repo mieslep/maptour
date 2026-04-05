@@ -54,14 +54,18 @@ export class TourEditor {
   private map!: L.Map;
   private stopMarkers: L.Marker[] = [];
   private routePolylines: Map<number, L.Polyline> = new Map();
+  private routeHitAreas: L.Polyline[] = [];
   private routeConnectors: L.Polyline[] = [];
   private radiusCircle: L.Circle | null = null;
   private routePointMarkers: L.CircleMarker[] = [];
   private editingRouteSegment: number = -1;
+  private reviewingRouteSegment: number = -1;
   private preEditView: { center: L.LatLng; zoom: number } | null = null;
   private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
   private selectedCard: 'welcome' | 'goodbye' | null = null;
+  private dirtyLegs: Set<number> = new Set();
+  private selectedLeg: number = -1;
   private previewDevice = 'iphone-14';
 
   private static readonly DEVICES: Array<{
@@ -96,7 +100,7 @@ export class TourEditor {
   }
 
   private withUndo(fn: () => void): void {
-    pushUndo(this.tour);
+    pushUndo(this.tour, this.dirtyLegs);
     fn();
     this.changed();
   }
@@ -168,7 +172,7 @@ export class TourEditor {
   }
 
   private initMap(): void {
-    this.map = L.map(this.mapContainer, { zoomControl: true, keyboard: false }).setView([52.845, -8.985], 15);
+    this.map = L.map(this.mapContainer, { zoomControl: true, keyboard: false, doubleClickZoom: false }).setView([52.845, -8.985], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 22,
@@ -191,6 +195,8 @@ export class TourEditor {
         this.addRoutePointAtClick(e.latlng);
         return;
       }
+      // Deselect any selected leg
+      this.deselectLeg();
     });
 
     // Fit to stops if we have any
@@ -218,6 +224,9 @@ export class TourEditor {
       this.tour.stops.push(stop);
       this.selectedStopIdx = this.tour.stops.length - 1;
     });
+    // New stop affects legs to/from it (circular tour: last→first wraps)
+    const newIdx = this.tour.stops.length - 1;
+    this.markLegsDirty(newIdx);
     this.refreshMap();
     this.renderPanel();
     this.setStatus(`Added stop ${this.tour.stops.length} at [${lat.toFixed(6)}, ${lng.toFixed(6)}]`);
@@ -232,7 +241,9 @@ export class TourEditor {
       if (this.selectedStopIdx >= this.tour.stops.length) {
         this.selectedStopIdx = this.tour.stops.length - 1;
       }
+      this.stitchRouteEndpoints();
     });
+    this.markAllLegsDirty();
     this.refreshMap();
     this.renderPanel();
     this.setStatus('Stop deleted. Stops renumbered.');
@@ -245,12 +256,19 @@ export class TourEditor {
       this.tour.stops.splice(to, 0, stop);
       this.tour.stops.forEach((s, i) => { s.id = i + 1; });
       this.selectedStopIdx = to;
+      this.stitchRouteEndpoints();
     });
+    this.markLegsDirty(to);
+    if (from < this.tour.stops.length) {
+      this.markLegsDirty(from);
+    }
     this.refreshMap();
     this.renderPanel();
   }
 
   private selectStop(idx: number): void {
+    this.deselectLeg();
+    this.exitRouteInteraction();
     this.selectedStopIdx = idx;
     this.selectedCard = null;
     this.detailTab = 'stop';
@@ -305,13 +323,21 @@ export class TourEditor {
   }
 
   private startEditingRoute(stopIdx: number, fitMap = true): void {
-    this.stopEditingRoute();
+    // If re-entering edit mode for the same route (rebuild after add/delete/move),
+    // just clear markers without restoring the map view
+    if (this.editingRouteSegment === stopIdx) {
+      this.routePointMarkers.forEach(m => m.remove());
+      this.routePointMarkers = [];
+    } else {
+      this.stopEditingRoute();
+      this.deselectLeg();
+    }
     if (stopIdx < 0 || stopIdx >= this.tour.stops.length) return;
     if (this.tour.stops.length < 2) return;
     const stop = this.tour.stops[stopIdx];
     if (!stop.getting_here?.route || stop.getting_here.route.length === 0) return;
 
-    // Save current view to restore on Done
+    // Save current view to restore on Done (only on first entry)
     if (!this.preEditView) {
       this.preEditView = { center: this.map.getCenter(), zoom: this.map.getZoom() };
     }
@@ -340,12 +366,15 @@ export class TourEditor {
 
     const buildMarkers = () => {
       route.forEach((pt, ptIdx) => {
+        const isFirst = ptIdx === 0;
+        const isLast = ptIdx === route.length - 1;
+        const endpointColor = isFirst ? '#16a34a' : isLast ? '#dc2626' : null;
         const m = L.circleMarker([pt[0], pt[1]], {
-          radius: 8,
-          fillColor: '#2563eb',
+          radius: endpointColor ? 10 : 8,
+          fillColor: endpointColor ?? '#2563eb',
           color: '#fff',
           weight: 2,
-          fillOpacity: 0.8,
+          fillOpacity: 0.9,
           pane: 'routeEditPoints',
           bubblingMouseEvents: false,
         }).addTo(this.map);
@@ -353,18 +382,19 @@ export class TourEditor {
         // Drag support
         m.on('mousedown', (e) => {
           justDragged = false;
-          pushUndo(this.tour); // snapshot before drag starts
+          pushUndo(this.tour, this.dirtyLegs); // snapshot before drag starts
           this.map.dragging.disable();
           L.DomEvent.stopPropagation(e);
           const onMove = (ev: L.LeafletMouseEvent) => {
             if (!justDragged) {
               // First move: select this point visually
               justDragged = true;
-              this.routePointMarkers.forEach(rm => {
-                rm.setStyle({ fillColor: '#2563eb', radius: 8 });
+              this.routePointMarkers.forEach((rm, ri) => {
+                const defColor = ri === 0 ? '#16a34a' : ri === route.length - 1 ? '#dc2626' : '#2563eb';
+                rm.setStyle({ fillColor: defColor, radius: (ri === 0 || ri === route.length - 1) ? 10 : 8 });
                 (rm.options as any)._selected = false;
               });
-              m.setStyle({ fillColor: '#dc2626', radius: 10 });
+              m.setStyle({ fillColor: '#f59e0b', radius: 12 });
               (m.options as any)._selected = true;
             }
             m.setLatLng(ev.latlng);
@@ -377,7 +407,7 @@ export class TourEditor {
             this.map.off('mouseup', onUp);
             if (justDragged) {
               this.changed();
-              this.updateRouteEditWidgetPosition();
+              // (bar is CSS-positioned, no update needed)
             }
             // Prevent the map click from firing after drag
             setTimeout(() => { justDragged = false; }, 50);
@@ -391,14 +421,15 @@ export class TourEditor {
           L.DomEvent.stopPropagation(e);
           if (justDragged) return;
           const wasSelected = (m.options as any)._selected;
-          // Deselect all
-          this.routePointMarkers.forEach(rm => {
-            rm.setStyle({ fillColor: '#2563eb', radius: 8 });
+          // Deselect all — restore endpoint colors
+          this.routePointMarkers.forEach((rm, ri) => {
+            const defColor = ri === 0 ? '#16a34a' : ri === route.length - 1 ? '#dc2626' : '#2563eb';
+            rm.setStyle({ fillColor: defColor, radius: (ri === 0 || ri === route.length - 1) ? 10 : 8 });
             (rm.options as any)._selected = false;
           });
           // Toggle: if it wasn't selected, select it. If it was, leave deselected.
           if (!wasSelected) {
-            m.setStyle({ fillColor: '#dc2626', radius: 10 });
+            m.setStyle({ fillColor: '#f59e0b', radius: 12 });
             (m.options as any)._selected = true;
           }
         });
@@ -423,26 +454,33 @@ export class TourEditor {
           });
           this.refreshRoutePolylines();
           rebuildMarkers();
-          this.updateRouteEditWidgetPosition();
+          // (bar is CSS-positioned, no update needed)
           this.setStatus(`Inserted point. ${route.length} points.`);
         });
       }
     };
 
     buildMarkers();
-    this.showRouteEditWidget(stopIdx);
+    // Only show editing bar if one doesn't already exist (e.g. transitioned from selection bar)
+    if (!this.mapContainer.querySelector('.maptour-leg-action-bar')) {
+      this.showEditingActionBar(stopIdx);
+    }
     this.setStatus(`Editing route to stop ${stopIdx + 1}.`);
   }
 
-  private showRouteEditWidget(stopIdx: number): void {
-    this.hideRouteEditWidget();
+  private showEditingActionBar(stopIdx: number): void {
+    this.hideLegActionBar();
 
-    const widget = document.createElement('div');
-    widget.className = 'route-edit-widget';
-    widget.innerHTML = `
-      <span><i class="fa-solid fa-pen" aria-hidden="true"></i> Editing route to Stop ${stopIdx + 1}</span>
-      <span class="route-edit-hint">Click to add. Drag to move. Delete to remove.</span>
-    `;
+    const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
+    const bar = document.createElement('div');
+    bar.className = 'maptour-leg-action-bar';
+    bar.style.visibility = 'hidden';
+
+    const label = document.createElement('span');
+    label.className = 'maptour-leg-action-label';
+    label.innerHTML = `<i class="fa-solid fa-pen" aria-hidden="true"></i> Editing: Stop ${prevIdx + 1} → ${stopIdx + 1}`;
+    bar.appendChild(label);
+
     const doneBtn = document.createElement('button');
     doneBtn.className = 'btn btn-sm btn-primary';
     doneBtn.textContent = 'Done';
@@ -459,27 +497,218 @@ export class TourEditor {
           this.changed();
         }
       }
+      pushUndo(this.tour, this.dirtyLegs);
+      this.clearLegDirty(stopIdx);
+      this.changed();
       this.stopEditingRoute();
       this.refreshRoutePolylines();
       this.setStatus('Route editing finished.');
     };
-    widget.appendChild(doneBtn);
-    this.mapContainer.appendChild(widget);
+    bar.appendChild(doneBtn);
+
+    this.mapContainer.appendChild(bar);
+    L.DomEvent.disableClickPropagation(bar);
+    this.setupBarDrag(bar);
+
+    // Position near the leg, avoiding overlap
+    requestAnimationFrame(() => {
+      const midPt = this.getLegBarPosition(stopIdx);
+      const containerRect = this.mapContainer.getBoundingClientRect();
+      const barW = bar.offsetWidth;
+      const barH = bar.offsetHeight;
+      const margin = 8;
+      let left = midPt.x - barW / 2;
+      let top = midPt.y - barH - 12;
+      if (top < margin) top = midPt.y + 12;
+      left = Math.max(margin, Math.min(left, containerRect.width - barW - margin));
+      top = Math.max(margin, Math.min(top, containerRect.height - barH - margin));
+      bar.style.left = `${left}px`;
+      bar.style.top = `${top}px`;
+      bar.style.visibility = '';
+    });
   }
 
-  private updateRouteEditWidgetPosition(): void {
-    // No-op: widget is CSS-fixed at top of map container
+  private replaceBarWithEditingControls(bar: HTMLElement, stopIdx: number): void {
+    const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
+    bar.innerHTML = '';
+
+    const label = document.createElement('span');
+    label.className = 'maptour-leg-action-label';
+    label.innerHTML = `<i class="fa-solid fa-pen" aria-hidden="true"></i> Editing: Stop ${prevIdx + 1} → ${stopIdx + 1}`;
+    bar.appendChild(label);
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'btn btn-sm btn-primary';
+    doneBtn.textContent = 'Done';
+    doneBtn.onclick = () => {
+      const stop = this.tour.stops[stopIdx];
+      const route = stop.getting_here?.route;
+      if (route && route.length > 0) {
+        const lastPt = route[route.length - 1];
+        const dest = stop.coords;
+        const dist = Math.sqrt((lastPt[0] - dest[0]) ** 2 + (lastPt[1] - dest[1]) ** 2);
+        if (dist > 1e-6) {
+          route.push([...dest] as [number, number]);
+          this.changed();
+        }
+      }
+      pushUndo(this.tour, this.dirtyLegs);
+      this.clearLegDirty(stopIdx);
+      this.changed();
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+      this.setStatus('Route editing finished.');
+    };
+    bar.appendChild(doneBtn);
   }
 
-  private hideRouteEditWidget(): void {
-    this.mapContainer.querySelector('.route-edit-widget')?.remove();
+  private startReviewingRoute(stopIdx: number): void {
+    this.stopReviewingRoute();
+    this.deselectLeg();
+    // Enter full edit mode (draggable points) but track as review
+    this.reviewingRouteSegment = stopIdx;
+    this.startEditingRoute(stopIdx);
+    // Replace the editing bar with review bar (startEditingRoute shows editing bar
+    // only if no bar exists, but we want review bar)
+    this.showReviewActionBar(stopIdx);
+    this.setStatus(`Reviewing route to stop ${stopIdx + 1}.`);
+  }
+
+  private showReviewActionBar(stopIdx: number): void {
+    this.hideLegActionBar();
+
+    const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
+    const stop = this.tour.stops[stopIdx];
+    const prevStop = this.tour.stops[prevIdx];
+    const hasRoute = !!(stop?.getting_here?.route?.length);
+
+    const bar = document.createElement('div');
+    bar.className = 'maptour-leg-action-bar';
+
+    const label = document.createElement('span');
+    label.className = 'maptour-leg-action-label';
+    label.innerHTML = `<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Reviewing: Stop ${prevIdx + 1} → ${stopIdx + 1}`;
+    bar.appendChild(label);
+
+    const reviewedBtn = document.createElement('button');
+    reviewedBtn.className = 'btn btn-sm';
+    reviewedBtn.innerHTML = '<i class="fa-solid fa-check"></i> Mark Reviewed';
+    reviewedBtn.onclick = () => {
+      pushUndo(this.tour, this.dirtyLegs);
+      this.clearLegDirty(stopIdx);
+      this.changed();
+      this.reviewingRouteSegment = -1;
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+    };
+    bar.appendChild(reviewedBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm btn-danger';
+    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    delBtn.title = 'Delete route';
+    delBtn.onclick = () => {
+      if (!confirm('Delete route?')) return;
+      this.withUndo(() => { stop.getting_here!.route = undefined; });
+      this.dirtyLegs.delete(stopIdx);
+      this.reviewingRouteSegment = -1;
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+      this.renderPanel();
+      this.setStatus(`Deleted route to stop ${stopIdx + 1}.`);
+    };
+    bar.appendChild(delBtn);
+
+    if (this.tour.stops.length > 1) {
+      const autoBtn = document.createElement('button');
+      autoBtn.className = 'btn btn-sm';
+      autoBtn.innerHTML = '<i class="fa-solid fa-route"></i> Auto';
+      autoBtn.onclick = async () => {
+        if (hasRoute && !confirm('Delete route and create new route automatically?')) return;
+        const apiKey = getOrsApiKey();
+        if (!apiKey) {
+          this.showOrsKeyModal(() => { autoBtn.click(); });
+          return;
+        }
+        autoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        autoBtn.disabled = true;
+        try {
+          if (!stop.getting_here) stop.getting_here = { mode: (this.tour.tour.nav_mode as LegMode) || 'walk' };
+          const route = await generateRoute(prevStop.coords, stop.coords);
+          this.withUndo(() => { stop.getting_here!.route = route; });
+          this.clearLegDirty(stopIdx);
+          this.reviewingRouteSegment = -1;
+          this.stopEditingRoute();
+          this.refreshRoutePolylines();
+          this.renderPanel();
+          this.setStatus(`Route generated: ${route.length} points.`);
+        } catch (err) {
+          this.setStatus(`Route failed: ${(err as Error).message}`);
+          autoBtn.innerHTML = '<i class="fa-solid fa-route"></i> Auto';
+          autoBtn.disabled = false;
+        }
+      };
+      bar.appendChild(autoBtn);
+    }
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'btn btn-sm btn-primary';
+    doneBtn.textContent = 'Done';
+    doneBtn.onclick = () => {
+      if (confirm('Mark route as reviewed?')) {
+        pushUndo(this.tour, this.dirtyLegs);
+        this.clearLegDirty(stopIdx);
+        this.changed();
+      }
+      this.reviewingRouteSegment = -1;
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+    };
+    bar.appendChild(doneBtn);
+
+    this.mapContainer.appendChild(bar);
+    L.DomEvent.disableClickPropagation(bar);
+    this.setupBarDrag(bar);
+
+    // Position avoiding route overlap
+    requestAnimationFrame(() => {
+      const pos = this.getLegBarPosition(stopIdx);
+      const containerRect = this.mapContainer.getBoundingClientRect();
+      const barW = bar.offsetWidth;
+      const barH = bar.offsetHeight;
+      const margin = 8;
+      let left = pos.x - barW / 2;
+      let top = pos.y - barH - 12;
+      if (top < margin) top = pos.y + 12;
+      left = Math.max(margin, Math.min(left, containerRect.width - barW - margin));
+      top = Math.max(margin, Math.min(top, containerRect.height - barH - margin));
+      bar.style.left = `${left}px`;
+      bar.style.top = `${top}px`;
+    });
+  }
+
+  /** Exit any active route interaction (review or edit). */
+  private exitRouteInteraction(): void {
+    if (this.reviewingRouteSegment >= 0) {
+      this.stopReviewingRoute();
+      this.refreshRoutePolylines();
+    } else if (this.editingRouteSegment >= 0) {
+      this.stopEditingRoute();
+      this.refreshRoutePolylines();
+    }
+  }
+
+  private stopReviewingRoute(): void {
+    if (this.reviewingRouteSegment < 0) return;
+    this.reviewingRouteSegment = -1;
+    this.stopEditingRoute();
   }
 
   private stopEditingRoute(): void {
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
     this.editingRouteSegment = -1;
-    this.hideRouteEditWidget();
+    this.hideLegActionBar();
     // Restore the map view from before editing
     if (this.preEditView) {
       this.map.flyTo(this.preEditView.center, this.preEditView.zoom, { animate: true, duration: 0.5 });
@@ -560,12 +789,360 @@ export class TourEditor {
     return Math.sqrt((x - (p1[0] + t * dx)) ** 2 + (y - (p1[1] + t * dy)) ** 2);
   }
 
+  /** Ensure every route's first point matches the previous stop and last point matches the destination stop. */
+  private stitchRouteEndpoints(): void {
+    const n = this.tour.stops.length;
+    for (let i = 0; i < n; i++) {
+      const stop = this.tour.stops[i];
+      if (!stop.getting_here?.route?.length) continue;
+      const route = stop.getting_here.route;
+      const prevIdx = i === 0 ? n - 1 : i - 1;
+      const prevStop = this.tour.stops[prevIdx];
+      route[0] = [...prevStop.coords] as [number, number];
+      route[route.length - 1] = [...stop.coords] as [number, number];
+    }
+  }
+
+  /** Mark the leg arriving at `idx` and the leg departing from `idx` (next stop's getting_here) as dirty. */
+  private markLegsDirty(idx: number): void {
+    const n = this.tour.stops.length;
+    if (n < 2) return;
+    // The leg arriving at this stop
+    if (this.tour.stops[idx]?.getting_here?.route?.length) {
+      this.dirtyLegs.add(idx);
+    }
+    // The leg departing from this stop (= next stop's getting_here)
+    const nextIdx = (idx + 1) % n;
+    if (this.tour.stops[nextIdx]?.getting_here?.route?.length) {
+      this.dirtyLegs.add(nextIdx);
+    }
+  }
+
+  /** Mark all legs with routes as dirty (used after reorder/delete). */
+  private markAllLegsDirty(): void {
+    this.tour.stops.forEach((stop, i) => {
+      if (stop.getting_here?.route?.length) {
+        this.dirtyLegs.add(i);
+      }
+    });
+  }
+
+  /** Clear dirty flag for a specific leg (called after editing/regenerating a route). */
+  private clearLegDirty(idx: number): void {
+    this.dirtyLegs.delete(idx);
+  }
+
+  private selectLeg(idx: number, _clickPoint?: { x: number; y: number }): void {
+    this.selectedLeg = idx;
+    this.refreshRoutePolylines();
+    this.fitLegBounds(idx);
+    // Show bar after zoom settles (or immediately if no move needed)
+    let shown = false;
+    const showBar = () => {
+      if (shown || this.selectedLeg !== idx) return;
+      shown = true;
+      const pos = this.getLegBarPosition(idx);
+      this.showLegActionBar(idx, pos);
+    };
+    this.map.once('moveend', showBar);
+    requestAnimationFrame(() => {
+      // If fitBounds was a no-op (already at right zoom), moveend won't fire
+      setTimeout(() => { this.map.off('moveend', showBar); showBar(); }, 50);
+    });
+  }
+
+  private fitLegBounds(idx: number): void {
+    const stop = this.tour.stops[idx];
+    const prevIdx = idx === 0 ? this.tour.stops.length - 1 : idx - 1;
+    const prevStop = this.tour.stops[prevIdx];
+    const pts: L.LatLngTuple[] = [[prevStop.coords[0], prevStop.coords[1]]];
+    if (stop.getting_here?.route?.length) {
+      pts.push(...stop.getting_here.route.map(p => [p[0], p[1]] as L.LatLngTuple));
+    }
+    pts.push([stop.coords[0], stop.coords[1]]);
+    this.map.fitBounds(L.latLngBounds(pts), { padding: [60, 60], animate: true });
+  }
+
+  /** Get a position for the action bar that avoids overlapping the route. */
+  private getLegBarPosition(idx: number): { x: number; y: number } {
+    const stop = this.tour.stops[idx];
+    const prevIdx = idx === 0 ? this.tour.stops.length - 1 : idx - 1;
+    const prevStop = this.tour.stops[prevIdx];
+
+    // Collect all leg points in container coordinates
+    const pts: L.Point[] = [this.map.latLngToContainerPoint(prevStop.coords)];
+    if (stop.getting_here?.route?.length) {
+      for (const p of stop.getting_here.route) {
+        pts.push(this.map.latLngToContainerPoint([p[0], p[1]]));
+      }
+    }
+    pts.push(this.map.latLngToContainerPoint(stop.coords));
+
+    // Find bounding box of the route in container coords
+    let minY = Infinity, maxY = -Infinity;
+    let sumX = 0;
+    for (const p of pts) {
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+      sumX += p.x;
+    }
+    const centerX = sumX / pts.length;
+
+    // Place bar above the route if there's room, otherwise below
+    const containerH = this.mapContainer.offsetHeight;
+    const barEstimatedH = 40;
+    const gap = 16;
+    let y: number;
+    if (minY > barEstimatedH + gap + 8) {
+      y = minY - gap; // above the route (the positioning code will subtract barH)
+    } else if (maxY + barEstimatedH + gap < containerH) {
+      y = maxY + gap + barEstimatedH; // below the route
+    } else {
+      y = minY - gap; // default: above, let clamping handle it
+    }
+
+    return { x: centerX, y };
+  }
+
+  private deselectLeg(): void {
+    if (this.selectedLeg >= 0) {
+      this.selectedLeg = -1;
+      this.hideLegActionBar();
+      this.refreshRoutePolylines();
+    }
+  }
+
+  private showLegActionBar(idx: number, clickPoint?: { x: number; y: number }): void {
+    this.hideLegActionBar();
+    const stop = this.tour.stops[idx];
+    const hasRoute = !!(stop?.getting_here?.route?.length);
+    const isDirty = this.dirtyLegs.has(idx);
+    const prevIdx = idx === 0 ? this.tour.stops.length - 1 : idx - 1;
+    const prevStop = this.tour.stops[prevIdx];
+
+    const bar = document.createElement('div');
+    bar.className = 'maptour-leg-action-bar';
+    // Position off-screen initially so we can measure it
+    bar.style.visibility = 'hidden';
+
+    const label = document.createElement('span');
+    label.className = 'maptour-leg-action-label';
+    label.textContent = `Leg: Stop ${prevIdx + 1} → ${idx + 1}`;
+    bar.appendChild(label);
+
+    if (hasRoute) {
+      if (isDirty) {
+        // Dirty route: "Review" enters review mode
+        const reviewRouteBtn = document.createElement('button');
+        reviewRouteBtn.className = 'btn btn-sm';
+        reviewRouteBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Review';
+        reviewRouteBtn.title = 'Review dirty route';
+        reviewRouteBtn.onclick = () => {
+          this.deselectLeg();
+          this.startReviewingRoute(idx);
+        };
+        bar.appendChild(reviewRouteBtn);
+      } else {
+        // Clean route: "Edit" enters edit mode
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
+        editBtn.title = 'Edit route points (double-click or E)';
+        editBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          const barLeft = bar.style.left;
+          const barTop = bar.style.top;
+          this.selectedLeg = -1;
+          this.startEditingRoute(idx, false);
+          this.refreshRoutePolylines();
+          this.replaceBarWithEditingControls(bar, idx);
+          bar.style.left = barLeft;
+          bar.style.top = barTop;
+          bar.style.transform = '';
+          bar.style.visibility = '';
+        };
+        bar.appendChild(editBtn);
+      }
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-sm btn-danger';
+      delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+      delBtn.title = 'Delete route (Delete)';
+      delBtn.onclick = () => {
+        if (!confirm('Delete route?')) return;
+        this.deleteSelectedLeg();
+      };
+      bar.appendChild(delBtn);
+    } else {
+      const drawBtn = document.createElement('button');
+      drawBtn.className = 'btn btn-sm';
+      drawBtn.innerHTML = '<i class="fa-solid fa-draw-polygon"></i> Draw';
+      drawBtn.title = 'Create route and edit';
+      drawBtn.onclick = () => this.drawAndEditLeg(idx);
+      bar.appendChild(drawBtn);
+    }
+
+    // Auto-route (always available when there's a previous stop)
+    if (this.tour.stops.length > 1) {
+      const autoBtn = document.createElement('button');
+      autoBtn.className = 'btn btn-sm';
+      autoBtn.innerHTML = '<i class="fa-solid fa-route"></i> Auto';
+      autoBtn.title = 'Generate route automatically';
+      autoBtn.onclick = async () => {
+        if (hasRoute && !confirm('Delete route and create new route automatically?')) return;
+        const apiKey = getOrsApiKey();
+        if (!apiKey) {
+          this.showOrsKeyModal(() => { autoBtn.click(); });
+          return;
+        }
+        autoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        autoBtn.disabled = true;
+        try {
+          if (!stop.getting_here) stop.getting_here = { mode: (this.tour.tour.nav_mode as LegMode) || 'walk' };
+          const route = await generateRoute(prevStop.coords, stop.coords);
+          this.withUndo(() => { stop.getting_here!.route = route; });
+          this.clearLegDirty(idx);
+          this.deselectLeg();
+          this.refreshRoutePolylines();
+          this.renderPanel();
+          this.setStatus(`Route generated: ${route.length} points.`);
+        } catch (err) {
+          this.setStatus(`Route failed: ${(err as Error).message}`);
+          autoBtn.innerHTML = '<i class="fa-solid fa-route"></i> Auto';
+          autoBtn.disabled = false;
+        }
+      };
+      bar.appendChild(autoBtn);
+    }
+
+    this.mapContainer.appendChild(bar);
+    L.DomEvent.disableClickPropagation(bar);
+    this.setupBarDrag(bar);
+
+    // Position near click point, clamped to stay within the map container
+    requestAnimationFrame(() => {
+      const containerRect = this.mapContainer.getBoundingClientRect();
+      const barW = bar.offsetWidth;
+      const barH = bar.offsetHeight;
+      const margin = 8;
+
+      if (clickPoint) {
+        // Place bar centered horizontally on click, above the click point
+        let left = clickPoint.x - barW / 2;
+        let top = clickPoint.y - barH - 12;
+
+        // If it would go above the container, place below the click instead
+        if (top < margin) {
+          top = clickPoint.y + 12;
+        }
+
+        // Clamp horizontally
+        left = Math.max(margin, Math.min(left, containerRect.width - barW - margin));
+        // Clamp vertically
+        top = Math.max(margin, Math.min(top, containerRect.height - barH - margin));
+
+        bar.style.left = `${left}px`;
+        bar.style.top = `${top}px`;
+      } else {
+        // Fallback: center at bottom
+        bar.style.left = `${(containerRect.width - barW) / 2}px`;
+        bar.style.bottom = `${margin}px`;
+      }
+
+      bar.style.visibility = '';
+    });
+  }
+
+  private hideLegActionBar(): void {
+    this.mapContainer.querySelector('.maptour-leg-action-bar')?.remove();
+  }
+
+  private setupBarDrag(bar: HTMLElement): void {
+    bar.style.cursor = 'grab';
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    const onMove = (e: MouseEvent) => {
+      const containerRect = this.mapContainer.getBoundingClientRect();
+      const barW = bar.offsetWidth;
+      const barH = bar.offsetHeight;
+      const margin = 4;
+      let left = startLeft + (e.clientX - startX);
+      let top = startTop + (e.clientY - startY);
+      left = Math.max(margin, Math.min(left, containerRect.width - barW - margin));
+      top = Math.max(margin, Math.min(top, containerRect.height - barH - margin));
+      bar.style.left = `${left}px`;
+      bar.style.top = `${top}px`;
+      bar.style.transform = '';
+    };
+
+    const onUp = () => {
+      bar.style.cursor = 'grab';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.userSelect = '';
+    };
+
+    bar.addEventListener('mousedown', (e) => {
+      // Don't drag when clicking buttons
+      if ((e.target as HTMLElement).closest('button')) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = bar.offsetLeft;
+      startTop = bar.offsetTop;
+      bar.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
+  /** Create a 3-point route (start, midpoint, end) and enter edit mode. */
+  private drawAndEditLeg(idx: number): void {
+    const stop = this.tour.stops[idx];
+    const prevIdx = idx === 0 ? this.tour.stops.length - 1 : idx - 1;
+    const prevStop = this.tour.stops[prevIdx];
+    if (!stop.getting_here) stop.getting_here = { mode: (this.tour.tour.nav_mode as LegMode) || 'walk' };
+    const mid: [number, number] = [
+      (prevStop.coords[0] + stop.coords[0]) / 2,
+      (prevStop.coords[1] + stop.coords[1]) / 2,
+    ];
+    this.withUndo(() => {
+      stop.getting_here!.route = [
+        [...prevStop.coords] as [number, number],
+        mid,
+        [...stop.coords] as [number, number],
+      ];
+    });
+    this.deselectLeg();
+    this.refreshRoutePolylines();
+    this.startEditingRoute(idx);
+    this.renderPanel();
+  }
+
+  private deleteSelectedLeg(): void {
+    if (this.selectedLeg < 0) return;
+    const stop = this.tour.stops[this.selectedLeg];
+    if (!stop?.getting_here?.route?.length) return;
+    const deletedIdx = this.selectedLeg;
+    this.withUndo(() => {
+      stop.getting_here!.route = undefined;
+    });
+    this.dirtyLegs.delete(deletedIdx);
+    this.deselectLeg();
+    this.refreshRoutePolylines();
+    this.renderPanel();
+    this.setStatus(`Deleted route to stop ${deletedIdx + 1}.`);
+  }
+
   private refreshMap(): void {
     // Clear existing markers, polylines, and route edit points
     this.stopMarkers.forEach(m => m.remove());
     this.stopMarkers = [];
     this.routePolylines.forEach(p => p.remove());
     this.routePolylines = new Map();
+    this.routeHitAreas.forEach(p => p.remove());
+    this.routeHitAreas = [];
     this.routeConnectors.forEach(p => p.remove());
     this.routeConnectors = [];
     this.stopEditingRoute();
@@ -585,9 +1162,21 @@ export class TourEditor {
 
       marker.on('dragend', () => {
         const ll = marker.getLatLng();
+        const newCoords: [number, number] = [ll.lat, ll.lng];
         this.withUndo(() => {
-          stop.coords = [ll.lat, ll.lng];
+          stop.coords = newCoords;
+          // Update the last point of this stop's route (this stop is the destination)
+          if (stop.getting_here?.route?.length) {
+            stop.getting_here.route[stop.getting_here.route.length - 1] = [...newCoords] as [number, number];
+          }
+          // Update the first point of the next stop's route (this stop is the origin)
+          const nextIdx = (idx + 1) % this.tour.stops.length;
+          const nextStop = this.tour.stops[nextIdx];
+          if (nextStop.getting_here?.route?.length) {
+            nextStop.getting_here.route[0] = [...newCoords] as [number, number];
+          }
         });
+        this.markLegsDirty(idx);
         this.refreshRoutePolylines();
         this.renderPanel();
         this.setStatus(`Moved ${stop.title} to [${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}]`);
@@ -602,6 +1191,8 @@ export class TourEditor {
   private refreshRoutePolylines(): void {
     this.routePolylines.forEach(p => p.remove());
     this.routePolylines = new Map();
+    this.routeHitAreas.forEach(p => p.remove());
+    this.routeHitAreas = [];
     this.routeConnectors.forEach(p => p.remove());
     this.routeConnectors = [];
 
@@ -616,12 +1207,22 @@ export class TourEditor {
       const hasRoute = !!(stop.getting_here?.route && stop.getting_here.route.length > 0);
       const isEditing = i === this.editingRouteSegment;
 
+      const isDirty = this.dirtyLegs.has(i);
+      const isSelected = i === this.selectedLeg;
+
+      // Determine the points for this leg
+      const legPts: L.LatLngTuple[] = hasRoute
+        ? stop.getting_here!.route!.map(p => [p[0], p[1]] as L.LatLngTuple)
+        : [prevStop.coords, stop.coords];
+
       if (hasRoute) {
-        // Solid line along actual route points
-        const polyline = L.polyline(stop.getting_here!.route!, {
-          color: '#2563eb',
-          weight: isEditing ? 4 : 3,
-          opacity: isEditing ? 0.9 : 0.7,
+        // Colour: yellow if dirty, cyan if selected, blue otherwise
+        const color = isSelected ? '#06b6d4' : isDirty ? '#d97706' : '#2563eb';
+        const weight = isEditing ? 4 : isSelected ? 5 : isDirty ? 4 : 3;
+        const opacity = isEditing ? 0.9 : isSelected ? 0.9 : isDirty ? 0.85 : 0.7;
+
+        const polyline = L.polyline(legPts, {
+          color, weight, opacity, interactive: isEditing,
         }).addTo(this.map);
         this.routePolylines.set(i, polyline);
 
@@ -630,23 +1231,57 @@ export class TourEditor {
           const lastPt = stop.getting_here!.route![stop.getting_here!.route!.length - 1];
           if (lastPt[0] !== stop.coords[0] || lastPt[1] !== stop.coords[1]) {
             const connector = L.polyline([lastPt, stop.coords], {
-              color: '#94a3b8',
-              weight: 2,
-              dashArray: '6 4',
-              opacity: 0.6,
+              color: '#94a3b8', weight: 2, dashArray: '6 4', opacity: 0.6,
             }).addTo(this.map);
             this.routeConnectors.push(connector);
           }
         }
       } else {
         // No route — draw a faint straight line from prev to this stop
-        const polyline = L.polyline([prevStop.coords, stop.coords], {
-          color: '#94a3b8',
-          weight: 2,
-          dashArray: '6 4',
-          opacity: 0.7,
+        const color = isSelected ? '#06b6d4' : '#94a3b8';
+        const weight = isSelected ? 4 : 2;
+        const polyline = L.polyline(legPts, {
+          color, weight, dashArray: '6 4', opacity: 0.7, interactive: false,
         }).addTo(this.map);
         this.routePolylines.set(i, polyline);
+      }
+
+      // Invisible wide hit-area polyline for click/dblclick (not during route editing)
+      if (!isEditing) {
+        const hitArea = L.polyline(legPts, {
+          weight: 20, opacity: 0, interactive: true,
+        }).addTo(this.map);
+        this.routeHitAreas.push(hitArea);
+
+        let clickTimer: ReturnType<typeof setTimeout> | null = null;
+        let lastClickPt: { x: number; y: number } | undefined;
+        hitArea.on('click', (e: L.LeafletMouseEvent) => {
+          L.DomEvent.stopPropagation(e);
+          if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+          lastClickPt = { x: e.containerPoint.x, y: e.containerPoint.y };
+          clickTimer = setTimeout(() => {
+            clickTimer = null;
+            if (this.selectedLeg === i) {
+              this.deselectLeg();
+            } else {
+              this.selectLeg(i, lastClickPt);
+            }
+          }, 250);
+        });
+        hitArea.on('dblclick', (e: L.LeafletMouseEvent) => {
+          L.DomEvent.stopPropagation(e);
+          if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+          if (hasRoute) {
+            this.deselectLeg();
+            if (isDirty) {
+              this.startReviewingRoute(i);
+            } else {
+              this.startEditingRoute(i);
+            }
+          } else {
+            this.drawAndEditLeg(i);
+          }
+        });
       }
     }
   }
@@ -832,21 +1467,45 @@ export class TourEditor {
     }
 
     frame.className = `device-frame device-frame--${device.category}`;
-    frame.style.width = `${device.width}px`;
-    // Aspect ratio height, capped to viewport
-    frame.style.maxHeight = 'calc(100vh - 160px)';
     frame.style.aspectRatio = `${device.width} / ${device.height}`;
+    frame.style.maxWidth = `${device.width}px`;
+    frame.style.maxHeight = 'calc(100vh - 160px)';
+    frame.style.width = 'auto';
+    frame.style.height = 'auto';
 
+    const notchHeight = device.category === 'phone' ? 24 : 0;
     if (device.category === 'phone') {
       const notch = document.createElement('div');
       notch.className = 'device-notch';
       frame.appendChild(notch);
     }
 
+    // Viewport renders at native device size, scaled down via transform
     const viewport = document.createElement('div');
     viewport.className = 'device-viewport';
+    viewport.style.width = `${device.width}px`;
+    viewport.style.height = `${device.height - notchHeight}px`;
+    viewport.style.transformOrigin = 'top left';
+    viewport.style.overflowY = 'auto';
+    viewport.style.overflowX = 'hidden';
     viewport.appendChild(content);
-    frame.appendChild(viewport);
+
+    const scaleWrap = document.createElement('div');
+    scaleWrap.className = 'device-scale-wrap';
+    scaleWrap.appendChild(viewport);
+    frame.appendChild(scaleWrap);
+
+    // Scale viewport to fit the frame
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const frameW = entry.contentRect.width;
+        if (frameW <= 0) continue;
+        const scale = frameW / device.width;
+        viewport.style.transform = `scale(${scale})`;
+        scaleWrap.style.height = `${(device.height - notchHeight) * scale}px`;
+      }
+    });
+    ro.observe(frame);
 
     return frame;
   }
@@ -1014,6 +1673,8 @@ export class TourEditor {
     welcomeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'welcome' ? 'selected' : ''}`;
     welcomeItem.innerHTML = `<span class="stop-drag-handle"><i class="fa-solid fa-flag" style="color:#16a34a;"></i></span><span class="stop-list-info">Welcome Card</span>`;
     welcomeItem.onclick = () => {
+      this.deselectLeg();
+      this.exitRouteInteraction();
       this.selectedStopIdx = -1;
       this.selectedCard = 'welcome';
       this.clearRadiusCircle();
@@ -1091,6 +1752,8 @@ export class TourEditor {
     goodbyeItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'goodbye' ? 'selected' : ''}`;
     goodbyeItem.innerHTML = `<span class="stop-drag-handle"><i class="fa-solid fa-flag-checkered"></i></span><span class="stop-list-info">Goodbye Card</span>`;
     goodbyeItem.onclick = () => {
+      this.deselectLeg();
+      this.exitRouteInteraction();
       this.selectedStopIdx = -1;
       this.selectedCard = 'goodbye';
       this.clearRadiusCircle();
@@ -1140,6 +1803,8 @@ export class TourEditor {
               stop.getting_here.route = route;
             });
           });
+          // Clear dirty flags for all regenerated routes
+          routes.forEach((_route, i) => { this.clearLegDirty(i + 1); });
           this.refreshRoutePolylines();
           this.renderPanel();
           this.setStatus(`Generated ${routes.size} routes.`);
@@ -1226,7 +1891,7 @@ export class TourEditor {
     // Zone 3: Content blocks (reuse existing WYSIWYG block preview system)
     const contentZone = document.createElement('div');
     contentZone.className = 'card-content-zone';
-    contentZone.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), '', () => pushUndo(this.tour)));
+    contentZone.appendChild(renderContentBlockEditor(stop.content, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
     frag.appendChild(contentZone);
 
     // Zone 4: Footer (clickable navigation)
@@ -1243,6 +1908,8 @@ export class TourEditor {
       footer.className = 'card-footer card-footer--clickable';
       footer.textContent = 'Goodbye Card \u2192';
       footer.onclick = () => {
+        this.deselectLeg();
+        this.exitRouteInteraction();
         this.selectedStopIdx = -1;
         this.selectedCard = 'goodbye';
         this.clearRadiusCircle();
@@ -1262,7 +1929,7 @@ export class TourEditor {
     const gh = stop.getting_here;
 
     if (gh.journey && gh.journey.length > 0) {
-      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour)));
+      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
       const removeBtn = document.createElement('button');
       removeBtn.className = 'btn btn-sm btn-danger';
       removeBtn.style.marginTop = '8px';
@@ -1438,107 +2105,81 @@ export class TourEditor {
       noteRow.appendChild(noteInput);
       body.appendChild(noteRow);
 
-      // Route controls
+      // Route section — mirrors the selection bar buttons
       const routeDiv = document.createElement('div');
       routeDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
-
-      const routeLabel = document.createElement('div');
-      routeLabel.className = 'subsection-title';
-      routeLabel.textContent = 'Route';
-      routeDiv.appendChild(routeLabel);
-
-      const btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; align-items:center;';
+      const routeBtnRow = document.createElement('div');
+      routeBtnRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px; align-items:center;';
+      const closeModal = () => document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
 
       if (gh.route && gh.route.length > 0) {
-        const info = document.createElement('span');
-        info.style.cssText = 'font-size:12px; color:#64748b;';
-        info.textContent = `${gh.route.length} points`;
-        btnRow.appendChild(info);
+        const isDirtyRoute = this.dirtyLegs.has(stopIdx);
+        if (isDirtyRoute) {
+          const reviewBtn = document.createElement('button');
+          reviewBtn.className = 'btn btn-sm';
+          reviewBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Review';
+          reviewBtn.onclick = () => { closeModal(); this.startReviewingRoute(stopIdx); };
+          routeBtnRow.appendChild(reviewBtn);
+        } else {
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn btn-sm';
+          editBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
+          editBtn.onclick = () => { closeModal(); this.startEditingRoute(stopIdx); };
+          routeBtnRow.appendChild(editBtn);
+        }
 
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-sm';
-        editBtn.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i> Edit';
-        editBtn.onclick = () => {
-          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
-          this.startEditingRoute(stopIdx);
-        };
-        btnRow.appendChild(editBtn);
-
-        const clearBtn = document.createElement('button');
-        clearBtn.className = 'btn btn-sm btn-danger';
-        clearBtn.textContent = 'Clear';
-        clearBtn.onclick = () => {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-sm btn-danger';
+        delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        delBtn.title = 'Delete route';
+        delBtn.onclick = () => {
+          if (!confirm('Delete route?')) return;
           this.withUndo(() => { gh.route = undefined; });
-          this.stopEditingRoute();
+          this.dirtyLegs.delete(stopIdx);
           this.refreshRoutePolylines();
-          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+          closeModal();
           this.renderDetailPanel();
         };
-        btnRow.appendChild(clearBtn);
+        routeBtnRow.appendChild(delBtn);
       } else {
-        const noRoute = document.createElement('span');
-        noRoute.style.cssText = 'font-size:12px; color:#94a3b8;';
-        noRoute.textContent = 'No route';
-        btnRow.appendChild(noRoute);
-
-        if (this.tour.stops.length > 1) {
-          const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
-          const manualBtn = document.createElement('button');
-          manualBtn.className = 'btn btn-sm';
-          manualBtn.innerHTML = '<i class="fa-solid fa-draw-polygon" aria-hidden="true"></i> Draw Route';
-          manualBtn.onclick = () => {
-            const prevStop = this.tour.stops[prevIdx];
-            this.withUndo(() => {
-              gh.route = [
-                [...prevStop.coords] as [number, number],
-                [...stop.coords] as [number, number],
-              ];
-            });
-            document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
-            this.refreshRoutePolylines();
-            this.startEditingRoute(stopIdx);
-            this.renderPanel();
-          };
-          btnRow.appendChild(manualBtn);
-        }
+        const drawBtn = document.createElement('button');
+        drawBtn.className = 'btn btn-sm';
+        drawBtn.innerHTML = '<i class="fa-solid fa-draw-polygon"></i> Draw';
+        drawBtn.onclick = () => { closeModal(); this.drawAndEditLeg(stopIdx); };
+        routeBtnRow.appendChild(drawBtn);
       }
 
       if (this.tour.stops.length > 1) {
-        const prevIdx = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
-        const genBtn = document.createElement('button');
-        genBtn.className = 'btn btn-sm';
-        genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
-        genBtn.onclick = async () => {
-          if (gh.route && gh.route.length > 0) {
-            if (!confirm(`Replace existing route (${gh.route.length} points) with auto-generated route?`)) return;
-          }
+        const prevIdx2 = stopIdx === 0 ? this.tour.stops.length - 1 : stopIdx - 1;
+        const prevStop2 = this.tour.stops[prevIdx2];
+        const hasExisting = !!(gh.route && gh.route.length > 0);
+        const autoBtn = document.createElement('button');
+        autoBtn.className = 'btn btn-sm';
+        autoBtn.innerHTML = '<i class="fa-solid fa-route"></i> Auto';
+        autoBtn.onclick = async () => {
+          if (hasExisting && !confirm('Delete route and create new route automatically?')) return;
           const apiKey = getOrsApiKey();
-          if (!apiKey) {
-            this.showOrsKeyModal(() => { genBtn.click(); });
-            return;
-          }
-          const prevStop = this.tour.stops[prevIdx];
-          genBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-          genBtn.disabled = true;
+          if (!apiKey) { this.showOrsKeyModal(() => { autoBtn.click(); }); return; }
+          autoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+          autoBtn.disabled = true;
           try {
-            const route = await generateRoute(prevStop.coords, stop.coords);
+            const route = await generateRoute(prevStop2.coords, stop.coords);
             this.withUndo(() => { gh.route = route; });
-            this.stopEditingRoute();
+            this.clearLegDirty(stopIdx);
             this.refreshRoutePolylines();
-            document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
+            closeModal();
             this.renderDetailPanel();
             this.setStatus(`Route generated: ${route.length} points.`);
           } catch (err) {
             this.setStatus(`Route failed: ${(err as Error).message}`);
-            genBtn.innerHTML = '<i class="fa-solid fa-route" aria-hidden="true"></i> Auto-route';
-            genBtn.disabled = false;
+            autoBtn.innerHTML = '<i class="fa-solid fa-route"></i> Auto';
+            autoBtn.disabled = false;
           }
         };
-        btnRow.appendChild(genBtn);
+        routeBtnRow.appendChild(autoBtn);
       }
 
-      routeDiv.appendChild(btnRow);
+      routeDiv.appendChild(routeBtnRow);
       body.appendChild(routeDiv);
 
       // Journey card section
@@ -1569,7 +2210,7 @@ export class TourEditor {
         journeyDiv.appendChild(journeyHeader);
 
         // Embed content block editor for journey blocks
-        journeyDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour)));
+        journeyDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
       } else {
         journeyDiv.appendChild(journeyHeader);
 
@@ -1630,7 +2271,7 @@ export class TourEditor {
     const contentZone = document.createElement('div');
     contentZone.className = 'card-content-zone';
     contentZone.appendChild(renderContentBlockEditor(
-      this.tour.tour.welcome!, () => this.changed(), '', () => pushUndo(this.tour),
+      this.tour.tour.welcome!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
     ));
     frag.appendChild(contentZone);
 
@@ -1730,7 +2371,7 @@ export class TourEditor {
     const contentZone = document.createElement('div');
     contentZone.className = 'card-content-zone';
     contentZone.appendChild(renderContentBlockEditor(
-      this.tour.tour.goodbye!, () => this.changed(), '', () => pushUndo(this.tour),
+      this.tour.tour.goodbye!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
     ));
     frag.appendChild(contentZone);
 
@@ -1797,9 +2438,10 @@ export class TourEditor {
 
   private performUndo(): void {
     const wasEditingRoute = this.editingRouteSegment;
-    const prev = undo(this.tour);
-    if (prev) {
-      this.tour = prev;
+    const entry = undo(this.tour, this.dirtyLegs);
+    if (entry) {
+      this.tour = entry.tour;
+      this.dirtyLegs = new Set(entry.dirtyLegs);
       if (this.selectedStopIdx >= this.tour.stops.length) {
         this.selectedStopIdx = this.tour.stops.length - 1;
       }
@@ -1819,9 +2461,10 @@ export class TourEditor {
 
   private performRedo(): void {
     const wasEditingRoute = this.editingRouteSegment;
-    const next = redo(this.tour);
-    if (next) {
-      this.tour = next;
+    const entry = redo(this.tour, this.dirtyLegs);
+    if (entry) {
+      this.tour = entry.tour;
+      this.dirtyLegs = new Set(entry.dirtyLegs);
       if (this.selectedStopIdx >= this.tour.stops.length) {
         this.selectedStopIdx = this.tour.stops.length - 1;
       }
@@ -1865,6 +2508,31 @@ export class TourEditor {
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.editingRouteSegment >= 0) {
         e.preventDefault();
         this.deleteSelectedRoutePoint();
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedLeg >= 0) {
+        e.preventDefault();
+        this.deleteSelectedLeg();
+      } else if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && this.selectedLeg >= 0) {
+        e.preventDefault();
+        const legIdx = this.selectedLeg;
+        const stop = this.tour.stops[legIdx];
+        if (stop?.getting_here?.route?.length) {
+          if (this.dirtyLegs.has(legIdx)) {
+            this.deselectLeg();
+            this.startReviewingRoute(legIdx);
+          } else {
+            this.deselectLeg();
+            this.startEditingRoute(legIdx);
+          }
+        } else {
+          this.drawAndEditLeg(legIdx);
+        }
+      } else if (e.key === 'Escape' && this.selectedLeg >= 0) {
+        e.preventDefault();
+        this.deselectLeg();
+      } else if (e.key === 'Escape' && this.reviewingRouteSegment >= 0) {
+        e.preventDefault();
+        this.stopReviewingRoute();
+        this.refreshRoutePolylines();
       } else if (e.key === 'Escape' && this.editingRouteSegment >= 0) {
         e.preventDefault();
         this.stopEditingRoute();

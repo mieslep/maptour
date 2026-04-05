@@ -518,26 +518,30 @@ textarea.input {
 
 /* ---- Route Edit Widget ---- */
 
-.route-edit-widget {
+
+.maptour-leg-action-bar {
   position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
   pointer-events: auto;
   z-index: 1000;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 6px 12px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: 13px;
   white-space: nowrap;
 }
 
-.route-edit-hint {
+.maptour-leg-action-label {
+  font-weight: 600;
+  color: #334155;
+  margin-right: 4px;
+}
+
+.maptour-leg-action-hint {
   color: #94a3b8;
   font-size: 11px;
 }
@@ -605,7 +609,6 @@ textarea.input {
 }
 
 .device-frame--phone {
-  max-width: 100%;
   margin: 16px auto;
   border-radius: 24px;
   border: 3px solid #1e293b;
@@ -616,7 +619,6 @@ textarea.input {
 }
 
 .device-frame--tablet {
-  max-width: 100%;
   margin: 12px auto;
   border-radius: 16px;
   border: 2px solid #475569;
@@ -641,15 +643,23 @@ textarea.input {
   margin: 0 auto;
 }
 
+.device-scale-wrap {
+  overflow: hidden;
+  position: relative;
+}
+
 .device-viewport {
   padding: 8px;
   min-height: 200px;
   overflow-y: auto;
-  flex: 1;
   font-family: system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
   color: #111827;
+}
+
+.device-frame--desktop .device-viewport {
+  flex: 1;
 }
 
 .device-frame--phone .device-viewport {

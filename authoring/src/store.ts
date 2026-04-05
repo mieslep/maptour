@@ -7,28 +7,29 @@ const ORS_KEY = 'maptour-ors-api-key';
 
 interface UndoEntry {
   tour: Tour;
+  dirtyLegs: number[];
 }
 
 let undoStack: UndoEntry[] = [];
 let redoStack: UndoEntry[] = [];
 const MAX_UNDO = 50;
 
-export function pushUndo(tour: Tour): void {
-  undoStack.push({ tour: structuredClone(tour) });
+export function pushUndo(tour: Tour, dirtyLegs?: Set<number>): void {
+  undoStack.push({ tour: structuredClone(tour), dirtyLegs: [...(dirtyLegs ?? [])] });
   if (undoStack.length > MAX_UNDO) undoStack.shift();
   redoStack = [];
 }
 
-export function undo(current: Tour): Tour | null {
+export function undo(current: Tour, currentDirtyLegs?: Set<number>): UndoEntry | null {
   if (undoStack.length === 0) return null;
-  redoStack.push({ tour: structuredClone(current) });
-  return undoStack.pop()!.tour;
+  redoStack.push({ tour: structuredClone(current), dirtyLegs: [...(currentDirtyLegs ?? [])] });
+  return undoStack.pop()!;
 }
 
-export function redo(current: Tour): Tour | null {
+export function redo(current: Tour, currentDirtyLegs?: Set<number>): UndoEntry | null {
   if (redoStack.length === 0) return null;
-  undoStack.push({ tour: structuredClone(current) });
-  return redoStack.pop()!.tour;
+  undoStack.push({ tour: structuredClone(current), dirtyLegs: [...(currentDirtyLegs ?? [])] });
+  return redoStack.pop()!;
 }
 
 export function clearUndoRedo(): void {

@@ -213,6 +213,16 @@ describe('NavController', () => {
     expect(nav.getCurrentIndex()).toBe(0);
   });
 
+  it('returnToStart marks current stop as visited before navigating', () => {
+    const tour = createTour(4);
+    const { nav, session } = setup(tour);
+    session.setStartIndex(0);
+    nav.goTo(3);
+    expect(session.getVisited().has(tour.stops[3].id)).toBe(false);
+    nav.returnToStart();
+    expect(session.getVisited().has(tour.stops[3].id)).toBe(true);
+  });
+
   it('returnToStart makes start stop the last stop', () => {
     const onTourEnd = vi.fn();
     const tour = createTour(4);
