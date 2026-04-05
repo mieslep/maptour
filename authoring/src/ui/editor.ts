@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import type { Tour, Stop, ContentBlock, LegMode } from '../types';
+import type { Tour, Stop, ContentBlock, LegMode, Waypoint } from '../types';
 import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey } from '../store';
 import { downloadYaml } from '../yaml-io';
 import { generateRoute, generateAllRoutes } from '../ors';
@@ -105,6 +105,8 @@ export class TourEditor {
   private dirtyLegs: Set<number> = new Set();
   private selectedLeg: number = -1;
   private previewDevice = 'iphone-14';
+  private waypointPlacementMode = false;
+  private waypointMarkers: L.CircleMarker[] = [];
 
   private static readonly DEVICES: Array<{
     id: string; label: string; category: 'phone' | 'tablet' | 'desktop';
@@ -226,6 +228,11 @@ export class TourEditor {
       if (this.mapMode === 'addStop') {
         this.addStop(e.latlng.lat, e.latlng.lng);
         this.setMapMode('default');
+        return;
+      }
+      // Waypoint placement mode: place on nearest route point
+      if (this.waypointPlacementMode && this.editingRouteSegment >= 0) {
+        this.placeWaypointOnRoute(e.latlng);
         return;
       }
       // In route edit mode, click on map adds a point
@@ -499,6 +506,7 @@ export class TourEditor {
     };
 
     buildMarkers();
+    this.renderWaypointMarkers(stopIdx);
     // Only show editing bar if one doesn't already exist (e.g. transitioned from selection bar)
     if (!this.mapContainer.querySelector('.maptour-leg-action-bar')) {
       this.showEditingActionBar(stopIdx);
@@ -543,6 +551,18 @@ export class TourEditor {
       this.setStatus('Route editing finished.');
     };
     bar.appendChild(doneBtn);
+
+    const wpBtn = document.createElement('button');
+    wpBtn.className = 'btn btn-sm';
+    wpBtn.innerHTML = `<i class="fa-solid fa-map-pin"></i> ${I18N_DEFAULTS.add_waypoint.default}`;
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.route?.length) {
+      wpBtn.disabled = true;
+      wpBtn.title = I18N_DEFAULTS.waypoint_no_route.default;
+    } else {
+      wpBtn.onclick = () => this.enterWaypointPlacementMode(stopIdx);
+    }
+    bar.appendChild(wpBtn);
 
     this.mapContainer.appendChild(bar);
     L.DomEvent.disableClickPropagation(bar);
@@ -598,6 +618,18 @@ export class TourEditor {
       this.setStatus('Route editing finished.');
     };
     bar.appendChild(doneBtn);
+
+    const wpBtn2 = document.createElement('button');
+    wpBtn2.className = 'btn btn-sm';
+    wpBtn2.innerHTML = `<i class="fa-solid fa-map-pin"></i> ${I18N_DEFAULTS.add_waypoint.default}`;
+    const stop2 = this.tour.stops[stopIdx];
+    if (!stop2.getting_here?.route?.length) {
+      wpBtn2.disabled = true;
+      wpBtn2.title = I18N_DEFAULTS.waypoint_no_route.default;
+    } else {
+      wpBtn2.onclick = () => this.enterWaypointPlacementMode(stopIdx);
+    }
+    bar.appendChild(wpBtn2);
   }
 
   private startReviewingRoute(stopIdx: number): void {
@@ -745,6 +777,9 @@ export class TourEditor {
   private stopEditingRoute(): void {
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
+    this.waypointMarkers.forEach(m => m.remove());
+    this.waypointMarkers = [];
+    this.exitWaypointPlacementMode();
     this.editingRouteSegment = -1;
     this.hideLegActionBar();
     // Restore the map view from before editing
@@ -2655,6 +2690,9 @@ export class TourEditor {
       } else if (e.key === 'Escape' && this.selectedLeg >= 0) {
         e.preventDefault();
         this.deselectLeg();
+      } else if (e.key === 'Escape' && this.waypointPlacementMode) {
+        e.preventDefault();
+        this.exitWaypointPlacementMode();
       } else if (e.key === 'Escape' && this.reviewingRouteSegment >= 0) {
         e.preventDefault();
         this.stopReviewingRoute();
@@ -2668,6 +2706,277 @@ export class TourEditor {
         this.setMapMode('default');
       }
     });
+  }
+
+  // ---- Waypoint placement & editing ----
+
+  private enterWaypointPlacementMode(stopIdx: number): void {
+    this.waypointPlacementMode = true;
+    this.mapContainer.classList.add('waypoint-placing');
+    this.setStatus('Click on the route to place a waypoint. Press Esc to cancel.');
+  }
+
+  private exitWaypointPlacementMode(): void {
+    this.waypointPlacementMode = false;
+    this.mapContainer.classList.remove('waypoint-placing');
+  }
+
+  private placeWaypointOnRoute(latlng: L.LatLng): void {
+    const stopIdx = this.editingRouteSegment;
+    if (stopIdx < 0) return;
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.route?.length) return;
+    const route = stop.getting_here.route;
+
+    // Snap to nearest point on polyline
+    const snapped = this.snapToPolyline(latlng, route);
+
+    const wp: Waypoint = {
+      coords: snapped.coords,
+      text: '',
+    };
+
+    this.exitWaypointPlacementMode();
+
+    this.withUndo(() => {
+      if (!stop.getting_here!.waypoints) stop.getting_here!.waypoints = [];
+      stop.getting_here!.waypoints.push(wp);
+      this.sortWaypointsByPosition(stop.getting_here!.waypoints, route);
+    });
+
+    const wpIndex = stop.getting_here!.waypoints!.indexOf(wp);
+    this.renderWaypointMarkers(stopIdx);
+    this.showWaypointModal(stop, stopIdx, wpIndex);
+  }
+
+  private snapToPolyline(latlng: L.LatLng, route: [number, number][]): { coords: [number, number]; frac: number } {
+    let bestDist = Infinity;
+    let bestCoords: [number, number] = route[0];
+    let bestFrac = 0;
+
+    for (let i = 0; i < route.length - 1; i++) {
+      const p1 = route[i];
+      const p2 = route[i + 1];
+      const dx = p2[0] - p1[0];
+      const dy = p2[1] - p1[1];
+      let t: number;
+      if (dx === 0 && dy === 0) {
+        t = 0;
+      } else {
+        t = ((latlng.lat - p1[0]) * dx + (latlng.lng - p1[1]) * dy) / (dx * dx + dy * dy);
+        t = Math.max(0, Math.min(1, t));
+      }
+      const projLat = p1[0] + t * dx;
+      const projLng = p1[1] + t * dy;
+      const dist = Math.sqrt((latlng.lat - projLat) ** 2 + (latlng.lng - projLng) ** 2);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestCoords = [projLat, projLng];
+        bestFrac = i + t;
+      }
+    }
+
+    return { coords: bestCoords, frac: bestFrac };
+  }
+
+  private sortWaypointsByPosition(waypoints: Waypoint[], route: [number, number][]): void {
+    const fracMap = new Map<Waypoint, number>();
+    for (const wp of waypoints) {
+      const snapped = this.snapToPolyline(L.latLng(wp.coords[0], wp.coords[1]), route);
+      fracMap.set(wp, snapped.frac);
+    }
+    waypoints.sort((a, b) => (fracMap.get(a) ?? 0) - (fracMap.get(b) ?? 0));
+  }
+
+  private renderWaypointMarkers(stopIdx: number): void {
+    this.waypointMarkers.forEach(m => m.remove());
+    this.waypointMarkers = [];
+
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.waypoints?.length) return;
+
+    stop.getting_here.waypoints.forEach((wp, wpIdx) => {
+      const m = L.circleMarker([wp.coords[0], wp.coords[1]], {
+        radius: 7,
+        fillColor: '#7c3aed',
+        color: '#fff',
+        weight: 2,
+        fillOpacity: 0.9,
+        pane: 'routeEditPoints',
+        bubblingMouseEvents: false,
+      }).addTo(this.map);
+
+      m.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        this.showWaypointModal(stop, stopIdx, wpIdx);
+      });
+
+      this.waypointMarkers.push(m);
+    });
+  }
+
+  private showWaypointModal(stop: Stop, stopIdx: number, wpIdx: number): void {
+    const waypoints = stop.getting_here?.waypoints;
+    if (!waypoints || wpIdx < 0 || wpIdx >= waypoints.length) return;
+    const wp = waypoints[wpIdx];
+
+    // Remove any existing modal
+    this.mapContainer.querySelector('.waypoint-modal')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'waypoint-modal';
+
+    const modal = document.createElement('div');
+    modal.className = 'waypoint-modal-content';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Edit Waypoint';
+    title.style.cssText = 'margin:0 0 16px; font-size:16px; font-weight:600;';
+    modal.appendChild(title);
+
+    // Text field (required)
+    const textLabel = document.createElement('label');
+    textLabel.textContent = 'Text';
+    textLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    modal.appendChild(textLabel);
+    const textArea = document.createElement('textarea');
+    textArea.className = 'input';
+    textArea.placeholder = 'e.g. Head towards the red house';
+    textArea.value = wp.text || '';
+    textArea.rows = 3;
+    textArea.style.cssText = 'width:100%; margin-bottom:12px; resize:vertical;';
+    modal.appendChild(textArea);
+
+    // Photo URL (optional)
+    const photoLabel = document.createElement('label');
+    photoLabel.textContent = 'Photo URL (optional)';
+    photoLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    modal.appendChild(photoLabel);
+    const photoInput = document.createElement('input');
+    photoInput.type = 'text';
+    photoInput.className = 'input';
+    photoInput.placeholder = 'https://...';
+    photoInput.value = wp.photo || '';
+    photoInput.style.cssText = 'width:100%; margin-bottom:12px;';
+    modal.appendChild(photoInput);
+
+    // Journey card toggle
+    const journeyRow = document.createElement('div');
+    journeyRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:12px;';
+    const journeyCheck = document.createElement('input');
+    journeyCheck.type = 'checkbox';
+    journeyCheck.id = 'wp-journey-toggle';
+    journeyCheck.checked = !!wp.journey_card;
+    journeyRow.appendChild(journeyCheck);
+    const journeyLabel = document.createElement('label');
+    journeyLabel.htmlFor = 'wp-journey-toggle';
+    journeyLabel.textContent = 'Make this a journey card';
+    journeyLabel.style.cssText = 'font-size:13px; font-weight:500; color:#334155; cursor:pointer;';
+    journeyRow.appendChild(journeyLabel);
+    modal.appendChild(journeyRow);
+
+    // Content blocks container (shown when journey card toggled on)
+    const contentContainer = document.createElement('div');
+    contentContainer.style.cssText = 'margin-bottom:12px;';
+    if (!wp.journey_card) contentContainer.style.display = 'none';
+
+    const rebuildContentBlocks = () => {
+      contentContainer.innerHTML = '';
+      if (!wp.content) wp.content = [];
+      const contentLabel = document.createElement('div');
+      contentLabel.textContent = 'Content Blocks';
+      contentLabel.style.cssText = 'font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+      contentContainer.appendChild(contentLabel);
+      contentContainer.appendChild(renderContentBlockEditor(
+        wp.content!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
+      ));
+    };
+
+    if (wp.journey_card) rebuildContentBlocks();
+    modal.appendChild(contentContainer);
+
+    journeyCheck.onchange = () => {
+      if (journeyCheck.checked) {
+        contentContainer.style.display = '';
+        if (!wp.content || wp.content.length === 0) {
+          wp.content = [{ type: 'text', body: '' }];
+        }
+        rebuildContentBlocks();
+      } else {
+        contentContainer.style.display = 'none';
+      }
+    };
+
+    // Approach radius override
+    const radiusLabel = document.createElement('label');
+    radiusLabel.textContent = 'Approach radius override (optional)';
+    radiusLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    modal.appendChild(radiusLabel);
+    const radiusInput = document.createElement('input');
+    radiusInput.type = 'number';
+    radiusInput.className = 'input';
+    radiusInput.placeholder = 'Default: 15m';
+    radiusInput.value = wp.radius != null ? String(wp.radius) : '';
+    radiusInput.style.cssText = 'width:100%; margin-bottom:16px;';
+    modal.appendChild(radiusInput);
+
+    // Buttons
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm btn-danger';
+    delBtn.textContent = 'Delete';
+    delBtn.style.marginRight = 'auto';
+    delBtn.onclick = () => {
+      if (!confirm('Delete this waypoint?')) return;
+      this.withUndo(() => {
+        waypoints.splice(wpIdx, 1);
+        if (waypoints.length === 0) stop.getting_here!.waypoints = undefined;
+      });
+      overlay.remove();
+      this.renderWaypointMarkers(stopIdx);
+      this.setStatus('Waypoint deleted.');
+    };
+    btnRow.appendChild(delBtn);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-sm';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => {
+      overlay.remove();
+    };
+    btnRow.appendChild(cancelBtn);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-sm btn-primary';
+    saveBtn.textContent = 'Save';
+    saveBtn.onclick = () => {
+      this.withUndo(() => {
+        wp.text = textArea.value;
+        wp.photo = photoInput.value.trim() || undefined;
+        wp.journey_card = journeyCheck.checked || undefined;
+        if (!journeyCheck.checked) wp.content = undefined;
+        const radiusVal = parseFloat(radiusInput.value);
+        wp.radius = isNaN(radiusVal) ? undefined : radiusVal;
+      });
+      overlay.remove();
+      this.renderWaypointMarkers(stopIdx);
+      this.setStatus('Waypoint saved.');
+    };
+    btnRow.appendChild(saveBtn);
+
+    modal.appendChild(btnRow);
+    overlay.appendChild(modal);
+
+    // Close on backdrop click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    this.mapContainer.appendChild(overlay);
+    L.DomEvent.disableClickPropagation(overlay);
+    textArea.focus();
   }
 
   private showOrsKeyModal(onSaved?: () => void): void {
