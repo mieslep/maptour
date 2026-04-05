@@ -7,7 +7,8 @@ export interface GoodbyeCardOptions {
   visitedCount: number;
   totalStops: number;
   closeUrl?: string;
-  onReview: () => void;
+  onRestartTour: () => void;
+  onBrowseStops: () => void;
 }
 
 export function renderGoodbyeCard(container: HTMLElement, options: GoodbyeCardOptions): void {
@@ -42,12 +43,25 @@ export function renderGoodbyeCard(container: HTMLElement, options: GoodbyeCardOp
     container.appendChild(goodbyeContent);
   }
 
-  // Revisit button
-  const review = document.createElement('button');
-  review.className = 'maptour-card__cta';
-  review.textContent = t('revisit');
-  review.addEventListener('click', options.onReview);
-  container.appendChild(review);
+  // "What next?" label
+  const whatNext = document.createElement('p');
+  whatNext.className = 'maptour-card__meta';
+  whatNext.textContent = t('revisit');
+  container.appendChild(whatNext);
+
+  // Take tour again button
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'maptour-card__cta';
+  restartBtn.textContent = t('revisit_yes');
+  restartBtn.addEventListener('click', options.onRestartTour);
+  container.appendChild(restartBtn);
+
+  // Browse stops button
+  const browseBtn = document.createElement('button');
+  browseBtn.className = 'maptour-card__cta maptour-card__cta--secondary';
+  browseBtn.textContent = t('revisit_no');
+  browseBtn.addEventListener('click', options.onBrowseStops);
+  container.appendChild(browseBtn);
 
   // Close link
   if (options.closeUrl) {

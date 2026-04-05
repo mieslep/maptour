@@ -212,6 +212,7 @@
   background: var(--maptour-surface);
   border-top: 1px solid var(--maptour-border);
   flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .maptour-tour-footer[hidden] {
@@ -708,7 +709,7 @@
     display: flex;
     flex-direction: row;
     height: 100%;
-    min-height: 100vh;
+    min-height: 100dvh;
     overflow: visible;
   }
 
@@ -717,8 +718,8 @@
     top: 0;
     inset: unset;
     width: 55%;
-    height: 100vh;
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
     flex-shrink: 0;
     z-index: auto;
     overflow: hidden;
@@ -728,7 +729,7 @@
   .maptour-sheet {
     position: static;
     width: 45%;
-    height: 100vh;
+    height: 100dvh;
     transform: none !important;
     border-radius: 0;
     box-shadow: none;
@@ -924,10 +925,6 @@
   color: var(--maptour-primary);
 }
 
-.maptour-stop-list__item--visited .maptour-stop-list__number {
-  background: var(--maptour-accent);
-}
-
 .maptour-stop-list__number {
   display: flex;
   align-items: center;
@@ -940,6 +937,18 @@
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.maptour-stop-list__number--start {
+  background: var(--maptour-accent);
+}
+
+.maptour-stop-list__number--end {
+  background: #dc2626;
+}
+
+.maptour-stop-list__item--visited .maptour-stop-list__number {
+  background: #9ca3af;
 }
 
 .maptour-stop-list__title {
@@ -1182,6 +1191,10 @@
   font-size: 16px;
   color: var(--maptour-text);
   display: flex;
+}
+
+.maptour-overview-controls__direction[hidden] {
+  display: none;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
@@ -1448,6 +1461,16 @@
 .maptour-card__cta:focus-visible {
   outline: 2px solid var(--maptour-primary);
   outline-offset: 2px;
+}
+
+.maptour-card__cta--secondary {
+  background: none;
+  color: var(--maptour-primary);
+  border: 1px solid var(--maptour-border);
+}
+
+.maptour-card__cta--secondary:hover {
+  background: var(--maptour-surface-2);
 }
 
 .maptour-card__close-link {
@@ -1903,25 +1926,40 @@
   }
 }
 
-/* GPS position icon */
+/* GPS position icon — pulsing purple dot */
 .maptour-gps-icon {
   background: none;
   border: none;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.maptour-gps-icon__person {
-  font-size: 22px;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
-  animation: maptour-gps-pulse 2s infinite;
-  display: block;
-  text-align: center;
-  line-height: 28px;
+.maptour-gps-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #7c3aed;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  z-index: 2;
+}
+
+.maptour-gps-dot__pulse {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.25);
+  position: absolute;
+  z-index: 1;
+  animation: maptour-gps-pulse 2s ease-out infinite;
 }
 
 @keyframes maptour-gps-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
 }
 
 /* GPS heading arrow — rotated via inline style transform: rotate(Xdeg) */

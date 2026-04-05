@@ -57,6 +57,17 @@ export function resolveMode(stop: Stop, tourNavMode?: LegMode): LegMode {
 const PIN_ICON = '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>';
 const ARROW_ICON = '<i class="fa-solid fa-diamond-turn-right" aria-hidden="true"></i>';
 
+/** Open a deep link without leaving a blank tab on mobile. */
+function openDeepLink(url: string): void {
+  const a = document.createElement('a');
+  a.href = url;
+  a.rel = 'noopener noreferrer';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 export type NavButtonVariant = 'pin' | 'arrow' | 'full';
 
 export class NavButton {
@@ -115,7 +126,7 @@ export class NavButton {
 
     if (savedApp && validApps.includes(savedApp)) {
       const [lat, lng] = this.stop.coords;
-      window.open(buildDeepLink(savedApp, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
+      openDeepLink(buildDeepLink(savedApp, lat, lng, this.legMode));
       this.onNavigateCallback?.();
     } else if (this.pickerOverlay) {
       this.hidePicker();
@@ -147,7 +158,7 @@ export class NavButton {
         this.preference.set(appId);
         this.hidePicker();
         const [lat, lng] = this.stop.coords;
-        window.open(buildDeepLink(appId, lat, lng, this.legMode), '_blank', 'noopener,noreferrer');
+        openDeepLink(buildDeepLink(appId, lat, lng, this.legMode));
         this.onNavigateCallback?.();
       });
       overlay.appendChild(btn);

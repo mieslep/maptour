@@ -159,7 +159,7 @@ export class MapView {
     } else {
       const icon = L.divIcon({
         className: 'maptour-gps-icon',
-        html: '<span class="maptour-gps-icon__person"><i class="fa-solid fa-person" aria-hidden="true"></i></span><span class="maptour-gps-heading-arrow" aria-hidden="true"></span>',
+        html: '<span class="maptour-gps-dot" aria-hidden="true"></span><span class="maptour-gps-dot__pulse" aria-hidden="true"></span><span class="maptour-gps-heading-arrow" aria-hidden="true"></span>',
         iconSize: [28, 28],
         iconAnchor: [14, 14],
       });

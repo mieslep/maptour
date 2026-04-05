@@ -90,6 +90,9 @@ export class StopListOverlay {
     list.setAttribute('role', 'list');
     list.setAttribute('aria-label', 'Tour stops');
 
+    const startStopIndex = this.tourOrder[0];
+    const endStopIndex = this.tourOrder[this.tourOrder.length - 1];
+
     this.tourOrder.forEach((stopIndex, displayPosition) => {
       const stop = this.stops[stopIndex];
       const item = document.createElement('button');
@@ -106,6 +109,11 @@ export class StopListOverlay {
 
       const number = document.createElement('span');
       number.className = 'maptour-stop-list__number';
+      if (stopIndex === startStopIndex) {
+        number.classList.add('maptour-stop-list__number--start');
+      } else if (stopIndex === endStopIndex) {
+        number.classList.add('maptour-stop-list__number--end');
+      }
       number.setAttribute('aria-hidden', 'true');
       number.textContent = String(stopIndex + 1);
 

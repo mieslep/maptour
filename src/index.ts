@@ -119,6 +119,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   let viewingSystemCard: string | null = null;
   let gpsOverviewApplied = false;
   let isReturningToStart = false;
+  let lastGpsPosition: { lat: number; lng: number } | null = null;
   let stopListOpen = false;
   const setStopListOpen = (open: boolean) => {
     stopListOpen = open;
@@ -151,7 +152,23 @@ async function init(options: MapTourInitOptions): Promise<void> {
       if (isOpen && !mapPanelCentred) {
         mapPanelCentred = true;
         requestAnimationFrame(() => {
-          if (journeyState.getState() === 'at_stop') {
+          if (lastGpsPosition) {
+            const nearest = nearestStop(lastGpsPosition.lat, lastGpsPosition.lng, tour.stops);
+            const maxDist = tour.tour.gps?.max_distance ?? 500;
+            if (nearest.distance <= maxDist) {
+              // User is near the tour — zoom to their position
+              mapView.getMap().flyTo([lastGpsPosition.lat, lastGpsPosition.lng], 17, { animate: true });
+            } else if (hasGettingHere && journeyState.getState() === 'tour_start') {
+              // User is far from the tour — show Getting Here
+              viewingSystemCard = 'getting_here';
+              tourFooter.hide();
+              cardHost.render((c) => renderGettingHereCard(c, { blocks: tour.tour.getting_here!, onBack: dismissSystemCard }));
+              mapView.fitBounds();
+            } else {
+              mapView.fitBounds();
+              mapView.triggerSequencePulse();
+            }
+          } else if (journeyState.getState() === 'at_stop') {
             const idx = navController.getCurrentIndex();
             if (tour.stops[idx]) mapView.flyToStop(tour.stops[idx], 18);
           } else if (journeyState.getState() === 'tour_start') {
@@ -217,6 +234,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
   });
   tourFooter.onNext(() => navController.next());
   tourFooter.onFinish(async () => {
+    // Mark the current stop as visited before finishing
+    const currentStop = tour.stops[navController.getCurrentIndex()];
+    if (currentStop) session.markVisited(currentStop.id);
+    tourFooter.update(session.getVisited().size, tour.stops.length);
+
     if (isReturningToStart) {
       // Already returning — just end the tour, no modal
       journeyState.transition('tour_complete');
@@ -272,7 +294,16 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const renderGoodbye = () => cardHost.render((c) => renderGoodbyeCard(c, {
     goodbye: tour.tour.goodbye, visitedCount: session.getVisited().size,
     totalStops: tour.stops.length, closeUrl: tour.tour.close_url,
-    onReview: () => { journeyState.clearSaved(); journeyState.transition('tour_start'); },
+    onRestartTour: () => {
+      isReturningToStart = false;
+      session.clearVisited();
+      journeyState.clearSaved();
+      journeyState.transition('tour_start');
+    },
+    onBrowseStops: () => {
+      stopListOverlay.update(tour.stops, -1, session.getVisited(), session.tourOrder);
+      stopListOverlay.open();
+    },
   }));
 
   const dismissSystemCard = () => {
@@ -326,6 +357,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     if (bsCfg !== false && bsCfg !== undefined) gpsTracker.enableBatterySaver(typeof bsCfg === 'object' ? bsCfg : undefined);
     gpsTracker.onPosition((pos) => {
       if (pos) {
+        lastGpsPosition = { lat: pos.lat, lng: pos.lng };
         mapView.updateGpsPosition(pos.lat, pos.lng);
         const d = proximityDetector?.getDistanceToNextStop(pos);
         if (d !== null && d !== undefined) gpsTracker.setNextStopDistance(d);
