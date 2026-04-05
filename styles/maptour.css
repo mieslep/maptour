@@ -2561,3 +2561,38 @@
     display: none !important;
   }
 }
+
+/* === Guidance Banner === */
+
+.maptour-guidance-banner {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  border-radius: var(--maptour-radius);
+  box-shadow: var(--maptour-shadow);
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.maptour-guidance-banner__photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.maptour-guidance-banner__text {
+  flex: 1;
+  min-width: 0;
+}
