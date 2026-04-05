@@ -19,6 +19,7 @@ const DEFAULTS: Record<string, string> = {
   all_stops:         'All Stops',
   all_stops_title:   'All stops',
   arrived:           "I've arrived at {stop} →",
+  arriving_at:       'Arriving at {stop}',
   audio_error:       'Audio could not be loaded.',
   back:              'Back',
   begin_from:        'Begin Tour from {stop}',
@@ -26,6 +27,7 @@ const DEFAULTS: Record<string, string> = {
   change_direction:  'Change direction',
   close:             'Close',
   complete:          'Complete',
+  continue:          'Continue',
   cycle_dir:         'Get cycling directions',
   directions_to:     'Directions to this stop',
   drive_me:          'Drive me there',
@@ -55,6 +57,7 @@ const DEFAULTS: Record<string, string> = {
   next_journey:      'Next: Journey to {stop}',
   next_stop:         'Next: {stop}',
   open_app_nav:      'Open app to bring me to',
+  open_in_app:       'Open in MapTour',
   picker_cancel:     'Cancel',
   picker_title:      'Open directions in:',
   progress_label:    'Tour progress',
@@ -84,6 +87,7 @@ const DEFAULTS: Record<string, string> = {
 /** Valid placeholder names per string key (for validation). */
 const PLACEHOLDERS: Record<string, string[]> = {
   arrived:         ['stop'],
+  arriving_at:     ['stop'],
   begin_from:      ['stop'],
   gallery_counter: ['n', 'total'],
   gps_near_stop:   ['stop'],
