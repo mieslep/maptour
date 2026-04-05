@@ -151,6 +151,17 @@ export function yamlToTour(text: string): Tour {
     return stop;
   });
 
+  // Stitch route endpoints to match stop coordinates (legacy YAML may have mismatches)
+  const n = parsedStops.length;
+  for (let i = 0; i < n; i++) {
+    const stop = parsedStops[i];
+    if (!stop.getting_here?.route?.length) continue;
+    const route = stop.getting_here.route;
+    const prevIdx = i === 0 ? n - 1 : i - 1;
+    route[0] = [...parsedStops[prevIdx].coords] as [number, number];
+    route[route.length - 1] = [...stop.coords] as [number, number];
+  }
+
   return { tour: meta, stops: parsedStops };
 }
 
