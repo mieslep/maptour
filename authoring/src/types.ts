@@ -42,11 +42,20 @@ export interface AudioBlock {
 
 export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock;
 
+export interface Waypoint {
+  coords: [number, number];
+  text: string;
+  photo?: string;
+  journey_card?: boolean;
+  content?: ContentBlock[];
+  radius?: number;
+}
+
 export interface Leg {
   mode: LegMode;
   note?: string;
   route?: [number, number][];
-  journey?: ContentBlock[];
+  waypoints?: Waypoint[];
 }
 
 export interface GpsConfig {

@@ -11,6 +11,7 @@ import { renderContentBlockEditor } from './content-blocks';
 const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   about_description:  { default: 'An open-source, embeddable map tour player for static websites.', desc: 'About card description' },
   about_heading:      { default: 'Powered by MapTour', desc: 'About card heading' },
+  add_waypoint:       { default: 'Add waypoint', desc: 'Button to add a waypoint to a route' },
   all_stops:          { default: 'All Stops', desc: 'Stop list toggle label when expanded' },
   all_stops_title:    { default: 'All stops', desc: 'Stop list overlay title' },
   arrived:            { default: "I've arrived at {stop} →", desc: 'Journey card CTA. Placeholder: {stop}' },
@@ -76,6 +77,7 @@ const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   transit_dir:        { default: 'Get transit directions', desc: 'Nav button for transit mode' },
   transit_label:      { default: 'Stop {n}: {stop}', desc: 'Transit bar label. Placeholders: {n}, {stop}' },
   walk_me:            { default: 'Walk me there', desc: 'Nav button for walk mode' },
+  waypoint_no_route:  { default: 'Add a route before adding waypoints', desc: 'Error when adding waypoint to leg without route' },
   welcome:            { default: 'Welcome', desc: 'Header label on welcome screen' },
 };
 

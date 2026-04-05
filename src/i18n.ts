@@ -16,6 +16,7 @@ export interface StringOverrides {
 const DEFAULTS: Record<string, string> = {
   about_description: 'An open-source, embeddable map tour player for static websites.',
   about_heading:     'Powered by MapTour',
+  add_waypoint:      'Add waypoint',
   all_stops:         'All Stops',
   all_stops_title:   'All stops',
   arrived:           "I've arrived at {stop} →",
@@ -81,6 +82,7 @@ const DEFAULTS: Record<string, string> = {
   transit_dir:       'Get transit directions',
   transit_label:     'Stop {n}: {stop}',
   walk_me:           'Walk me there',
+  waypoint_no_route: 'Add a route before adding waypoints',
   welcome:           'Welcome',
 };
 
