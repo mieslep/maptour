@@ -9,6 +9,8 @@ test-results/
 .claude/
 .specify/
 
+coverage/
+
 # Built files copied to demo/ during local dev
 demo/maptour.js
 demo/maptour.css

@@ -44,5 +44,25 @@ export default defineConfig({
     globals: true,
     include: ['tests/unit/**/*.test.ts'],
     exclude: ['tests/e2e/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
+      exclude: [
+        'node_modules/**',
+        'dist/**',
+        'tests/**',
+        'authoring/**',
+        'demo/**',
+        'native/**',
+        'scripts/**',
+        '*.config.*',
+      ],
+    },
   },
 });
