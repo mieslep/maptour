@@ -35,6 +35,8 @@ const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   gallery_counter:    { default: '{n} / {total}', desc: 'Gallery image counter. Placeholders: {n}, {total}' },
   get_started_prompt: { default: 'Open the map to explore stops and start your tour', desc: 'Welcome card prompt text' },
   getting_here_title: { default: 'Getting Here', desc: 'Getting Here card heading' },
+  gps_denied:         { default: 'Location access denied — enable in browser settings for GPS features', desc: 'Toast message when GPS permission is denied' },
+  gps_near_stop:      { default: "You're near {stop} — start here?", desc: 'GPS nudge when user is near a stop. Placeholder: {stop}' },
   how_to_get_here:    { default: 'How to get here', desc: 'Getting Here card subheading' },
   im_here:            { default: "I'm here", desc: 'Transit bar arrival button' },
   image_error:        { default: 'Image could not be loaded', desc: 'Image fallback text' },
@@ -94,7 +96,7 @@ export class TourEditor {
   private preEditView: { center: L.LatLng; zoom: number } | null = null;
   private mapMode: 'default' | 'addStop' = 'default';
   private selectedStopIdx: number = -1;
-  private selectedCard: 'welcome' | 'goodbye' | null = null;
+  private selectedCard: 'getting_here' | 'welcome' | 'goodbye' | null = null;
   private dirtyLegs: Set<number> = new Set();
   private selectedLeg: number = -1;
   private previewDevice = 'iphone-14';
@@ -1551,6 +1553,12 @@ export class TourEditor {
       scrollable.className = 'panel-scrollable device-scroll-area';
       scrollable.appendChild(this.wrapInDeviceFrame(this.renderStopEditor(stop)));
       this.detailPanel.appendChild(scrollable);
+    } else if (this.selectedCard === 'getting_here') {
+      this.detailPanel.appendChild(this.makeDeviceToolbar('Getting Here'));
+      const scrollable = document.createElement('div');
+      scrollable.className = 'panel-scrollable device-scroll-area';
+      scrollable.appendChild(this.wrapInDeviceFrame(this.renderGettingHereSection()));
+      this.detailPanel.appendChild(scrollable);
     } else if (this.selectedCard === 'welcome') {
       this.detailPanel.appendChild(this.makeDeviceToolbar('Welcome Card'));
       const scrollable = document.createElement('div');
@@ -1723,6 +1731,21 @@ export class TourEditor {
 
     const list = document.createElement('div');
     list.className = 'stop-list';
+
+    // Getting Here card (pinned at top)
+    const ghItem = document.createElement('div');
+    ghItem.className = `stop-list-item stop-list-item--special ${this.selectedCard === 'getting_here' ? 'selected' : ''}`;
+    ghItem.innerHTML = `<span class="stop-drag-handle"><i class="fa-solid fa-diamond-turn-right" style="color:#2563eb;"></i></span><span class="stop-list-info">Getting Here</span>`;
+    ghItem.onclick = () => {
+      this.deselectLeg();
+      this.exitRouteInteraction();
+      this.selectedStopIdx = -1;
+      this.selectedCard = 'getting_here';
+      this.clearRadiusCircle();
+      this.highlightMarker(-1);
+      this.renderPanel();
+    };
+    list.appendChild(ghItem);
 
     // Welcome card (pinned at top)
     const welcomeItem = document.createElement('div');
@@ -2285,6 +2308,48 @@ export class TourEditor {
 
       body.appendChild(journeyDiv);
     });
+  }
+
+  private renderGettingHereSection(): HTMLElement {
+    if (!this.tour.tour.getting_here) this.tour.tour.getting_here = [];
+    const frag = document.createElement('div');
+    frag.className = 'card-preview';
+
+    // Title
+    const titleHeading = document.createElement('div');
+    titleHeading.className = 'card-title';
+    titleHeading.textContent = 'Getting Here';
+    frag.appendChild(titleHeading);
+
+    const subtitle = document.createElement('div');
+    subtitle.className = 'card-meta-line';
+    subtitle.textContent = 'Directions to the tour starting point. Leave empty to hide the menu item.';
+    frag.appendChild(subtitle);
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'card-divider';
+    frag.appendChild(divider);
+
+    // Content blocks
+    const contentZone = document.createElement('div');
+    contentZone.className = 'card-content-zone';
+    contentZone.appendChild(renderContentBlockEditor(
+      this.tour.tour.getting_here!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
+    ));
+    frag.appendChild(contentZone);
+
+    // Footer - navigate to welcome
+    const footer = document.createElement('div');
+    footer.className = 'card-footer card-footer--clickable';
+    footer.textContent = 'Back to Welcome Card';
+    footer.onclick = () => {
+      this.selectedCard = 'welcome';
+      this.renderPanel();
+    };
+    frag.appendChild(footer);
+
+    return frag;
   }
 
   private renderWelcomeSection(): HTMLElement {

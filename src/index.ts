@@ -25,7 +25,7 @@ import { OverviewControls } from './layout/OverviewControls';
 import { buildMobileLayout } from './layout/buildMobileLayout';
 import { buildDesktopLayout } from './layout/buildDesktopLayout';
 import { createJourneyHandler } from './orchestrator/journeyHandler';
-import { setStrings } from './i18n';
+import { setStrings, t } from './i18n';
 import type { MapTourInitOptions } from './types';
 
 export type { MapTourInitOptions };
@@ -61,6 +61,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const menuBar = new MenuBar(container, tour.tour.header_html);
   menuBar.setGettingHereVisible(hasGettingHere);
   const tourFooter = new TourFooter();
+
 
   // === Layout ===
   const mapPane = document.createElement('div');
@@ -348,9 +349,16 @@ async function init(options: MapTourInitOptions): Promise<void> {
     onOverviewEnter: () => { gpsOverviewApplied = false; },
   }));
 
-  // === GPS ===
+  // === GPS (deferred — starts on user action) ===
   let proximityDetector: ProximityDetector | null = null;
-  if (gpsTracker.isAvailable()) {
+  let gpsStarted = false;
+  let gpsDenied = false;
+  let gpsInitialZoomDone = false;
+
+  const startGps = () => {
+    if (gpsStarted || !gpsTracker.isAvailable()) return;
+    gpsStarted = true;
+
     proximityDetector = new ProximityDetector(tour.stops, 0, tour.tour.gps);
     proximityDetector.onArrival((stopIndex) => journeyState.transition('at_stop', stopIndex));
     const bsCfg = tour.tour.gps?.battery_saver;
@@ -364,13 +372,81 @@ async function init(options: MapTourInitOptions): Promise<void> {
         proximityDetector?.checkPosition(pos);
         if (!gpsOverviewApplied && journeyState.getState() === 'tour_start') {
           const acc = tour.tour.gps?.max_accuracy ?? 50, dist = tour.tour.gps?.max_distance ?? 500;
-          if (pos.accuracy <= acc) { const n = nearestStop(pos.lat, pos.lng, tour.stops); if (n.distance <= dist) { gpsOverviewApplied = true; updateOverviewSelection(n.index); } }
+          if (pos.accuracy <= acc) {
+            const n = nearestStop(pos.lat, pos.lng, tour.stops);
+            if (n.distance <= dist) {
+              gpsOverviewApplied = true;
+              showGpsNudge(n.index);
+            }
+          }
         }
-      } else { mapView.clearGpsPosition(); }
+        // Update locate button to active state
+        locateBtn?.classList.remove('maptour-locate-btn--acquiring', 'maptour-locate-btn--denied');
+        locateBtn?.classList.add('maptour-locate-btn--active');
+        // Zoom to user on first GPS fix
+        if (!gpsInitialZoomDone) {
+          gpsInitialZoomDone = true;
+          mapView.getMap().flyTo([pos.lat, pos.lng], 17, { animate: true });
+        }
+      } else {
+        // Permission denied or unavailable
+        gpsDenied = true;
+        locateBtn?.classList.remove('maptour-locate-btn--acquiring', 'maptour-locate-btn--active');
+        locateBtn?.classList.add('maptour-locate-btn--denied');
+        mapView.clearGpsPosition();
+        showGpsToast();
+      }
     });
     gpsTracker.onHeading((heading) => mapView.updateGpsHeading(heading));
     gpsTracker.start();
+  };
+
+  // Locate button + GPS denied toast
+  let locateBtn: HTMLElement | null = null;
+  if (gpsTracker.isAvailable()) {
+    locateBtn = mapView.addLocateButton(() => {
+      if (gpsDenied) {
+        showGpsToast();
+        return;
+      }
+      if (!gpsStarted) {
+        locateBtn?.classList.add('maptour-locate-btn--acquiring');
+        startGps();
+      } else if (lastGpsPosition) {
+        mapView.getMap().flyTo([lastGpsPosition.lat, lastGpsPosition.lng], 17, { animate: true });
+      }
+    });
   }
+
+  const showGpsNudge = (stopIndex: number) => {
+    const stop = tour.stops[stopIndex];
+    if (!stop) return;
+    let nudge = container.querySelector('.maptour-gps-nudge') as HTMLElement | null;
+    if (nudge) nudge.remove();
+    nudge = document.createElement('button');
+    nudge.className = 'maptour-gps-nudge';
+    nudge.innerHTML = '<i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + t('gps_near_stop', { stop: stop.title });
+    nudge.addEventListener('click', () => {
+      updateOverviewSelection(stopIndex);
+      nudge?.remove();
+    });
+    container.appendChild(nudge);
+    requestAnimationFrame(() => nudge?.classList.add('maptour-gps-nudge--visible'));
+    // Auto-dismiss after 10 seconds
+    setTimeout(() => nudge?.remove(), 10000);
+  };
+
+  const showGpsToast = () => {
+    let toast = container.querySelector('.maptour-gps-toast') as HTMLElement | null;
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.className = 'maptour-gps-toast';
+      toast.textContent = t('gps_denied');
+      container.appendChild(toast);
+    }
+    toast.classList.add('maptour-gps-toast--visible');
+    setTimeout(() => toast?.classList.remove('maptour-gps-toast--visible'), 4000);
+  };
 
   // === Restore or start ===
   const restored = journeyState.restore();

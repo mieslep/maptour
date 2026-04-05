@@ -322,6 +322,24 @@ export class MapView {
     });
   }
 
+  /** Add a locate-me button to the map. Returns the button element for external control. */
+  addLocateButton(onClick: () => void): HTMLElement {
+    const Control = L.Control.extend({
+      onAdd: () => {
+        const btn = L.DomUtil.create('button', 'maptour-locate-btn');
+        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>';
+        btn.setAttribute('aria-label', 'Show my location');
+        btn.title = 'Show my location';
+        L.DomEvent.disableClickPropagation(btn);
+        btn.addEventListener('click', onClick);
+        return btn;
+      },
+    });
+    new Control({ position: 'topright' }).addTo(this.map);
+    const el = this.map.getContainer().querySelector('.maptour-locate-btn') as HTMLElement;
+    return el;
+  }
+
   getMap(): L.Map {
     return this.map;
   }

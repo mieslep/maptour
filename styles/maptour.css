@@ -1926,6 +1926,106 @@
   }
 }
 
+/* Locate-me button on map */
+.maptour-locate-btn {
+  width: 34px;
+  height: 34px;
+  background: var(--maptour-surface);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--maptour-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+.maptour-locate-btn:hover {
+  background: var(--maptour-surface-2);
+}
+
+.maptour-locate-btn--acquiring {
+  color: #7c3aed;
+  animation: maptour-locate-pulse 1s ease-in-out infinite;
+}
+
+@keyframes maptour-locate-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.maptour-locate-btn--active {
+  color: #7c3aed;
+}
+
+.maptour-locate-btn--denied {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* GPS denied toast */
+.maptour-gps-toast {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: var(--maptour-text);
+  color: var(--maptour-surface);
+  font-family: var(--maptour-font);
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--maptour-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.maptour-gps-toast--visible {
+  opacity: 1;
+}
+
+/* GPS nudge — "You're near X — start here?" */
+.maptour-gps-nudge {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-family: var(--maptour-font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.maptour-gps-nudge--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.maptour-gps-nudge:hover {
+  background: #6d28d9;
+}
+
 /* GPS position icon — pulsing purple dot */
 .maptour-gps-icon {
   background: none;

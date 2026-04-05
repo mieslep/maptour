@@ -76,6 +76,7 @@ export interface TourMeta {
   welcome?: ContentBlock[];
   goodbye?: ContentBlock[];
   gps?: GpsConfig;
+  getting_here?: ContentBlock[];
   nudge_return?: boolean;
   require_scroll?: boolean;
 }

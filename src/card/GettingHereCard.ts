@@ -15,18 +15,21 @@ export function renderGettingHereCard(container: HTMLElement, options: GettingHe
   const header = document.createElement('div');
   header.className = 'maptour-card__header';
 
+  const headerText = document.createElement('div');
+  headerText.className = 'maptour-card__header-text';
+
   const backBtn = document.createElement('button');
   backBtn.className = 'maptour-card__back-btn';
   backBtn.setAttribute('aria-label', t('back'));
   backBtn.innerHTML = '<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';
-  backBtn.addEventListener('click', options.onBack);
   header.appendChild(backBtn);
 
   const title = document.createElement('h2');
   title.className = 'maptour-card__title';
   title.textContent = t('getting_here_title');
-  header.appendChild(title);
+  headerText.appendChild(title);
 
+  header.appendChild(headerText);
   container.appendChild(header);
 
   // Content blocks

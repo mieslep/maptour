@@ -86,6 +86,7 @@ function cleanTourMeta(meta: TourMeta): Record<string, unknown> {
     }
     if (Object.keys(filtered).length > 0) result.strings = filtered;
   }
+  if (meta.getting_here && meta.getting_here.length > 0) result.getting_here = meta.getting_here.map(cleanBlock);
   if (meta.nudge_return) result.nudge_return = true;
   if (meta.require_scroll) result.require_scroll = true;
   return result;
@@ -134,6 +135,7 @@ export function yamlToTour(text: string): Tour {
   if (Array.isArray(tourMeta.welcome)) meta.welcome = tourMeta.welcome as ContentBlock[];
   if (Array.isArray(tourMeta.goodbye)) meta.goodbye = tourMeta.goodbye as ContentBlock[];
   if (tourMeta.gps && typeof tourMeta.gps === 'object') meta.gps = tourMeta.gps as GpsConfig;
+  if (Array.isArray(tourMeta.getting_here)) meta.getting_here = tourMeta.getting_here as ContentBlock[];
   if (tourMeta.nudge_return === true) meta.nudge_return = true;
   if (tourMeta.require_scroll === true) meta.require_scroll = true;
 

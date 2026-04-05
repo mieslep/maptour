@@ -19,10 +19,13 @@ export function renderAboutCard(container: HTMLElement, options: AboutCardOption
   backBtn.addEventListener('click', options.onBack);
   header.appendChild(backBtn);
 
+  const headerText = document.createElement('div');
+  headerText.className = 'maptour-card__header-text';
   const title = document.createElement('h2');
   title.className = 'maptour-card__title';
   title.textContent = t('menu_about');
-  header.appendChild(title);
+  headerText.appendChild(title);
+  header.appendChild(headerText);
 
   container.appendChild(header);
 
