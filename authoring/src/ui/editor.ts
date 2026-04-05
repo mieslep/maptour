@@ -121,7 +121,7 @@ export class TourEditor {
     { id: 'ipad-air',   label: 'iPad Air',        category: 'tablet',  width: 820, height: 1180, minPanelWidth: 400 },
     { id: 'desktop',    label: 'Desktop',          category: 'desktop', width: 0,   height: 0,    minPanelWidth: 780 },
   ];
-  private detailTab: 'stop' | 'journey' = 'stop';
+  private detailTab: 'stop' = 'stop';
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
   private mapContainer!: HTMLElement;
@@ -2041,42 +2041,7 @@ export class TourEditor {
     return frag;
   }
 
-  private renderJourneyTab(stop: Stop): HTMLElement {
-    const frag = document.createElement('div');
-    frag.style.padding = '8px 0';
-    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-    const gh = stop.getting_here;
-
-    if (gh.journey && gh.journey.length > 0) {
-      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn btn-sm btn-danger';
-      removeBtn.style.marginTop = '8px';
-      removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove all journey content';
-      removeBtn.onclick = () => {
-        if (!confirm('Remove all journey content for this route?')) return;
-        this.withUndo(() => { gh.journey = undefined; });
-        this.renderDetailPanel();
-      };
-      frag.appendChild(removeBtn);
-    } else {
-      const emptyMsg = document.createElement('div');
-      emptyMsg.className = 'empty-msg';
-      emptyMsg.textContent = 'No journey content yet.';
-      frag.appendChild(emptyMsg);
-
-      const addBtn = document.createElement('button');
-      addBtn.className = 'cb-add-btn';
-      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add journey content';
-      addBtn.onclick = () => {
-        this.withUndo(() => { gh.journey = [{ type: 'text', body: '' }]; });
-        this.renderDetailPanel();
-      };
-      frag.appendChild(addBtn);
-    }
-
-    return frag;
-  }
+  // Journey tab removed — journey content is now authored via waypoints (B3)
 
   private makeGutterButton(onClick: () => void): HTMLElement {
     const btn = document.createElement('button');
@@ -2301,52 +2266,7 @@ export class TourEditor {
       routeDiv.appendChild(routeBtnRow);
       body.appendChild(routeDiv);
 
-      // Journey card section
-      const journeyDiv = document.createElement('div');
-      journeyDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
-
-      const journeyHeader = document.createElement('div');
-      journeyHeader.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;';
-      const journeyLabel = document.createElement('div');
-      journeyLabel.className = 'subsection-title';
-      journeyLabel.style.margin = '0';
-      journeyLabel.textContent = 'Journey Card';
-      journeyHeader.appendChild(journeyLabel);
-
-      if (gh.journey && gh.journey.length > 0) {
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'btn btn-sm btn-danger';
-        removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        removeBtn.onclick = () => {
-          if (!confirm('Remove all journey content for this stop?')) return;
-          this.withUndo(() => { gh.journey = undefined; });
-          // Close current modal, re-open with updated state
-          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
-          this.renderDetailPanel();
-          this.showGettingHereModal(stop, stopIdx);
-        };
-        journeyHeader.appendChild(removeBtn);
-        journeyDiv.appendChild(journeyHeader);
-
-        // Embed content block editor for journey blocks
-        journeyDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
-      } else {
-        journeyDiv.appendChild(journeyHeader);
-
-        const addBtn = document.createElement('button');
-        addBtn.className = 'btn btn-sm';
-        addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Journey Card';
-        addBtn.onclick = () => {
-          this.withUndo(() => { gh.journey = [{ type: 'text', body: '' }]; });
-          // Close current modal, re-open with updated state
-          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
-          this.renderDetailPanel();
-          this.showGettingHereModal(stop, stopIdx);
-        };
-        journeyDiv.appendChild(addBtn);
-      }
-
-      body.appendChild(journeyDiv);
+      // Journey card section removed — journey content is now authored via waypoints
     });
   }
 
