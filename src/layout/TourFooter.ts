@@ -99,10 +99,8 @@ export class TourFooter {
   }
 
   /** Show the "Next: Stop Name" label and next arrow, hide the finish button. */
-  setNextStop(title: string, hasJourney = false): void {
-    this.label.textContent = hasJourney
-      ? t('next_journey', { stop: title })
-      : t('next_stop', { stop: title });
+  setNextStop(title: string): void {
+    this.label.textContent = t('next_stop', { stop: title });
     this.label.hidden = false;
     this.nextBtn.hidden = false;
     this.finishBtn.hidden = true;

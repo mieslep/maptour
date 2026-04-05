@@ -200,8 +200,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
       mapView.setVisitedStops(session.getVisited());
       tourFooter.update(session.getVisited().size, tour.stops.length);
       if (nextStop) {
-        const hasJourney = !!(nextStop.getting_here?.journey && nextStop.getting_here.journey.length > 0);
-        tourFooter.setNextStop(nextStop.title, hasJourney);
+        tourFooter.setNextStop(nextStop.title);
       } else {
         tourFooter.setLastStop(isReturningToStart);
       }
@@ -209,14 +208,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
       if (mapPanel) mapPanel.setActiveStop(stop, tour.tour.nav_mode);
       resetScrollHint?.();
       updateScrollGate();
-    },
-    onJourneyStart: (destinationStop) => {
-      tourFooter.setNextStop(destinationStop.title);
-      cardHost.render((c) => journeyCardRenderer.render(c, destinationStop, () => {
-        stopCardRenderer.setSuppressGettingHereNote(true);
-        navController.completeJourney();
-      }));
-      tourFooter.setScrollGate(false);
     },
     onTourEnd: () => {
       const lastIdx = session.reversed ? 0 : tour.stops.length - 1;

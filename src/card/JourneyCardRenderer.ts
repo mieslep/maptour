@@ -1,6 +1,5 @@
 import type { Stop, LegMode } from '../types';
 import { t } from '../i18n';
-import { renderBlock } from './blocks/renderBlock';
 import { NavButton } from './NavButton';
 import { NavAppPreference } from '../navigation/NavAppPreference';
 
@@ -52,16 +51,6 @@ export class JourneyCardRenderer {
     new NavButton(pinContainer, destinationStop, this.navPreference, undefined, this.tourNavMode, 'pin');
 
     container.appendChild(header);
-
-    // Journey content blocks
-    if (gettingHere.journey && gettingHere.journey.length > 0) {
-      const content = document.createElement('div');
-      content.className = 'maptour-card__content';
-      gettingHere.journey.forEach((block) => {
-        content.appendChild(renderBlock(block, true));
-      });
-      container.appendChild(content);
-    }
 
     // "I've arrived" button
     const footer = document.createElement('div');

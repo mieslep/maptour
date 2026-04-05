@@ -275,19 +275,6 @@ stops:
           - -8.98565
         - - 52.845447
           - -8.985658
-      journey:
-        - type: text
-          body: |
-            As you head up the steps from Bank Place, look around at the
-            red-brick Georgian terraces. Ennis grew rapidly in the 18th and
-            early 19th centuries as a market town and parliamentary borough.
-            Many of these terraced houses date from that period, built for
-            the merchants and professionals who served the town's thriving
-            economy. Bindon Street is one of Clare's best surviving
-            Georgian streetscapes.
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-5to6-georgian.jpg
-          caption: Georgian terraced houses on the route between stops 5 and 6
   - id: 6
     title: Figurative Sculptures, Harmony Row
     coords:
@@ -576,22 +563,6 @@ stops:
           - -8.987923
         - - 52.844301
           - -8.987508
-      journey:
-        - type: text
-          body: |
-            As you walk along the River Fergus, you are following the
-            waterway that gave Ennis its name. "Inis" in Irish means
-            island - the town grew up around a small island in the river
-            where a Franciscan friary was founded in the 13th century.
-
-            The Fergus has shaped the town for centuries.
-
-            Across the water you can see Post Office Field, an important
-            part of the flood plain and a valuable green space for birds 
-            and other wildlife within the town.
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-11to12-fergus.jpg
-          caption: The River Fergus and Post Office Field
   - id: 12
     title: Market Day
     coords:
@@ -655,24 +626,6 @@ stops:
           - -8.984778
         - - 52.843121
           - -8.984797
-      journey:
-        - type: text
-          body: |
-            You are passing through Enright's Bow, one of Ennis's 
-            characteristic "bowways" - arched passageways that connect
-            the town's main streets to the lanes and yards behind. 
-            These medieval passages originally gave access to the long 
-            narrow plots of land(burgage plots) that ran behind the 
-            street-front buildings, where merchants kept workshops, stores, 
-            and kitchen gardens.
-
-            Ennis restored and reopened many of these laneways
-            and bowways as part of a town renewal initiative, turning
-            forgotten back passages into attractive pedestrian routes that
-            reveal the town's historic street pattern.
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-12to13-bowway.jpg
-          caption: Enright's Bow - one of Ennis's restored bowways
   - id: 13
     title: Weathered Woman
     coords:
@@ -811,31 +764,6 @@ stops:
           - -8.98188
         - - 52.844034
           - -8.981866
-      journey:
-        - type: text
-          body: |
-            You are walking up O'Connell Street, the main street of Ennis.
-            Lined with colourful shopfronts and pubs, this pedestrianised
-            street is the commercial heart of the town. On your right you
-            will pass the Old Ground Hotel, one of Clare's oldest hotels.
-
-            At the top of the street stands the **O'Connell Monument**, a
-            tall column erected in 1867 to honour Daniel O'Connell, "The
-            Liberator". O'Connell was elected MP for Clare in 1828 in a
-            landmark by-election held in Ennis - his victory forced the
-            British government to pass Catholic Emancipation the following
-            year, allowing Catholics to sit in Parliament for the first
-            time. The connection between O'Connell and Ennis is one of the
-            most significant in Irish political history.
-
-            The square at the top of the street is known locally as
-            "The Height".
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-st.jpg
-          caption: O'Connell Street, Ennis - the pedestrianised main street
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-column.jpg
-          caption: The O'Connell Monument at The Height
   - id: 16
     title: The Centurial Sphere & Easter Rising Memorial
     coords:
