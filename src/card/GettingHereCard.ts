@@ -22,6 +22,7 @@ export function renderGettingHereCard(container: HTMLElement, options: GettingHe
   backBtn.className = 'maptour-card__back-btn';
   backBtn.setAttribute('aria-label', t('back'));
   backBtn.innerHTML = '<i class="fa-solid fa-arrow-left" aria-hidden="true"></i>';
+  backBtn.addEventListener('click', options.onBack);
   header.appendChild(backBtn);
 
   const title = document.createElement('h2');
