@@ -43,6 +43,9 @@ tour:
 
         For more about Ennis and what else to see, visit
         [visitennis.ie](https://visitennis.ie).
+  getting_here:
+    - type: text
+      body: The tour starts near "Club Bridge" in Ennis. The nearest carpark is "GAA Cloister Carpark" off Abbey Street; you may find on-street parking in Lifford (near Lifford Lighting or Peril's Furniture) or on College Road (particularly when school is not meeting).
   require_scroll: true
 stops:
   - id: 1
