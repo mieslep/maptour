@@ -13,9 +13,9 @@ describe('renderWelcomeCard', () => {
     expect(container.querySelector('h1')?.textContent).toBe('My Tour');
   });
 
-  it('renders description when provided', () => {
+  it('does not render description (description moved to welcome content blocks)', () => {
     renderWelcomeCard(container, { title: 'T', description: 'A great tour', stopCount: 3, onBegin: vi.fn() });
-    expect(container.querySelector('.maptour-card__description')?.textContent).toBe('A great tour');
+    expect(container.querySelector('.maptour-card__description')).toBeNull();
   });
 
   it('renders stop count and duration', () => {

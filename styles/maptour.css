@@ -59,9 +59,14 @@
   background: var(--maptour-surface);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-top: 52px; /* clear floating title bar */
+  padding-top: 56px; /* clear menu bar */
+  transition: padding-top 0.25s ease;
   display: flex;
   flex-direction: column;
+}
+
+.maptour-card-view--menu-hidden {
+  padding-top: 0;
 }
 
 .maptour-card-view .maptour-card {
@@ -119,7 +124,12 @@
   gap: 8px;
   padding: 6px 12px;
   background: var(--maptour-surface);
+  transition: transform 0.25s ease;
   border-bottom: 1px solid var(--maptour-border);
+}
+
+.maptour-menu-bar--hidden {
+  transform: translateY(-100%);
 }
 
 .maptour-menu-bar__hamburger {
@@ -969,7 +979,7 @@
 
 .maptour-card__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;

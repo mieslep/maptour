@@ -25,7 +25,6 @@ export function buildMobileLayout(deps: MobileLayoutDeps): LayoutComponents {
   // Card view — wraps stop list and card
   const cardView = document.createElement('div');
   cardView.className = 'maptour-card-view';
-  cardView.style.paddingTop = '56px';
   cardView.appendChild(stopListWrapper);
   cardView.appendChild(cardEl);
 
@@ -58,6 +57,22 @@ export function buildMobileLayout(deps: MobileLayoutDeps): LayoutComponents {
     scrollHint.classList.remove('maptour-scroll-hint--hidden');
     requestAnimationFrame(updateScrollHint);
   };
+
+  // Auto-hide menu bar on scroll down, show on scroll up
+  let lastScrollTop = 0;
+  cardView.addEventListener('scroll', () => {
+    const st = cardView.scrollTop;
+    if (st > lastScrollTop && st > 56) {
+      // Scrolling down — hide menu bar
+      menuBarEl.classList.add('maptour-menu-bar--hidden');
+      cardView.classList.add('maptour-card-view--menu-hidden');
+    } else {
+      // Scrolling up or at top — show menu bar
+      menuBarEl.classList.remove('maptour-menu-bar--hidden');
+      cardView.classList.remove('maptour-card-view--menu-hidden');
+    }
+    lastScrollTop = Math.max(0, st);
+  }, { passive: true });
 
   container.appendChild(cardView);
 

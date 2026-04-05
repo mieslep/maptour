@@ -25,14 +25,6 @@ export function renderWelcomeCard(container: HTMLElement, options: WelcomeCardOp
   title.textContent = options.title;
   container.appendChild(title);
 
-  // Description
-  if (options.description) {
-    const desc = document.createElement('p');
-    desc.className = 'maptour-card__description';
-    desc.textContent = options.description;
-    container.appendChild(desc);
-  }
-
   // Meta (stop count + duration)
   const meta = document.createElement('p');
   meta.className = 'maptour-card__meta';
