@@ -14,6 +14,7 @@ export class GuidanceBanner {
     this.photoEl.className = 'maptour-guidance-banner__photo';
     this.photoEl.alt = '';
     this.photoEl.hidden = true;
+    this.photoEl.addEventListener('click', () => this.showPhotoModal());
 
     this.textEl = document.createElement('div');
     this.textEl.className = 'maptour-guidance-banner__text';
@@ -26,6 +27,7 @@ export class GuidanceBanner {
     this.textEl.textContent = waypoint.text;
     if (waypoint.photo) {
       this.photoEl.src = waypoint.photo;
+      this.photoEl.alt = waypoint.text;
       this.photoEl.hidden = false;
     } else {
       this.photoEl.hidden = true;
@@ -44,5 +46,36 @@ export class GuidanceBanner {
 
   getElement(): HTMLElement {
     return this.el;
+  }
+
+  private showPhotoModal(): void {
+    const src = this.photoEl.src;
+    if (!src) return;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'maptour-photo-modal';
+
+    const img = document.createElement('img');
+    img.className = 'maptour-photo-modal__img';
+    img.src = src;
+    img.alt = this.photoEl.alt;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'maptour-photo-modal__close';
+    closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    closeBtn.setAttribute('aria-label', 'Close photo');
+
+    const close = () => backdrop.remove();
+    closeBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) close();
+    });
+
+    backdrop.appendChild(img);
+    backdrop.appendChild(closeBtn);
+
+    // Append to the container (outside the map pane) so it's truly full-screen
+    const container = this.el.closest('.maptour-container') ?? document.body;
+    container.appendChild(backdrop);
   }
 }
