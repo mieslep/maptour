@@ -2464,7 +2464,7 @@
 
 .maptour-guidance-banner {
   position: absolute;
-  top: 12px;
+  top: 60px;
   left: 12px;
   right: 12px;
   z-index: 1000;
@@ -2472,10 +2472,11 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.82);
-  color: #fff;
+  background: var(--maptour-surface);
+  color: var(--maptour-text);
+  border: 1px solid var(--maptour-border);
   border-radius: var(--maptour-radius);
-  box-shadow: var(--maptour-shadow);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   font-family: var(--maptour-font);
   font-size: 15px;
   line-height: 1.35;
@@ -2490,12 +2491,12 @@
   flex-shrink: 0;
   cursor: pointer;
   pointer-events: auto;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid var(--maptour-border);
   transition: border-color 0.15s;
 }
 
 .maptour-guidance-banner__photo:hover {
-  border-color: rgba(255, 255, 255, 0.8);
+  border-color: var(--maptour-primary);
 }
 
 .maptour-guidance-banner__text {
