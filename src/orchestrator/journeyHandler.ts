@@ -167,21 +167,30 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             mapView.setWaypoints(waypoints, progress.current);
             const bounds = activeWaypointTracker!.getSegmentBounds();
             mapView.zoomToSegment(bounds.from, bounds.to);
-            // Update guidance banner
+            // Update guidance banner and footer
             guidanceBanner.setWaypoint(nextWaypoint);
-            // Update footer progress
             tourFooter.updateWaypointProgress(progress);
+            tourFooter.show();
           },
           onJourneyCard: (waypoint, onDismiss) => {
             // Show journey card for this waypoint
             guidanceBanner.hide();
+            tourFooter.hide();
+            // On mobile, hide map panel so card view is visible
+            if (mapPanel) mapPanel.hide();
             cardHost.render((c) => journeyCardRenderer.renderWaypoint(c, waypoint, () => {
               // On continue: dismiss card, resume waypoint transit
               onDismiss();
-              // Re-show guidance banner for next waypoint if not complete
+              // Re-show map and guidance banner for next waypoint if not complete
               if (!activeWaypointTracker!.isComplete()) {
                 const currentWp = activeWaypointTracker!.getCurrentWaypoint();
                 guidanceBanner.setWaypoint(currentWp);
+                tourFooter.show();
+                if (mapPanel) {
+                  mapPanel.setHeaderVisible(false);
+                  mapPanel.show();
+                  requestAnimationFrame(() => mapView.invalidateSize());
+                }
                 if (sheet) sheet.setPosition('collapsed', true);
               }
             }));
@@ -195,15 +204,25 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           },
         });
 
-        // Initial state: zoom to first segment, show guidance
+        // Initial state: zoom to first segment, show waypoint markers
         const firstWaypoint = waypoints[0];
         mapView.setWaypoints(waypoints, 0);
         mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords);
-        guidanceBanner.setWaypoint(firstWaypoint);
 
         // Set footer to waypoint mode
         tourFooter.enterWaypointMode(activeWaypointTracker.getProgress());
-        tourFooter.show();
+
+        // Check if the first waypoint is a journey card — if so, advance
+        // immediately so onJourneyCard fires and shows the card
+        const firstIsJourneyCard = firstWaypoint.journey_card === true ||
+          (firstWaypoint.content && firstWaypoint.content.length > 0);
+
+        if (firstIsJourneyCard) {
+          activeWaypointTracker.advance();
+        } else {
+          guidanceBanner.setWaypoint(firstWaypoint);
+          tourFooter.show();
+        }
 
       } else {
         // === No waypoints — show transit bar (existing behaviour) ===
