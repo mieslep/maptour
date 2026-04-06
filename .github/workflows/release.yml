@@ -32,7 +32,7 @@ jobs:
         run: npm run build:site
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/maptour.js
