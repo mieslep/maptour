@@ -2720,7 +2720,7 @@ export class TourEditor {
     stop.getting_here.waypoints.forEach((wp, wpIdx) => {
       const m = L.circleMarker([wp.coords[0], wp.coords[1]], {
         radius: 7,
-        fillColor: '#7c3aed',
+        fillColor: '#ec4899',
         color: '#fff',
         weight: 2,
         fillOpacity: 0.9,
@@ -2742,7 +2742,7 @@ export class TourEditor {
           // Snap to nearest point on route polyline
           const snapped = this.snapToPolyline(ev.latlng, route);
           m.setLatLng([snapped.coords[0], snapped.coords[1]]);
-          m.setStyle({ fillColor: '#a855f7', radius: 9 }); // highlight during drag
+          m.setStyle({ fillColor: '#f472b6', radius: 9 }); // highlight during drag
         };
 
         const onUp = (ev: L.LeafletMouseEvent) => {

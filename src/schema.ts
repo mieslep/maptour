@@ -65,12 +65,15 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
 
 export const WaypointSchema = z.object({
   coords: z.tuple([z.number().min(-90).max(90), z.number().min(-180).max(180)]),
-  text: z.string().min(1),
+  text: z.string(),
   photo: z.string().optional(),
   journey_card: z.boolean().optional(),
   content: z.array(ContentBlockSchema).optional(),
   radius: z.number().positive().optional(),
-});
+}).refine(
+  (wp) => wp.text.length > 0 || wp.journey_card === true || (wp.content && wp.content.length > 0),
+  { message: 'Light waypoints require non-empty text', path: ['text'] },
+);
 
 // ---- Leg / getting_here ----
 

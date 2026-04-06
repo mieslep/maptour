@@ -367,15 +367,15 @@ export class MapView {
       } else if (i === activeIndex) {
         // Active (next target)
         className = 'maptour-waypoint-marker maptour-waypoint-marker--active';
-        fillColor = '#7c3aed';
+        fillColor = '#ec4899';
         fillOpacity = 0.9;
-        color = '#7c3aed';
+        color = '#ec4899';
       } else {
         // Future
         className = 'maptour-waypoint-marker maptour-waypoint-marker--future';
         fillColor = 'transparent';
         fillOpacity = 0;
-        color = '#7c3aed';
+        color = '#ec4899';
       }
 
       const marker = L.circleMarker(wp.coords, {

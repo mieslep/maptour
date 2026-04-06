@@ -440,7 +440,37 @@ stops:
     expect(result.error).toBeDefined();
   });
 
-  it('returns error for waypoint with empty text', () => {
+  it('accepts journey card waypoint with empty text', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: "Rich content here"
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.stops[1].getting_here?.waypoints?.[0].text).toBe('');
+  });
+
+  it('returns error for light waypoint with empty text', () => {
     const yaml = `
 tour:
   id: test
