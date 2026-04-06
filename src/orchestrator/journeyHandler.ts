@@ -77,6 +77,10 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     guidanceBanner.hide();
     mapView.clearWaypoints();
     tourFooter.exitWaypointMode();
+    // On mobile, hide the map panel so the card view shows
+    if (mapPanel) {
+      mapPanel.hide();
+    }
   }
 
   return (state: JourneyState, stopIndex: number) => {
@@ -147,7 +151,13 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
         mapView.setOverviewMode(false);
         overviewControls.hide();
         if (sheet) sheet.setPosition('collapsed', true);
-        if (mapPanel) mapPanel.hide();
+        // On mobile, show the map panel full-screen for waypoint navigation
+        if (mapPanel) {
+          mapPanel.setHeaderVisible(false);
+          mapPanel.show();
+          // Allow map to settle before zooming
+          requestAnimationFrame(() => mapView.invalidateSize());
+        }
 
         // Create waypoint tracker
         activeWaypointTracker = new WaypointTracker(waypoints, {

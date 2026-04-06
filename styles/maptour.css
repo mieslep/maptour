@@ -2566,20 +2566,20 @@
 
 .maptour-guidance-banner {
   position: absolute;
-  bottom: 12px;
+  top: 12px;
   left: 12px;
   right: 12px;
   z-index: 10;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.78);
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.82);
   color: #fff;
   border-radius: var(--maptour-radius);
   box-shadow: var(--maptour-shadow);
   font-family: var(--maptour-font);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.35;
   pointer-events: none;
 }
