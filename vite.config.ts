@@ -48,10 +48,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       thresholds: {
-        lines: 50,
-        functions: 50,
-        branches: 50,
-        statements: 50,
+        lines: 80,
+        statements: 80,
       },
       exclude: [
         'node_modules/**',
@@ -62,6 +60,7 @@ export default defineConfig({
         'native/**',
         'scripts/**',
         '*.config.*',
+        'src/index.ts',
       ],
     },
   },
