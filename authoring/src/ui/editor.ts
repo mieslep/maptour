@@ -1956,51 +1956,34 @@ export class TourEditor {
   private renderStopCardTab(stop: Stop, stopIdx: number): HTMLElement {
     const frag = document.createElement('div');
 
-    // Zone 1: Title (click to edit)
+    // Zone 1: Title + Getting Here (click to edit)
     const titleZone = document.createElement('div');
-    titleZone.className = 'card-edit-zone';
+    titleZone.className = 'card-edit-zone card-edit-zone--title';
     titleZone.style.cursor = 'pointer';
-    titleZone.onclick = () => this.showTitleModal(stop);
+    titleZone.onclick = () => this.showTitleModal(stop, stopIdx);
 
     const titleContent = document.createElement('div');
+    titleContent.style.cssText = 'flex:1; min-width:0;';
     const titleHeading = document.createElement('div');
     titleHeading.className = 'card-title';
     titleHeading.textContent = stop.title || 'Untitled Stop';
     titleContent.appendChild(titleHeading);
 
-    titleZone.appendChild(titleContent);
-    frag.appendChild(titleZone);
-
-    // Zone 2: Getting Here (all stops, click to edit)
+    // Getting here summary below title
     const gh = stop.getting_here;
-    const ghZone = document.createElement('div');
-    ghZone.className = 'card-edit-zone card-getting-here';
-    ghZone.style.cursor = 'pointer';
-    ghZone.onclick = () => this.showGettingHereModal(stop, stopIdx);
-
-    const ghContent = document.createElement('div');
-    ghContent.style.cssText = 'display:flex; align-items:center; gap:6px; flex:1; min-width:0;';
-
     if (gh && (gh.note || gh.mode)) {
+      const ghSummary = document.createElement('div');
+      ghSummary.className = 'card-gh-summary';
       const iconClass = TourEditor.MODE_ICONS[gh.mode] || 'fa-person-walking';
-      const modeIcon = document.createElement('i');
-      modeIcon.className = `fa-solid ${iconClass} card-gh-icon`;
-      ghContent.appendChild(modeIcon);
-
-      const noteText = document.createElement('span');
-      noteText.className = 'card-gh-note';
-      noteText.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
-      ghContent.appendChild(noteText);
-    } else {
-      const placeholder = document.createElement('span');
-      placeholder.className = 'card-gh-placeholder';
-      const fromIdx = stopIdx === 0 ? this.tour.stops.length : stopIdx;
-      placeholder.textContent = `Click to add notes on getting here from stop ${fromIdx}`;
-      ghContent.appendChild(placeholder);
+      ghSummary.innerHTML = `<i class="fa-solid ${iconClass} card-gh-icon"></i> `;
+      const noteSpan = document.createElement('span');
+      noteSpan.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
+      ghSummary.appendChild(noteSpan);
+      titleContent.appendChild(ghSummary);
     }
 
-    ghZone.appendChild(ghContent);
-    frag.appendChild(ghZone);
+    titleZone.appendChild(titleContent);
+    frag.appendChild(titleZone);
 
     // Divider
     const divider = document.createElement('div');
@@ -2104,8 +2087,11 @@ export class TourEditor {
     }
   }
 
-  private showTitleModal(stop: Stop): void {
-    this.showEditZoneModal('Edit Title', (body) => {
+  private showTitleModal(stop: Stop, stopIdx: number): void {
+    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
+    const gh = stop.getting_here;
+
+    this.showEditZoneModal('Edit Stop', (body) => {
       // Title
       const titleRow = document.createElement('div');
       titleRow.className = 'input-row';
@@ -2123,42 +2109,12 @@ export class TourEditor {
       titleRow.appendChild(titleInput);
       body.appendChild(titleRow);
 
-      // Coords (readonly)
-      const coordsRow = document.createElement('div');
-      coordsRow.className = 'input-row';
-      coordsRow.innerHTML = '<label class="input-label">Coords</label>';
-      const coordsInput = document.createElement('input');
-      coordsInput.type = 'text';
-      coordsInput.className = 'input';
-      coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
-      coordsInput.readOnly = true;
-      coordsRow.appendChild(coordsInput);
-      body.appendChild(coordsRow);
+      // Getting Here section
+      const ghHeader = document.createElement('div');
+      ghHeader.style.cssText = 'margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:13px; font-weight:600; color:#334155; margin-bottom:8px;';
+      ghHeader.textContent = 'Getting Here';
+      body.appendChild(ghHeader);
 
-      // Arrival radius
-      const radiusRow = document.createElement('div');
-      radiusRow.className = 'input-row';
-      radiusRow.innerHTML = '<label class="input-label">Arrival Radius (m)</label>';
-      const radiusInput = document.createElement('input');
-      radiusInput.type = 'number';
-      radiusInput.className = 'input';
-      radiusInput.placeholder = 'Default';
-      radiusInput.value = stop.arrival_radius?.toString() ?? '';
-      radiusInput.oninput = () => {
-        stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
-        this.changed();
-        this.updateRadiusCircle();
-      };
-      radiusRow.appendChild(radiusInput);
-      body.appendChild(radiusRow);
-    });
-  }
-
-  private showGettingHereModal(stop: Stop, stopIdx: number): void {
-    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-    const gh = stop.getting_here;
-
-    this.showEditZoneModal('Edit Getting Here', (body) => {
       // Mode
       const modeRow = document.createElement('div');
       modeRow.className = 'input-row';
@@ -2189,7 +2145,7 @@ export class TourEditor {
       noteRow.appendChild(noteInput);
       body.appendChild(noteRow);
 
-      // Route section — mirrors the selection bar buttons
+      // Route section
       const routeDiv = document.createElement('div');
       routeDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
       const routeBtnRow = document.createElement('div');
@@ -2266,9 +2222,43 @@ export class TourEditor {
       routeDiv.appendChild(routeBtnRow);
       body.appendChild(routeDiv);
 
-      // Journey card section removed — journey content is now authored via waypoints
+      // Coords (readonly)
+      const metaHeader = document.createElement('div');
+      metaHeader.style.cssText = 'margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:13px; font-weight:600; color:#334155; margin-bottom:8px;';
+      metaHeader.textContent = 'Advanced';
+      body.appendChild(metaHeader);
+
+      const coordsRow = document.createElement('div');
+      coordsRow.className = 'input-row';
+      coordsRow.innerHTML = '<label class="input-label">Coords</label>';
+      const coordsInput = document.createElement('input');
+      coordsInput.type = 'text';
+      coordsInput.className = 'input';
+      coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
+      coordsInput.readOnly = true;
+      coordsRow.appendChild(coordsInput);
+      body.appendChild(coordsRow);
+
+      // Arrival radius
+      const radiusRow = document.createElement('div');
+      radiusRow.className = 'input-row';
+      radiusRow.innerHTML = '<label class="input-label">Arrival Radius (m)</label>';
+      const radiusInput = document.createElement('input');
+      radiusInput.type = 'number';
+      radiusInput.className = 'input';
+      radiusInput.placeholder = 'Default';
+      radiusInput.value = stop.arrival_radius?.toString() ?? '';
+      radiusInput.oninput = () => {
+        stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
+        this.changed();
+        this.updateRadiusCircle();
+      };
+      radiusRow.appendChild(radiusInput);
+      body.appendChild(radiusRow);
     });
   }
+
+  // Getting Here editing is now consolidated into showTitleModal (Edit Stop)
 
   private renderGettingHereSection(): HTMLElement {
     if (!this.tour.tour.getting_here) this.tour.tour.getting_here = [];
