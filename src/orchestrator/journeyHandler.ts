@@ -79,7 +79,6 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     mapView.clearWaypoints();
     tourFooter.exitWaypointMode();
     if (mapPanel) {
-      mapPanel.exitImHereMode();
       mapPanel.hide();
     }
   }
@@ -163,12 +162,12 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           requestAnimationFrame(() => mapView.invalidateSize());
         }
 
-        // Advance handler — called from FAB "I'm here" tap
-        const advanceWaypoint = () => {
+        // Wire guidance banner "I'm here" button
+        guidanceBanner.onAction(() => {
           if (activeWaypointTracker && !activeWaypointTracker.isComplete()) {
             activeWaypointTracker.advance();
           }
-        };
+        });
 
         // Create waypoint tracker
         activeWaypointTracker = new WaypointTracker(waypoints, {
@@ -178,27 +177,20 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             mapView.setWaypoints(waypoints, progress.current);
             const bounds = activeWaypointTracker!.getSegmentBounds();
             mapView.zoomToSegment(bounds.from, bounds.to);
-            // Update guidance banner
+            // Update guidance banner with next waypoint
             guidanceBanner.setWaypoint(nextWaypoint);
-            // Ensure FAB is in "I'm here" mode and map is showing
-            if (mapPanel) {
-              mapPanel.enterImHereMode(advanceWaypoint);
-              if (!mapPanel.isOpen()) {
-                mapPanel.show();
-                requestAnimationFrame(() => mapView.invalidateSize());
-              }
-            }
             tourFooter.updateWaypointProgress(progress);
+            // Ensure map is showing (may have been hidden for journey card)
+            if (mapPanel && !mapPanel.isOpen()) {
+              mapPanel.setHeaderVisible(false);
+              mapPanel.show();
+              requestAnimationFrame(() => mapView.invalidateSize());
+            }
           },
           onJourneyCard: (waypoint, onDismiss) => {
-            // Show journey card for this waypoint
+            // Show journey card — hide map, show card view
             guidanceBanner.hide();
-            tourFooter.hide();
-            // On mobile, hide map panel so card view is visible
-            if (mapPanel) {
-              mapPanel.exitImHereMode();
-              mapPanel.hide();
-            }
+            if (mapPanel) mapPanel.hide();
             cardHost.render((c) => journeyCardRenderer.renderWaypoint(c, waypoint, () => {
               // On continue: dismiss card, resume waypoint transit
               onDismiss();
@@ -219,7 +211,6 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
         // Set footer to waypoint mode (for progress track)
         tourFooter.enterWaypointMode(activeWaypointTracker.getProgress());
-        tourFooter.hide(); // footer hidden — FAB is the primary action
 
         // Check if the first waypoint is a journey card — if so, advance
         // immediately so onJourneyCard fires and shows the card
@@ -230,10 +221,6 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           activeWaypointTracker.advance();
         } else {
           guidanceBanner.setWaypoint(firstWaypoint);
-          // FAB becomes "I'm here" button
-          if (mapPanel) {
-            mapPanel.enterImHereMode(advanceWaypoint);
-          }
         }
 
       } else {

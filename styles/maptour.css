@@ -492,17 +492,6 @@
   border: 1px solid var(--maptour-border);
 }
 
-/* FAB in "I'm here" mode — pill-shaped text button */
-.maptour-map-open-btn--im-here {
-  width: auto;
-  border-radius: 20px;
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--maptour-font);
-  letter-spacing: 0.01em;
-}
-
 
 /* Card nav icon visible on mobile (directions are on the card, not map panel) */
 
@@ -2480,6 +2469,7 @@
   right: 12px;
   z-index: 1000;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
@@ -2513,6 +2503,30 @@
 .maptour-guidance-banner__text {
   flex: 1;
   min-width: 0;
+}
+
+.maptour-guidance-banner__action {
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: 2px;
+  background: var(--maptour-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--maptour-radius);
+  font-family: var(--maptour-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.maptour-guidance-banner__action:hover {
+  opacity: 0.9;
+}
+
+.maptour-guidance-banner__action:focus-visible {
+  outline: 2px solid var(--maptour-text);
+  outline-offset: 2px;
 }
 
 /* === Photo modal === */

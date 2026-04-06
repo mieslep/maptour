@@ -1,9 +1,12 @@
 import type { Waypoint } from '../types';
+import { t } from '../i18n';
 
 export class GuidanceBanner {
   private readonly el: HTMLElement;
   private textEl: HTMLElement;
   private photoEl: HTMLImageElement;
+  private actionBtn: HTMLButtonElement;
+  private actionCallback: (() => void) | null = null;
 
   constructor() {
     this.el = document.createElement('div');
@@ -19,8 +22,14 @@ export class GuidanceBanner {
     this.textEl = document.createElement('div');
     this.textEl.className = 'maptour-guidance-banner__text';
 
+    this.actionBtn = document.createElement('button');
+    this.actionBtn.className = 'maptour-guidance-banner__action';
+    this.actionBtn.textContent = t('im_here');
+    this.actionBtn.addEventListener('click', () => this.actionCallback?.());
+
     this.el.appendChild(this.photoEl);
     this.el.appendChild(this.textEl);
+    this.el.appendChild(this.actionBtn);
   }
 
   setWaypoint(waypoint: Waypoint): void {
@@ -34,6 +43,11 @@ export class GuidanceBanner {
       this.photoEl.removeAttribute('src');
     }
     this.el.hidden = false;
+  }
+
+  /** Set the callback for the action button. */
+  onAction(cb: () => void): void {
+    this.actionCallback = cb;
   }
 
   hide(): void {
@@ -74,7 +88,6 @@ export class GuidanceBanner {
     backdrop.appendChild(img);
     backdrop.appendChild(closeBtn);
 
-    // Append to the container (outside the map pane) so it's truly full-screen
     const container = this.el.closest('.maptour-container') ?? document.body;
     container.appendChild(backdrop);
   }
