@@ -27,10 +27,11 @@ export class WaypointTracker {
   }
 
   getSegmentBounds(): { from: [number, number]; to: [number, number] } {
-    // 'from' is current waypoint coords (or would be previous position for first)
-    // 'to' is the current target waypoint coords
-    const current = this.waypoints[this.currentIndex];
-    const prev = this.currentIndex > 0 ? this.waypoints[this.currentIndex - 1] : null;
+    // After advance(), currentIndex points past the waypoint just advanced.
+    // Use the previous waypoint as 'to' when currentIndex is at or past the end.
+    const idx = Math.min(this.currentIndex, this.waypoints.length - 1);
+    const current = this.waypoints[idx];
+    const prev = idx > 0 ? this.waypoints[idx - 1] : null;
     return {
       from: prev ? prev.coords : current.coords,
       to: current.coords,
@@ -59,8 +60,17 @@ export class WaypointTracker {
   private afterAdvance(): void {
     if (this.currentIndex >= this.waypoints.length) {
       this.callbacks.onComplete();
+      return;
+    }
+
+    const next = this.waypoints[this.currentIndex];
+    const nextIsJourneyCard = next.journey_card === true ||
+                              (next.content !== undefined && next.content.length > 0);
+
+    if (nextIsJourneyCard) {
+      // Advance again so the journey card renders via onJourneyCard
+      this.advance();
     } else {
-      const next = this.waypoints[this.currentIndex];
       const nextNext = this.currentIndex < this.waypoints.length - 1
         ? this.waypoints[this.currentIndex + 1]
         : null;

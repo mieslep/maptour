@@ -351,6 +351,15 @@
   display: none;
 }
 
+/* Waypoint mode: footer overlays the full-screen map panel */
+.maptour-tour-footer--waypoint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 13;
+}
+
 .maptour-tour-footer__scroll-indicator--bounce {
   animation: maptour-bounce-down 0.5s ease;
 }
@@ -536,6 +545,10 @@
 .maptour-map-open-btn:focus-visible {
   outline: 2px solid var(--maptour-text);
   outline-offset: 2px;
+}
+
+.maptour-map-open-btn[hidden] {
+  display: none;
 }
 
 /* Stop list FAB hidden on mobile — moved to later in file to win cascade */
@@ -1408,6 +1421,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-top: 8px;
   margin-bottom: 16px;
 }
 
@@ -2484,6 +2498,10 @@
   pointer-events: auto;
 }
 
+.maptour-guidance-banner[hidden] {
+  display: none;
+}
+
 .maptour-guidance-banner__photo {
   width: 44px;
   height: 44px;
@@ -2503,30 +2521,6 @@
 .maptour-guidance-banner__text {
   flex: 1;
   min-width: 0;
-}
-
-.maptour-guidance-banner__action {
-  width: 100%;
-  padding: 8px 16px;
-  margin-top: 2px;
-  background: var(--maptour-primary);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--maptour-radius);
-  font-family: var(--maptour-font);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.maptour-guidance-banner__action:hover {
-  opacity: 0.9;
-}
-
-.maptour-guidance-banner__action:focus-visible {
-  outline: 2px solid var(--maptour-text);
-  outline-offset: 2px;
 }
 
 /* === Photo modal === */

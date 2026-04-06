@@ -360,11 +360,11 @@ export class MapView {
       let color: string;
 
       if (i < activeIndex) {
-        // Passed
+        // Passed — muted pink
         className = 'maptour-waypoint-marker maptour-waypoint-marker--passed';
-        fillColor = '#9ca3af';
-        fillOpacity = 0.4;
-        color = '#9ca3af';
+        fillColor = '#f9a8d4';
+        fillOpacity = 0.5;
+        color = '#f9a8d4';
       } else if (i === activeIndex) {
         // Active (next target)
         className = 'maptour-waypoint-marker maptour-waypoint-marker--active';

@@ -1,12 +1,9 @@
 import type { Waypoint } from '../types';
-import { t } from '../i18n';
 
 export class GuidanceBanner {
   private readonly el: HTMLElement;
   private textEl: HTMLElement;
   private photoEl: HTMLImageElement;
-  private actionBtn: HTMLButtonElement;
-  private actionCallback: (() => void) | null = null;
 
   constructor() {
     this.el = document.createElement('div');
@@ -22,32 +19,21 @@ export class GuidanceBanner {
     this.textEl = document.createElement('div');
     this.textEl.className = 'maptour-guidance-banner__text';
 
-    this.actionBtn = document.createElement('button');
-    this.actionBtn.className = 'maptour-guidance-banner__action';
-    this.actionBtn.textContent = t('im_here');
-    this.actionBtn.addEventListener('click', () => this.actionCallback?.());
-
     this.el.appendChild(this.photoEl);
     this.el.appendChild(this.textEl);
-    this.el.appendChild(this.actionBtn);
   }
 
   setWaypoint(waypoint: Waypoint): void {
     this.textEl.textContent = waypoint.text;
     if (waypoint.photo) {
       this.photoEl.src = waypoint.photo;
-      this.photoEl.alt = waypoint.text;
+      this.photoEl.alt = waypoint.photo_alt || waypoint.text;
       this.photoEl.hidden = false;
     } else {
       this.photoEl.hidden = true;
       this.photoEl.removeAttribute('src');
     }
     this.el.hidden = false;
-  }
-
-  /** Set the callback for the action button. */
-  onAction(cb: () => void): void {
-    this.actionCallback = cb;
   }
 
   hide(): void {

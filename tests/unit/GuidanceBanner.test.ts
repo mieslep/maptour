@@ -21,7 +21,7 @@ describe('GuidanceBanner', () => {
     const el = banner.getElement();
     expect(el.className).toBe('maptour-guidance-banner');
     expect(el.hidden).toBe(true);
-    expect(el.children).toHaveLength(3);
+    expect(el.children).toHaveLength(2);
 
     const photo = el.children[0] as HTMLImageElement;
     expect(photo.tagName).toBe('IMG');
@@ -30,9 +30,6 @@ describe('GuidanceBanner', () => {
 
     const text = el.children[1] as HTMLElement;
     expect(text.className).toBe('maptour-guidance-banner__text');
-
-    const action = el.children[2] as HTMLButtonElement;
-    expect(action.className).toBe('maptour-guidance-banner__action');
   });
 
   it('setWaypoint updates text', () => {

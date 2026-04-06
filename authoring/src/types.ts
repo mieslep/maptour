@@ -46,6 +46,8 @@ export interface Waypoint {
   coords: [number, number];
   text: string;
   photo?: string;
+  photo_caption?: string;
+  photo_alt?: string;
   journey_card?: boolean;
   content?: ContentBlock[];
   radius?: number;

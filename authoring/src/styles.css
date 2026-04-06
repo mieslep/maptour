@@ -574,6 +574,36 @@ textarea.input {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
+.wp-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.wp-mode-toggle__btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.wp-mode-toggle__btn + .wp-mode-toggle__btn {
+  border-left: 1px solid #cbd5e1;
+}
+
+.wp-mode-toggle__btn--active {
+  background: #3b82f6;
+  color: white;
+}
+
 /* ---- Device Preview Frame ---- */
 
 /* Device category tabs */

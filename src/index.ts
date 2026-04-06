@@ -3,7 +3,6 @@ import '../styles/maptour.css';
 import { loadTour } from './loader';
 import { MapView } from './map/MapView';
 import { NavController } from './navigation/NavController';
-import { NavAppPreference } from './navigation/NavAppPreference';
 import { GpsTracker } from './gps/GpsTracker';
 import { nearestStop } from './gps/nearestStop';
 import { ProximityDetector } from './gps/proximityDetector';
@@ -83,11 +82,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // === Card system ===
   const cardHost = new CardHost(cardEl);
-  const navPreference = new NavAppPreference();
-  const stopCardRenderer = new StopCardRenderer(navPreference);
-  stopCardRenderer.setTourNavMode(tour.tour.nav_mode);
-  const journeyCardRenderer = new JourneyCardRenderer(navPreference);
-  journeyCardRenderer.setTourNavMode(tour.tour.nav_mode);
+  const stopCardRenderer = new StopCardRenderer();
+  const journeyCardRenderer = new JourneyCardRenderer();
 
   // === UI components ===
   const transitBar = new InTransitBar(container);
@@ -197,7 +193,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
       setStopListOpen(false);
       const nextStop = navController.getNextStop(index);
       cardHost.render((c) => stopCardRenderer.render(c, stop, index + 1, tour.stops.length));
-      stopCardRenderer.setSuppressGettingHereNote(false);
       mapView.setActiveStop(stop);
       mapView.setVisitedStops(session.getVisited());
       tourFooter.update(session.getVisited().size, tour.stops.length);
@@ -270,7 +265,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
   overviewControls.onBegin((index, reversed) => {
     session.setStartIndex(index);
     session.setReversed(reversed);
-    stopCardRenderer.setStartingStop(index);
     navController.resetReturnState();
     if (mapPanel) mapPanel.hide();
     journeyState.transition('at_stop', index);
@@ -283,7 +277,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
     welcome: tour.tour.welcome, hideFooterCta: !isMobile,
     onBegin: () => {
       session.setStartIndex(session.overviewSelectedIndex);
-      stopCardRenderer.setStartingStop(session.overviewSelectedIndex);
       navController.resetReturnState();
       journeyState.transition('at_stop', session.overviewSelectedIndex);
     },
@@ -348,7 +341,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     tour, session, mapView, navController, sheet, mapPanel, menuBar,
     tourFooter, overviewControls, stopListOverlay, transitBar,
     cardHost, journeyCardRenderer, guidanceBanner, arrivingBanner,
-    sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
+    container, sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
     renderWelcome, renderGoodbye,
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },
     onOverviewEnter: () => { gpsOverviewApplied = false; },

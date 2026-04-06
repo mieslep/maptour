@@ -236,11 +236,8 @@ describe('WaypointTracker', () => {
       cb.onJourneyCard = vi.fn((_wp, onDismiss) => onDismiss());
       const tracker = new WaypointTracker(wps, cb);
 
-      // Advance past first (light)
-      tracker.advance();
-      expect(cb.onAdvance).toHaveBeenCalledWith(wps[1], wps[2]);
-
-      // Advance past second (journey card — auto-dismissed)
+      // Advance past first (light) — next is journey card, so it auto-advances
+      // into onJourneyCard (auto-dismissed), then onAdvance for the third
       tracker.advance();
       expect(cb.onJourneyCard).toHaveBeenCalledTimes(1);
       expect(cb.onAdvance).toHaveBeenCalledWith(wps[2], null);

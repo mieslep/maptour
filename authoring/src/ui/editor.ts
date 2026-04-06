@@ -2794,80 +2794,179 @@ export class TourEditor {
     title.style.cssText = 'margin:0 0 16px; font-size:16px; font-weight:600;';
     modal.appendChild(title);
 
-    // Text field (required)
+    // === Mode toggle: Basic Waypoint / Journey Card ===
+    const isJourneyCard = !!wp.journey_card || (wp.content !== undefined && wp.content.length > 0);
+    let mode: 'basic' | 'journey' = isJourneyCard ? 'journey' : 'basic';
+
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'wp-mode-toggle';
+
+    const basicBtn = document.createElement('button');
+    basicBtn.className = 'wp-mode-toggle__btn';
+    basicBtn.textContent = 'Basic Waypoint';
+
+    const journeyBtn = document.createElement('button');
+    journeyBtn.className = 'wp-mode-toggle__btn';
+    journeyBtn.textContent = 'Journey Card';
+
+    toggleRow.appendChild(basicBtn);
+    toggleRow.appendChild(journeyBtn);
+    modal.appendChild(toggleRow);
+
+    // === Basic waypoint fields ===
+    const basicFields = document.createElement('div');
+
+    // Text field
     const textLabel = document.createElement('label');
-    textLabel.textContent = 'Text';
+    textLabel.textContent = 'Guidance text';
     textLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
-    modal.appendChild(textLabel);
+    basicFields.appendChild(textLabel);
     const textArea = document.createElement('textarea');
     textArea.className = 'input';
     textArea.placeholder = 'e.g. Head towards the red house';
     textArea.value = wp.text || '';
     textArea.rows = 3;
     textArea.style.cssText = 'width:100%; margin-bottom:12px; resize:vertical;';
-    modal.appendChild(textArea);
+    basicFields.appendChild(textArea);
 
-    // Photo URL (optional)
-    const photoLabel = document.createElement('label');
-    photoLabel.textContent = 'Photo URL (optional)';
-    photoLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
-    modal.appendChild(photoLabel);
+    // Image section — "Add Image" / expanded fields
+    const imageSection = document.createElement('div');
+    imageSection.style.cssText = 'margin-bottom:12px;';
+
+    const addImageBtn = document.createElement('button');
+    addImageBtn.className = 'btn btn-sm';
+    addImageBtn.textContent = '+ Add Image';
+    addImageBtn.style.cssText = 'margin-bottom:8px;';
+
+    const imageFields = document.createElement('div');
+    imageFields.className = 'wp-image-fields';
+
+    // Image URL
+    const urlLabel = document.createElement('label');
+    urlLabel.textContent = 'Image URL';
+    urlLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    imageFields.appendChild(urlLabel);
     const photoInput = document.createElement('input');
     photoInput.type = 'text';
     photoInput.className = 'input';
     photoInput.placeholder = 'https://...';
     photoInput.value = wp.photo || '';
-    photoInput.style.cssText = 'width:100%; margin-bottom:12px;';
-    modal.appendChild(photoInput);
+    photoInput.style.cssText = 'width:100%; margin-bottom:8px;';
+    imageFields.appendChild(photoInput);
 
-    // Journey card toggle
-    const journeyRow = document.createElement('div');
-    journeyRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:12px;';
-    const journeyCheck = document.createElement('input');
-    journeyCheck.type = 'checkbox';
-    journeyCheck.id = 'wp-journey-toggle';
-    journeyCheck.checked = !!wp.journey_card;
-    journeyRow.appendChild(journeyCheck);
-    const journeyLabel = document.createElement('label');
-    journeyLabel.htmlFor = 'wp-journey-toggle';
-    journeyLabel.textContent = 'Make this a journey card';
-    journeyLabel.style.cssText = 'font-size:13px; font-weight:500; color:#334155; cursor:pointer;';
-    journeyRow.appendChild(journeyLabel);
-    modal.appendChild(journeyRow);
+    // Preview
+    const photoPreview = document.createElement('div');
+    photoPreview.style.cssText = 'margin-bottom:8px;';
+    let previewTimer: ReturnType<typeof setTimeout> | null = null;
+    const updatePhotoPreview = () => {
+      if (previewTimer) clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        photoPreview.innerHTML = '';
+        const url = photoInput.value.trim();
+        if (url) {
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.cssText = 'max-width:100%; max-height:150px; border-radius:4px;';
+          img.onerror = () => { photoPreview.textContent = 'Image not found'; };
+          photoPreview.appendChild(img);
+        }
+      }, 400);
+    };
+    photoInput.oninput = updatePhotoPreview;
+    imageFields.appendChild(photoPreview);
 
-    // Content blocks container (shown when journey card toggled on)
-    const contentContainer = document.createElement('div');
-    contentContainer.style.cssText = 'margin-bottom:12px;';
-    if (!wp.journey_card) contentContainer.style.display = 'none';
+    // Caption
+    const captionLabel = document.createElement('label');
+    captionLabel.textContent = 'Caption (optional)';
+    captionLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    imageFields.appendChild(captionLabel);
+    const captionInput = document.createElement('input');
+    captionInput.type = 'text';
+    captionInput.className = 'input';
+    captionInput.placeholder = 'Caption';
+    captionInput.value = wp.photo_caption || '';
+    captionInput.style.cssText = 'width:100%; margin-bottom:8px;';
+    imageFields.appendChild(captionInput);
+
+    // Alt text
+    const altLabel = document.createElement('label');
+    altLabel.textContent = 'Alt text (optional)';
+    altLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    imageFields.appendChild(altLabel);
+    const altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.className = 'input';
+    altInput.placeholder = 'Alt text';
+    altInput.value = wp.photo_alt || '';
+    altInput.style.cssText = 'width:100%; margin-bottom:8px;';
+    imageFields.appendChild(altInput);
+
+    // Remove image button
+    const removeImageBtn = document.createElement('button');
+    removeImageBtn.className = 'btn btn-sm btn-danger';
+    removeImageBtn.textContent = 'Remove Image';
+    removeImageBtn.style.cssText = 'margin-bottom:4px;';
+    imageFields.appendChild(removeImageBtn);
+
+    const hasImage = !!wp.photo;
+    const showImageFields = (show: boolean) => {
+      addImageBtn.style.display = show ? 'none' : '';
+      imageFields.style.display = show ? '' : 'none';
+      if (show) updatePhotoPreview();
+    };
+    showImageFields(hasImage);
+
+    addImageBtn.onclick = () => showImageFields(true);
+    removeImageBtn.onclick = () => {
+      photoInput.value = '';
+      captionInput.value = '';
+      altInput.value = '';
+      photoPreview.innerHTML = '';
+      showImageFields(false);
+    };
+
+    imageSection.appendChild(addImageBtn);
+    imageSection.appendChild(imageFields);
+    basicFields.appendChild(imageSection);
+
+    modal.appendChild(basicFields);
+
+    // === Journey card fields ===
+    const journeyFields = document.createElement('div');
+    journeyFields.style.cssText = 'margin-bottom:12px;';
 
     const rebuildContentBlocks = () => {
-      contentContainer.innerHTML = '';
+      journeyFields.innerHTML = '';
       if (!wp.content) wp.content = [];
       const contentLabel = document.createElement('div');
       contentLabel.textContent = 'Content Blocks';
       contentLabel.style.cssText = 'font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
-      contentContainer.appendChild(contentLabel);
-      contentContainer.appendChild(renderContentBlockEditor(
+      journeyFields.appendChild(contentLabel);
+      journeyFields.appendChild(renderContentBlockEditor(
         wp.content!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
       ));
     };
 
-    if (wp.journey_card) rebuildContentBlocks();
-    modal.appendChild(contentContainer);
+    modal.appendChild(journeyFields);
 
-    journeyCheck.onchange = () => {
-      if (journeyCheck.checked) {
-        contentContainer.style.display = '';
-        if (!wp.content || wp.content.length === 0) {
-          wp.content = [{ type: 'text', body: '' }];
-        }
-        rebuildContentBlocks();
-      } else {
-        contentContainer.style.display = 'none';
+    // === Mode switch logic ===
+    const setMode = (m: 'basic' | 'journey') => {
+      mode = m;
+      basicBtn.classList.toggle('wp-mode-toggle__btn--active', m === 'basic');
+      journeyBtn.classList.toggle('wp-mode-toggle__btn--active', m === 'journey');
+      basicFields.style.display = m === 'basic' ? '' : 'none';
+      journeyFields.style.display = m === 'journey' ? '' : 'none';
+      if (m === 'journey' && (!wp.content || wp.content.length === 0)) {
+        wp.content = [{ type: 'text', body: '' }];
       }
+      if (m === 'journey') rebuildContentBlocks();
     };
 
-    // Approach radius override
+    basicBtn.onclick = () => setMode('basic');
+    journeyBtn.onclick = () => setMode('journey');
+    setMode(mode);
+
+    // === Approach radius override ===
     const radiusLabel = document.createElement('label');
     radiusLabel.textContent = 'Approach radius override (optional)';
     radiusLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
@@ -2880,7 +2979,12 @@ export class TourEditor {
     radiusInput.style.cssText = 'width:100%; margin-bottom:16px;';
     modal.appendChild(radiusInput);
 
-    // Buttons
+    // === Validation message ===
+    const validationMsg = document.createElement('div');
+    validationMsg.style.cssText = 'color:#dc2626; font-size:13px; margin-bottom:8px; display:none;';
+    modal.appendChild(validationMsg);
+
+    // === Buttons ===
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
 
@@ -2912,11 +3016,38 @@ export class TourEditor {
     saveBtn.className = 'btn btn-sm btn-primary';
     saveBtn.textContent = 'Save';
     saveBtn.onclick = () => {
+      // Validate
+      if (mode === 'basic') {
+        if (!textArea.value.trim()) {
+          validationMsg.textContent = 'Basic waypoint requires guidance text.';
+          validationMsg.style.display = '';
+          textArea.focus();
+          return;
+        }
+      } else {
+        const blocks = wp.content ?? [];
+        if (blocks.length === 0) {
+          validationMsg.textContent = 'Journey card requires at least one content block.';
+          validationMsg.style.display = '';
+          return;
+        }
+      }
+      validationMsg.style.display = 'none';
+
       this.withUndo(() => {
-        wp.text = textArea.value;
-        wp.photo = photoInput.value.trim() || undefined;
-        wp.journey_card = journeyCheck.checked || undefined;
-        if (!journeyCheck.checked) wp.content = undefined;
+        if (mode === 'basic') {
+          wp.text = textArea.value;
+          wp.photo = photoInput.value.trim() || undefined;
+          wp.photo_caption = captionInput.value.trim() || undefined;
+          wp.photo_alt = altInput.value.trim() || undefined;
+          wp.journey_card = undefined;
+          wp.content = undefined;
+        } else {
+          wp.photo = undefined;
+          wp.photo_caption = undefined;
+          wp.photo_alt = undefined;
+          wp.journey_card = true;
+        }
         const radiusVal = parseFloat(radiusInput.value);
         wp.radius = isNaN(radiusVal) ? undefined : radiusVal;
       });
@@ -2936,7 +3067,7 @@ export class TourEditor {
 
     this.mapContainer.appendChild(overlay);
     L.DomEvent.disableClickPropagation(overlay);
-    textArea.focus();
+    if (mode === 'basic') textArea.focus();
   }
 
   private showOrsKeyModal(onSaved?: () => void): void {

@@ -41,6 +41,8 @@ function cleanWaypoint(wp: Waypoint): Record<string, unknown> {
     text: wp.text,
   };
   if (wp.photo) result.photo = wp.photo;
+  if (wp.photo_caption) result.photo_caption = wp.photo_caption;
+  if (wp.photo_alt) result.photo_alt = wp.photo_alt;
   if (wp.journey_card === true) result.journey_card = true;
   if (wp.content && wp.content.length > 0) result.content = wp.content.map(cleanBlock);
   if (wp.radius !== undefined) result.radius = wp.radius;

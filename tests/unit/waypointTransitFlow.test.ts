@@ -72,20 +72,15 @@ describe('Waypoint transit flow integration', () => {
     ];
     const tracker = new WaypointTracker(waypoints, callbacks);
 
-    // Advance past light waypoint 0
-    tracker.advance();
-    expect(callbacks.onAdvance).toHaveBeenCalledOnce();
-    expect(callbacks.onJourneyCard).not.toHaveBeenCalled();
-
-    // Advance past journey card waypoint 1
+    // Advance past light waypoint 0 — next is a journey card, so auto-advances
     tracker.advance();
     expect(callbacks.onJourneyCard).toHaveBeenCalledOnce();
     expect(callbacks.onJourneyCard.mock.calls[0][0]).toBe(waypoints[1]);
 
-    // Simulate dismiss → should fire onAdvance for the next waypoint
+    // Simulate dismiss → should fire onAdvance for the last light waypoint
     const onDismiss = callbacks.onJourneyCard.mock.calls[0][1];
     onDismiss();
-    expect(callbacks.onAdvance).toHaveBeenCalledTimes(2);
+    expect(callbacks.onAdvance).toHaveBeenCalledOnce();
     expect(callbacks.onAdvance).toHaveBeenLastCalledWith(waypoints[2], null);
 
     // Advance past last light waypoint
@@ -107,26 +102,19 @@ describe('Waypoint transit flow integration', () => {
     expect(callbacks.onJourneyCard).toHaveBeenCalledTimes(1);
     expect(callbacks.onJourneyCard.mock.calls[0][0].text).toBe('Card 1');
 
-    // Dismiss first → should show second
+    // Dismiss first → auto-advances into second journey card
     callbacks.onJourneyCard.mock.calls[0][1]();
-    expect(callbacks.onAdvance).toHaveBeenCalledTimes(1);
-    expect(callbacks.onAdvance.mock.calls[0][0].text).toBe('Card 2');
-
-    // Second journey card
-    tracker.advance();
     expect(callbacks.onJourneyCard).toHaveBeenCalledTimes(2);
     expect(callbacks.onJourneyCard.mock.calls[1][0].text).toBe('Card 2');
 
-    // Dismiss second → should show third
+    // Dismiss second → auto-advances into third journey card
     callbacks.onJourneyCard.mock.calls[1][1]();
-    expect(callbacks.onAdvance).toHaveBeenCalledTimes(2);
-
-    // Third journey card
-    tracker.advance();
     expect(callbacks.onJourneyCard).toHaveBeenCalledTimes(3);
+    expect(callbacks.onJourneyCard.mock.calls[2][0].text).toBe('Card 3');
 
     // Dismiss third → complete
     callbacks.onJourneyCard.mock.calls[2][1]();
+    expect(callbacks.onAdvance).not.toHaveBeenCalled();
     expect(callbacks.onComplete).toHaveBeenCalledOnce();
   });
 

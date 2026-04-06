@@ -32,6 +32,7 @@ export interface JourneyHandlerDeps {
   journeyCardRenderer: JourneyCardRenderer;
   guidanceBanner: GuidanceBanner;
   arrivingBanner: ArrivingBanner;
+  container: HTMLElement;
   sheetContentEl: HTMLElement | null;
   isMobile: boolean;
   setStopListOpen: (open: boolean) => void;
@@ -58,26 +59,35 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     tour, session, mapView, navController,
     sheet, mapPanel, menuBar, tourFooter, overviewControls,
     stopListOverlay, transitBar, cardHost, journeyCardRenderer,
-    guidanceBanner, arrivingBanner, sheetContentEl,
+    guidanceBanner, arrivingBanner, container, sheetContentEl,
     isMobile, setStopListOpen, setViewingSystemCard,
     renderWelcome, renderGoodbye, onStopActivated, onOverviewEnter,
     transitionToStop, setMapFabVisible,
   } = deps;
 
   let activeWaypointTracker: WaypointTracker | null = null;
+  let pendingJourneyCardDismiss: (() => void) | null = null;
+  const footerOriginalParent = tourFooter.getElement().parentElement;
 
-  // Wire "I'm here" button to advance the waypoint tracker
+  // Wire footer "Continue" button to advance the waypoint tracker
   tourFooter.onImHere(() => {
-    if (activeWaypointTracker && !activeWaypointTracker.isComplete()) {
+    if (pendingJourneyCardDismiss) {
+      const dismiss = pendingJourneyCardDismiss;
+      pendingJourneyCardDismiss = null;
+      dismiss();
+    } else if (activeWaypointTracker && !activeWaypointTracker.isComplete()) {
       activeWaypointTracker.advance();
     }
   });
 
   function cleanupWaypointTransit(): void {
     activeWaypointTracker = null;
+    pendingJourneyCardDismiss = null;
     guidanceBanner.hide();
     mapView.clearWaypoints();
     tourFooter.exitWaypointMode();
+    // Move footer back to its original parent (inside the sheet)
+    if (footerOriginalParent) footerOriginalParent.appendChild(tourFooter.getElement());
     if (mapPanel) {
       mapPanel.hide();
     }
@@ -151,6 +161,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
       if (waypoints && waypoints.length > 0) {
         // === Waypoint transit mode ===
+        cardHost.render(() => {}); // Clear stop card content
         mapView.setOverviewMode(false);
         overviewControls.hide();
         if (sheet) sheet.setPosition('collapsed', true);
@@ -161,13 +172,6 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           // Allow map to settle before zooming
           requestAnimationFrame(() => mapView.invalidateSize());
         }
-
-        // Wire guidance banner "I'm here" button
-        guidanceBanner.onAction(() => {
-          if (activeWaypointTracker && !activeWaypointTracker.isComplete()) {
-            activeWaypointTracker.advance();
-          }
-        });
 
         // Create waypoint tracker
         activeWaypointTracker = new WaypointTracker(waypoints, {
@@ -180,22 +184,43 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             // Update guidance banner with next waypoint
             guidanceBanner.setWaypoint(nextWaypoint);
             tourFooter.updateWaypointProgress(progress);
+            // Move footer to container overlay for map view
+            container.appendChild(tourFooter.getElement());
+            tourFooter.getElement().classList.add('maptour-tour-footer--waypoint');
             // Ensure map is showing (may have been hidden for journey card)
-            if (mapPanel && !mapPanel.isOpen()) {
+            if (mapPanel) {
               mapPanel.setHeaderVisible(false);
-              mapPanel.show();
-              requestAnimationFrame(() => mapView.invalidateSize());
+              if (!mapPanel.isOpen()) {
+                mapPanel.show();
+                requestAnimationFrame(() => mapView.invalidateSize());
+              }
             }
           },
           onJourneyCard: (waypoint, onDismiss) => {
+            // Update map to this waypoint's segment (even though map is hidden,
+            // it will be correct if the user peeks via the FAB).
+            // Use current - 1 as active: advance() already incremented past this waypoint.
+            const progress = activeWaypointTracker!.getProgress();
+            const displayIndex = Math.max(0, progress.current - 1);
+            mapView.setWaypoints(waypoints, displayIndex);
+            const bounds = activeWaypointTracker!.getSegmentBounds();
+            mapView.zoomToSegment(bounds.from, bounds.to);
+            tourFooter.updateWaypointProgress(progress);
+
             // Show journey card — hide map, show card view
             guidanceBanner.hide();
-            if (mapPanel) mapPanel.hide();
-            cardHost.render((c) => journeyCardRenderer.renderWaypoint(c, waypoint, () => {
-              // On continue: dismiss card, resume waypoint transit
-              onDismiss();
-            }));
+            if (mapPanel) {
+              mapPanel.hide();
+              // Show FAB so user can peek at map for orientation
+              mapPanel.setHeaderVisible(true);
+            }
+            // Move footer back to sheet for journey card view
+            if (footerOriginalParent) footerOriginalParent.appendChild(tourFooter.getElement());
+            tourFooter.getElement().classList.remove('maptour-tour-footer--waypoint');
+            cardHost.render((c) => journeyCardRenderer.renderWaypoint(c, waypoint));
             if (sheet) sheet.setPosition('expanded', true);
+            // Store dismiss callback — footer "Continue" will call it
+            pendingJourneyCardDismiss = onDismiss;
           },
           onComplete: () => {
             // All waypoints cleared — transition to destination stop
@@ -209,6 +234,9 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
         mapView.setWaypoints(waypoints, 0);
         mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords);
 
+        // Move footer to container so it sits above the map panel (sheet has
+        // will-change:transform which breaks position:fixed inside it)
+        container.appendChild(tourFooter.getElement());
         // Set footer to waypoint mode (for progress track)
         tourFooter.enterWaypointMode(activeWaypointTracker.getProgress());
 

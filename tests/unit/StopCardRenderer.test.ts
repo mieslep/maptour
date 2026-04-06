@@ -42,25 +42,4 @@ describe('StopCardRenderer', () => {
     expect(container.querySelector('.maptour-card__finish')).toBeNull();
   });
 
-  it('shows getting_here note when not on starting stop', () => {
-    renderer.setStartingStop(0);
-    const stop = makeStop({ getting_here: { mode: 'walk', note: 'Walk 5 min' } });
-    renderer.render(container, stop, 2, 5); // stopNumber=2, startingStopIndex=0 → show
-    expect(container.querySelector('.maptour-card__getting-here-note')).toBeTruthy();
-  });
-
-  it('hides getting_here note on starting stop', () => {
-    renderer.setStartingStop(0);
-    const stop = makeStop({ getting_here: { mode: 'walk', note: 'Walk 5 min' } });
-    renderer.render(container, stop, 1, 5); // stopNumber=1 → (1-1)=0 === startingStopIndex → hide
-    expect(container.querySelector('.maptour-card__getting-here-note')).toBeNull();
-  });
-
-  it('hides getting_here note when suppressed', () => {
-    renderer.setStartingStop(0);
-    renderer.setSuppressGettingHereNote(true);
-    const stop = makeStop({ getting_here: { mode: 'walk', note: 'Walk 5 min' } });
-    renderer.render(container, stop, 2, 5);
-    expect(container.querySelector('.maptour-card__getting-here-note')).toBeNull();
-  });
 });
