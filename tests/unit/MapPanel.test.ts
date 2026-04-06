@@ -29,15 +29,27 @@ describe('MapPanel', () => {
     expect(panel.isOpen()).toBe(false);
   });
 
-  it('creates panel with close button in container', () => {
+  it('creates panel in container', () => {
     expect(container.querySelector('.maptour-map-panel')).not.toBeNull();
-    expect(container.querySelector('.maptour-map-panel__close')).not.toBeNull();
   });
 
-  it('header has close button with X icon', () => {
-    const closeBtn = container.querySelector('.maptour-map-panel__close');
-    expect(closeBtn).not.toBeNull();
-    expect(closeBtn!.querySelector('.fa-xmark')).not.toBeNull();
+  it('FAB shows map icon initially', () => {
+    const btn = panel.getOpenButton();
+    expect(btn.querySelector('.fa-map')).not.toBeNull();
+  });
+
+  it('FAB switches to X icon when map is open', () => {
+    panel.show();
+    const btn = panel.getOpenButton();
+    expect(btn.querySelector('.fa-xmark')).not.toBeNull();
+    expect(btn.querySelector('.fa-map')).toBeNull();
+  });
+
+  it('FAB switches back to map icon when closed', () => {
+    panel.show();
+    panel.hide();
+    const btn = panel.getOpenButton();
+    expect(btn.querySelector('.fa-map')).not.toBeNull();
   });
 
   it('getOpenButton returns a button with map icon', () => {
@@ -70,9 +82,9 @@ describe('MapPanel', () => {
     expect(panel.isOpen()).toBe(true);
   });
 
-  it('close button click closes', () => {
+  it('FAB click when open closes the panel', () => {
     panel.show();
-    container.querySelector<HTMLElement>('.maptour-map-panel__close')!.click();
+    panel.getOpenButton().click();
     expect(panel.isOpen()).toBe(false);
   });
 

@@ -5,8 +5,7 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 export class MapPanel {
   private readonly panel: HTMLElement;
-  private readonly closeBtn: HTMLButtonElement;
-  private readonly openBtn: HTMLButtonElement;
+  private readonly fab: HTMLButtonElement;
   private open = false;
   private toggleCallbacks: Array<(open: boolean) => void> = [];
 
@@ -14,25 +13,16 @@ export class MapPanel {
     this.panel = document.createElement('div');
     this.panel.className = 'maptour-map-panel';
 
-    // Close button — floats inside the map panel, top-right
-    this.closeBtn = document.createElement('button');
-    this.closeBtn.className = 'maptour-map-panel__close';
-    this.closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
-    this.closeBtn.setAttribute('aria-label', t('show_stop'));
-    this.closeBtn.addEventListener('click', () => this.hide());
-
-    this.panel.appendChild(this.closeBtn);
     this.panel.appendChild(mapPane);
-
     container.appendChild(this.panel);
 
-    // Open button — floating FAB, positioned by CSS
-    this.openBtn = document.createElement('button');
-    this.openBtn.className = 'maptour-map-open-btn';
-    this.openBtn.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
-    this.openBtn.setAttribute('aria-label', t('show_map'));
-    this.openBtn.title = t('show_map');
-    this.openBtn.addEventListener('click', () => this.show());
+    // Single FAB that toggles between map icon and close icon
+    this.fab = document.createElement('button');
+    this.fab.className = 'maptour-map-open-btn';
+    this.fab.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
+    this.fab.setAttribute('aria-label', t('show_map'));
+    this.fab.title = t('show_map');
+    this.fab.addEventListener('click', () => this.toggle());
 
     this.panel.addEventListener('transitionend', (e) => {
       if (e.propertyName === 'transform') {
@@ -42,12 +32,12 @@ export class MapPanel {
   }
 
   getOpenButton(): HTMLButtonElement {
-    return this.openBtn;
+    return this.fab;
   }
 
   /** Keep for API compat — no longer renders nav button. */
   setActiveStop(_stop: Stop, _tourNavMode?: LegMode): void {
-    // Nav button removed from map panel header
+    // Nav button removed from map panel
   }
 
   toggle(): void {
@@ -58,7 +48,11 @@ export class MapPanel {
     if (this.open) return;
     this.open = true;
     this.panel.classList.add('maptour-map-panel--open');
-    this.closeBtn.hidden = false;
+    // Transform FAB into close button
+    this.fab.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    this.fab.setAttribute('aria-label', t('show_stop'));
+    this.fab.title = t('show_stop');
+    this.fab.classList.add('maptour-map-open-btn--close');
     if (this.prefersReducedMotion()) {
       this.toggleCallbacks.forEach((cb) => cb(this.open));
     }
@@ -68,6 +62,11 @@ export class MapPanel {
     if (!this.open) return;
     this.open = false;
     this.panel.classList.remove('maptour-map-panel--open');
+    // Restore FAB to map icon
+    this.fab.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
+    this.fab.setAttribute('aria-label', t('show_map'));
+    this.fab.title = t('show_map');
+    this.fab.classList.remove('maptour-map-open-btn--close');
     if (this.prefersReducedMotion()) {
       this.toggleCallbacks.forEach((cb) => cb(this.open));
     }
@@ -84,9 +83,9 @@ export class MapPanel {
       && window.matchMedia(REDUCED_MOTION_QUERY).matches;
   }
 
-  /** Show or hide the close button. Hidden during waypoint transit (no manual close). */
+  /** Hide the FAB entirely (e.g. during waypoint transit). */
   setHeaderVisible(visible: boolean): void {
-    this.closeBtn.hidden = !visible;
+    this.fab.hidden = !visible;
     this.panel.classList.toggle('maptour-map-panel--full-height', !visible);
   }
 
@@ -96,6 +95,6 @@ export class MapPanel {
 
   destroy(): void {
     this.panel.remove();
-    this.openBtn.remove();
+    this.fab.remove();
   }
 }

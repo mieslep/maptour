@@ -152,10 +152,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
     mapPanel.getElement().appendChild(overviewControls.getElement());
 
     let mapPanelCentred = false;
-    const mapFab = mapPanel.getOpenButton();
     mapPanel.onToggle((isOpen) => {
       menuBar.close();
-      mapFab.hidden = isOpen; // hide FAB when map is open
       if (journeyState.getState() === 'tour_start') menuBar.getElement().style.display = isOpen ? 'none' : '';
       mapView.invalidateSize();
       if (isOpen && !mapPanelCentred) {
@@ -190,7 +188,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     });
 
     // Map open FAB — append to container, positioned by CSS
-    container.appendChild(mapFab);
+    container.appendChild(mapPanel.getOpenButton());
   }
 
   // === NavController ===
@@ -355,7 +353,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },
     onOverviewEnter: () => { gpsOverviewApplied = false; },
     transitionToStop: (stopIndex) => { journeyState.transition('at_stop', stopIndex); },
-    setMapFabVisible: isMobile && mapPanel ? (visible) => { mapPanel!.getOpenButton().hidden = !visible; } : undefined,
+    setMapFabVisible: isMobile && mapPanel ? (visible) => { mapPanel!.setHeaderVisible(visible); } : undefined,
   }));
 
   // === GPS (deferred — starts on user action) ===
