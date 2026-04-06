@@ -33,6 +33,7 @@ export interface JourneyHandlerDeps {
   guidanceBanner: GuidanceBanner;
   arrivingBanner: ArrivingBanner;
   container: HTMLElement;
+  mapPane: HTMLElement;
   sheetContentEl: HTMLElement | null;
   isMobile: boolean;
   setStopListOpen: (open: boolean) => void;
@@ -59,7 +60,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     tour, session, mapView, navController,
     sheet, mapPanel, menuBar, tourFooter, overviewControls,
     stopListOverlay, transitBar, cardHost, journeyCardRenderer,
-    guidanceBanner, arrivingBanner, container, sheetContentEl,
+    guidanceBanner, arrivingBanner, container, mapPane, sheetContentEl,
     isMobile, setStopListOpen, setViewingSystemCard,
     renderWelcome, renderGoodbye, onStopActivated, onOverviewEnter,
     transitionToStop, setMapFabVisible,
@@ -68,6 +69,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
   let activeWaypointTracker: WaypointTracker | null = null;
   let pendingJourneyCardDismiss: (() => void) | null = null;
   const footerOriginalParent = tourFooter.getElement().parentElement;
+  const mapPaneOriginalParent = mapPane.parentElement;
 
   // Wire footer "Continue" button to advance the waypoint tracker
   tourFooter.onImHere(() => {
@@ -88,6 +90,11 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     tourFooter.exitWaypointMode();
     // Move footer back to its original parent (inside the sheet)
     if (footerOriginalParent) footerOriginalParent.appendChild(tourFooter.getElement());
+    // Move map pane back if it was embedded in a journey card
+    if (mapPaneOriginalParent && mapPane.parentElement !== mapPaneOriginalParent) {
+      mapPaneOriginalParent.appendChild(mapPane);
+      requestAnimationFrame(() => mapView.invalidateSize());
+    }
     if (mapPanel) {
       mapPanel.hide();
     }
@@ -187,6 +194,10 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             // Move footer to container overlay for map view
             container.appendChild(tourFooter.getElement());
             tourFooter.getElement().classList.add('maptour-tour-footer--waypoint');
+            // Move map pane back to map panel if it was embedded in a journey card
+            if (mapPaneOriginalParent && mapPane.parentElement !== mapPaneOriginalParent) {
+              mapPaneOriginalParent.appendChild(mapPane);
+            }
             // Ensure map is showing (may have been hidden for journey card)
             if (mapPanel) {
               mapPanel.setHeaderVisible(false);
@@ -209,15 +220,49 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
             // Show journey card — hide map, show card view
             guidanceBanner.hide();
-            if (mapPanel) {
-              mapPanel.hide();
-              // Show FAB so user can peek at map for orientation
-              mapPanel.setHeaderVisible(true);
-            }
             // Move footer back to sheet for journey card view
             if (footerOriginalParent) footerOriginalParent.appendChild(tourFooter.getElement());
             tourFooter.getElement().classList.remove('maptour-tour-footer--waypoint');
             cardHost.render((c) => journeyCardRenderer.renderWaypoint(c, waypoint));
+
+            // Check if the card has a map block — embed the map pane inline
+            const mapEmbed = cardHost.getContainer().querySelector('.maptour-card__map-embed') as HTMLElement | null;
+            if (mapEmbed) {
+              // Move map pane back from map panel first
+              if (mapPaneOriginalParent) mapPaneOriginalParent.appendChild(mapPane);
+              if (mapPanel) mapPanel.hide();
+              // Embed into the card
+              mapEmbed.appendChild(mapPane);
+              requestAnimationFrame(() => {
+                mapView.invalidateSize();
+                // Re-fit bounds for the smaller embed container with extra padding
+                const map = mapView.getMap();
+                mapView.zoomToSegment(bounds.from, bounds.to, 60);
+
+                // Apply optional relative zoom adjustment and centre nudge
+                const zoomDelta = parseFloat(mapEmbed.dataset.zoom ?? '');
+                const offsetX = parseFloat(mapEmbed.dataset.offsetX ?? '');
+                const offsetY = parseFloat(mapEmbed.dataset.offsetY ?? '');
+                if (!isNaN(zoomDelta) && zoomDelta !== 0) {
+                  map.setZoom(map.getZoom() + zoomDelta, { animate: false });
+                }
+                if (!isNaN(offsetX) || !isNaN(offsetY)) {
+                  const center = map.getCenter();
+                  const dLat = (isNaN(offsetY) ? 0 : offsetY) / 111320;
+                  const dLng = (isNaN(offsetX) ? 0 : offsetX) / (111320 * Math.cos(center.lat * Math.PI / 180));
+                  map.setView([center.lat + dLat, center.lng + dLng], map.getZoom(), { animate: false });
+                }
+              });
+              // No FAB needed — map is inline
+              if (mapPanel) mapPanel.setHeaderVisible(false);
+            } else {
+              if (mapPanel) {
+                mapPanel.hide();
+                // Show FAB so user can peek at map for orientation
+                mapPanel.setHeaderVisible(true);
+              }
+            }
+
             if (sheet) sheet.setPosition('expanded', true);
             // Store dismiss callback — footer "Continue" will call it
             pendingJourneyCardDismiss = onDismiss;

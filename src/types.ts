@@ -73,7 +73,15 @@ export interface AudioBlock {
   label?: string;
 }
 
-export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock;
+export interface MapBlock {
+  type: 'map';
+  height?: number;      // container height in px (default: 200)
+  zoom?: number;        // override zoom level
+  offset_x?: number;    // horizontal centre nudge in metres (positive = east)
+  offset_y?: number;    // vertical centre nudge in metres (positive = north)
+}
+
+export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock | MapBlock;
 
 export type LegMode = 'walk' | 'drive' | 'transit' | 'cycle';
 

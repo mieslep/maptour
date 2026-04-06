@@ -404,19 +404,19 @@ export class MapView {
   }
 
   /** Fit map bounds to show the segment between two points. */
-  zoomToSegment(from: [number, number], to: [number, number]): void {
+  zoomToSegment(from: [number, number], to: [number, number], padding = 40): void {
     const bounds = L.latLngBounds([from, to]);
     const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
       this.map.fitBounds(bounds, {
-        paddingTopLeft: [40, 40],
-        paddingBottomRight: [40, 40 + this.paddingBottom],
+        paddingTopLeft: [padding, padding],
+        paddingBottomRight: [padding, padding + this.paddingBottom],
         animate: false,
       });
     } else {
       this.map.flyToBounds(bounds, {
-        paddingTopLeft: [40, 40],
-        paddingBottomRight: [40, 40 + this.paddingBottom],
+        paddingTopLeft: [padding, padding],
+        paddingBottomRight: [padding, padding + this.paddingBottom],
         duration: 0.6,
       });
     }

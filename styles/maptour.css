@@ -1425,6 +1425,19 @@
   margin-bottom: 16px;
 }
 
+/* Inline map embed in journey cards */
+.maptour-card__map-embed {
+  position: relative;
+  width: 100%;
+  border-radius: var(--maptour-radius);
+  overflow: hidden;
+}
+
+.maptour-card__map-embed .maptour-map-pane {
+  position: absolute;
+  inset: 0;
+}
+
 /* === Content Blocks === */
 
 .maptour-block {

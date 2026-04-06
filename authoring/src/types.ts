@@ -40,7 +40,15 @@ export interface AudioBlock {
   label?: string;
 }
 
-export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock;
+export interface MapBlock {
+  type: 'map';
+  height?: number;
+  zoom?: number;
+  offset_x?: number;
+  offset_y?: number;
+}
+
+export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock | MapBlock;
 
 export interface Waypoint {
   coords: [number, number];

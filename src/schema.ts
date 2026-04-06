@@ -53,12 +53,21 @@ export const AudioBlockSchema = z.object({
   label: z.string().optional(),
 });
 
+export const MapBlockSchema = z.object({
+  type: z.literal('map'),
+  height: z.number().optional(),
+  zoom: z.number().optional(),
+  offset_x: z.number().optional(),
+  offset_y: z.number().optional(),
+});
+
 export const ContentBlockSchema = z.discriminatedUnion('type', [
   TextBlockSchema,
   ImageBlockSchema,
   GalleryBlockSchema,
   VideoBlockSchema,
   AudioBlockSchema,
+  MapBlockSchema,
 ]);
 
 // ---- Waypoint ----

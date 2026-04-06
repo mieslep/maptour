@@ -341,7 +341,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     tour, session, mapView, navController, sheet, mapPanel, menuBar,
     tourFooter, overviewControls, stopListOverlay, transitBar,
     cardHost, journeyCardRenderer, guidanceBanner, arrivingBanner,
-    container, sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
+    container, mapPane, sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
     renderWelcome, renderGoodbye,
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },
     onOverviewEnter: () => { gpsOverviewApplied = false; },
@@ -403,7 +403,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // Locate button + GPS denied toast
   let locateBtn: HTMLElement | null = null;
-  if (gpsTracker.isAvailable()) {
+  if (!isMobile && gpsTracker.isAvailable()) {
     locateBtn = mapView.addLocateButton(() => {
       if (gpsDenied) {
         showGpsToast();

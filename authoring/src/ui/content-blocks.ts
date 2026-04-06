@@ -147,6 +147,11 @@ function renderPreviewBlock(
     renderVideoPreview(content, block);
   } else if (block.type === 'audio') {
     renderAudioPreview(content, block);
+  } else if (block.type === 'map') {
+    const mapLabel = document.createElement('div');
+    mapLabel.style.cssText = 'display:flex; align-items:center; gap:6px; color:#64748b; font-size:13px;';
+    mapLabel.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i> Inline Map';
+    content.appendChild(mapLabel);
   }
 
   wrapper.appendChild(content);
@@ -159,6 +164,7 @@ function isBlockEmpty(block: ContentBlock): boolean {
   if (block.type === 'gallery') return block.images.length === 0 || block.images.every(i => !i.url.trim());
   if (block.type === 'video') return !block.url.trim();
   if (block.type === 'audio') return !block.url.trim();
+  if (block.type === 'map') return false;
   return true;
 }
 
@@ -377,7 +383,7 @@ function showTypePicker(anchor: HTMLElement, onPick: (type: ContentBlock['type']
   closeAllMenus();
   const menu = document.createElement('div');
   menu.className = 'cb-menu';
-  const types: ContentBlock['type'][] = ['text', 'image', 'gallery', 'video', 'audio'];
+  const types: ContentBlock['type'][] = ['text', 'image', 'gallery', 'video', 'audio', 'map'];
   for (const t of types) {
     const btn = document.createElement('button');
     btn.className = 'cb-menu-item';
@@ -411,6 +417,7 @@ function createEmptyBlock(type: ContentBlock['type']): ContentBlock {
   if (type === 'image') return { type: 'image', url: '' };
   if (type === 'gallery') return { type: 'gallery', images: [{ url: '' }] };
   if (type === 'video') return { type: 'video', url: '' };
+  if (type === 'map') return { type: 'map' };
   return { type: 'audio', url: '' };
 }
 
@@ -459,7 +466,7 @@ function openEditModal(
   typeLbl.textContent = 'Type';
   const typeSelect = document.createElement('select');
   typeSelect.className = 'input';
-  for (const t of ['text', 'image', 'gallery', 'video', 'audio']) {
+  for (const t of ['text', 'image', 'gallery', 'video', 'audio', 'map']) {
     const opt = document.createElement('option');
     opt.value = t;
     opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
@@ -491,6 +498,39 @@ function openEditModal(
     renderVideoModalFields(body, block, onChange);
   } else if (block.type === 'audio') {
     renderAudioModalFields(body, block, onChange);
+  } else if (block.type === 'map') {
+    const info = document.createElement('div');
+    info.style.cssText = 'color:#64748b; font-size:13px; padding:8px 0;';
+    info.textContent = 'Shows an inline map centred on the current waypoint segment.';
+    body.appendChild(info);
+
+    const heightInput = makeModalInput('Height', String(block.height ?? '200'), v => {
+      block.height = v ? Number(v) : undefined;
+      onChange();
+    });
+    (heightInput.querySelector('input') as HTMLInputElement).placeholder = '200 (pixels)';
+    body.appendChild(heightInput);
+
+    const zoomInput = makeModalInput('Zoom', String(block.zoom ?? ''), v => {
+      block.zoom = v ? Number(v) : undefined;
+      onChange();
+    });
+    (zoomInput.querySelector('input') as HTMLInputElement).placeholder = '0 (relative: +1 closer, −1 further)';
+    body.appendChild(zoomInput);
+
+    const oxInput = makeModalInput('Nudge east/west', String(block.offset_x ?? ''), v => {
+      block.offset_x = v ? Number(v) : undefined;
+      onChange();
+    });
+    (oxInput.querySelector('input') as HTMLInputElement).placeholder = '0 (metres, +east −west)';
+    body.appendChild(oxInput);
+
+    const oyInput = makeModalInput('Nudge north/south', String(block.offset_y ?? ''), v => {
+      block.offset_y = v ? Number(v) : undefined;
+      onChange();
+    });
+    (oyInput.querySelector('input') as HTMLInputElement).placeholder = '0 (metres, +north −south)';
+    body.appendChild(oyInput);
   }
 
   modal.appendChild(body);

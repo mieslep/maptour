@@ -173,6 +173,8 @@ stops:
           content:
             - type: text
               body: Turn left at the Friendship Seating Area. This was developed in 2022 with a partnership between Ennis Municipal District and the Ennis Mental Health Association, in the hope that it will become a special place to for people to meet and connect with one another in the town centre.
+            - type: map
+              height: 350
   - id: 3
     title: Contentment is Wealth
     coords:
