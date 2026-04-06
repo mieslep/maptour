@@ -492,6 +492,17 @@
   border: 1px solid var(--maptour-border);
 }
 
+/* FAB in "I'm here" mode — pill-shaped text button */
+.maptour-map-open-btn--im-here {
+  width: auto;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--maptour-font);
+  letter-spacing: 0.01em;
+}
+
 
 /* Card nav icon visible on mobile (directions are on the card, not map panel) */
 

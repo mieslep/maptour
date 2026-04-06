@@ -29,9 +29,10 @@ export class MapView {
 
     // Initialise Leaflet map
     this.map = L.map(container, {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: true,
     });
+    L.control.zoom({ position: 'bottomleft' }).addTo(this.map);
 
     container.setAttribute('role', 'application');
     container.setAttribute('aria-label', `Map for ${tour.tour.title}`);
