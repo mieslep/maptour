@@ -41,6 +41,7 @@ export interface JourneyHandlerDeps {
   onStopActivated?: (stopIndex: number) => void;
   onOverviewEnter?: () => void;
   transitionToStop: (stopIndex: number) => void;
+  setMapFabVisible?: (visible: boolean) => void;
 }
 
 /**
@@ -60,7 +61,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     guidanceBanner, arrivingBanner, sheetContentEl,
     isMobile, setStopListOpen, setViewingSystemCard,
     renderWelcome, renderGoodbye, onStopActivated, onOverviewEnter,
-    transitionToStop,
+    transitionToStop, setMapFabVisible,
   } = deps;
 
   let activeWaypointTracker: WaypointTracker | null = null;
@@ -90,6 +91,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
     if (state === 'tour_start') {
       cleanupWaypointTransit();
+      setMapFabVisible?.(false);
       if (sheet) sheet.setPosition('expanded', true);
       if (mapPanel) mapPanel.hide();
       mapView.setMapPadding(0);
@@ -119,6 +121,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
     } else if (state === 'at_stop') {
       cleanupWaypointTransit();
+      setMapFabVisible?.(true);
       // Layout transitions
       mapView.setOverviewMode(false);
       overviewControls.hide();
@@ -137,6 +140,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       onStopActivated?.(stopIndex);
 
     } else if (state === 'in_transit') {
+      setMapFabVisible?.(false);
       // Determine the destination stop
       const currentStop = tour.stops[stopIndex];
       const nextIndex = session.reversed
@@ -239,6 +243,7 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
     } else if (state === 'tour_complete') {
       cleanupWaypointTransit();
+      setMapFabVisible?.(false);
       mapView.setOverviewMode(false);
       overviewControls.hide();
       if (sheet) sheet.setPosition('expanded', true);

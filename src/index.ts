@@ -152,8 +152,10 @@ async function init(options: MapTourInitOptions): Promise<void> {
     mapPanel.getElement().appendChild(overviewControls.getElement());
 
     let mapPanelCentred = false;
+    const mapFab = mapPanel.getOpenButton();
     mapPanel.onToggle((isOpen) => {
       menuBar.close();
+      mapFab.hidden = isOpen; // hide FAB when map is open
       if (journeyState.getState() === 'tour_start') menuBar.getElement().style.display = isOpen ? 'none' : '';
       mapView.invalidateSize();
       if (isOpen && !mapPanelCentred) {
@@ -187,12 +189,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       if (!isOpen) mapPanelCentred = false;
     });
 
-    const mapOpenBtn = mapPanel.getOpenButton();
-    new MutationObserver(() => {
-      if (viewingSystemCard) return;
-      const header = cardEl.querySelector('.maptour-card__header');
-      if (header && !header.contains(mapOpenBtn)) header.appendChild(mapOpenBtn);
-    }).observe(cardEl, { childList: true });
+    // Map open FAB — append to container, positioned by CSS
+    container.appendChild(mapFab);
   }
 
   // === NavController ===
@@ -357,6 +355,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },
     onOverviewEnter: () => { gpsOverviewApplied = false; },
     transitionToStop: (stopIndex) => { journeyState.transition('at_stop', stopIndex); },
+    setMapFabVisible: isMobile && mapPanel ? (visible) => { mapPanel!.getOpenButton().hidden = !visible; } : undefined,
   }));
 
   // === GPS (deferred — starts on user action) ===

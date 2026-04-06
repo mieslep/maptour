@@ -29,9 +29,9 @@ describe('MapPanel', () => {
     expect(panel.isOpen()).toBe(false);
   });
 
-  it('creates panel with header in container', () => {
+  it('creates panel with close button in container', () => {
     expect(container.querySelector('.maptour-map-panel')).not.toBeNull();
-    expect(container.querySelector('.maptour-map-panel__header')).not.toBeNull();
+    expect(container.querySelector('.maptour-map-panel__close')).not.toBeNull();
   });
 
   it('header has close button with X icon', () => {
@@ -106,10 +106,11 @@ describe('MapPanel', () => {
     expect(calls).toEqual([true]);
   });
 
-  it('setActiveStop renders directions button in header', () => {
+  it('setActiveStop is callable without error (nav button removed)', () => {
     const stop = { id: 1, title: 'Test', coords: [52.84, -8.98] as [number, number], content: [], getting_here: { mode: 'walk' as const } };
     panel.setActiveStop(stop);
-    expect(container.querySelector('.maptour-map-panel__nav-btn .maptour-nav-btn')).not.toBeNull();
+    // Nav button was removed from map panel — setActiveStop is a no-op for API compat
+    expect(true).toBe(true);
   });
 
   it('destroy removes panel from DOM', () => {
