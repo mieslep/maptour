@@ -53,13 +53,36 @@ export const AudioBlockSchema = z.object({
   label: z.string().optional(),
 });
 
+export const MapBlockSchema = z.object({
+  type: z.literal('map'),
+  height: z.number().optional(),
+  zoom: z.number().optional(),
+  offset_x: z.number().optional(),
+  offset_y: z.number().optional(),
+});
+
 export const ContentBlockSchema = z.discriminatedUnion('type', [
   TextBlockSchema,
   ImageBlockSchema,
   GalleryBlockSchema,
   VideoBlockSchema,
   AudioBlockSchema,
+  MapBlockSchema,
 ]);
+
+// ---- Waypoint ----
+
+export const WaypointSchema = z.object({
+  coords: z.tuple([z.number().min(-90).max(90), z.number().min(-180).max(180)]),
+  text: z.string(),
+  photo: z.string().optional(),
+  journey_card: z.boolean().optional(),
+  content: z.array(ContentBlockSchema).optional(),
+  radius: z.number().positive().optional(),
+}).refine(
+  (wp) => wp.text.length > 0 || wp.journey_card === true || (wp.content && wp.content.length > 0),
+  { message: 'Light waypoints require non-empty text', path: ['text'] },
+);
 
 // ---- Leg / getting_here ----
 
@@ -69,8 +92,11 @@ export const LegSchema = z.object({
   mode: LegModeSchema,
   note: z.string().optional(),
   route: z.array(z.tuple([z.number(), z.number()])).optional(),
-  journey: z.array(ContentBlockSchema).optional(),
-});
+  waypoints: z.array(WaypointSchema).optional(),
+}).refine(
+  (leg) => !leg.waypoints?.length || leg.route?.length,
+  { message: 'Waypoints require a route on the leg', path: ['waypoints'] },
+);
 
 // ---- GPS config ----
 
@@ -118,6 +144,8 @@ export const TourMetaSchema = z.object({
   getting_here: z.array(ContentBlockSchema).optional(),
   nudge_return: z.boolean().optional(),
   require_scroll: z.boolean().optional(),
+  tour_url: z.string().optional(),
+  waypoint_radius: z.number().positive().optional(),
 });
 
 // ---- Top-level tour file ----
@@ -131,6 +159,7 @@ export const TourFileSchema = z.object({
 
 export type ContentBlock = z.infer<typeof ContentBlockSchema>;
 export type GalleryImage = z.infer<typeof GalleryImageSchema>;
+export type Waypoint = z.infer<typeof WaypointSchema>;
 export type Leg = z.infer<typeof LegSchema>;
 export type LegMode = z.infer<typeof LegModeSchema>;
 export type Stop = z.infer<typeof StopSchema>;

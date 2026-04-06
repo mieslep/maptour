@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import type { Tour, Stop, ContentBlock, LegMode } from '../types';
+import type { Tour, Stop, ContentBlock, LegMode, Waypoint } from '../types';
 import { pushUndo, undo, redo, debouncedSave, clearUndoRedo, getOrsApiKey, setOrsApiKey } from '../store';
 import { downloadYaml } from '../yaml-io';
 import { generateRoute, generateAllRoutes } from '../ors';
@@ -11,9 +11,11 @@ import { renderContentBlockEditor } from './content-blocks';
 const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   about_description:  { default: 'An open-source, embeddable map tour player for static websites.', desc: 'About card description' },
   about_heading:      { default: 'Powered by MapTour', desc: 'About card heading' },
+  add_waypoint:       { default: 'Add waypoint', desc: 'Button to add a waypoint to a route' },
   all_stops:          { default: 'All Stops', desc: 'Stop list toggle label when expanded' },
   all_stops_title:    { default: 'All stops', desc: 'Stop list overlay title' },
   arrived:            { default: "I've arrived at {stop} →", desc: 'Journey card CTA. Placeholder: {stop}' },
+  arriving_at:        { default: 'Arriving at {stop}', desc: 'Waypoint approach notification. Placeholder: {stop}' },
   audio_error:        { default: 'Audio could not be loaded.', desc: 'Audio fallback text' },
   back:               { default: 'Back', desc: 'Back button in menus' },
   begin_from:         { default: 'Begin Tour from {stop}', desc: 'Welcome card CTA with stop name. Placeholder: {stop}' },
@@ -21,6 +23,7 @@ const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   change_direction:   { default: 'Change direction', desc: 'Direction toggle label' },
   close:              { default: 'Close', desc: 'Close button on goodbye screen' },
   complete:           { default: 'Complete', desc: 'Header label on goodbye screen' },
+  continue:           { default: 'Continue', desc: 'Continue button in waypoint player' },
   cycle_dir:          { default: 'Get cycling directions', desc: 'Nav button for cycle mode' },
   directions_to:      { default: 'Directions to this stop', desc: 'Generic nav button label' },
   drive_me:           { default: 'Drive me there', desc: 'Nav button for drive mode' },
@@ -50,6 +53,7 @@ const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   next_journey:       { default: 'Next: Journey to {stop}', desc: 'Footer label when next stop has a journey. Placeholder: {stop}' },
   next_stop:          { default: 'Next: {stop}', desc: 'Footer showing next stop name. Placeholder: {stop}' },
   open_app_nav:       { default: 'Open app to bring me to', desc: 'Full nav button label prefix' },
+  open_in_app:        { default: 'Open in MapTour', desc: 'Deep link button to open in native app' },
   picker_cancel:      { default: 'Cancel', desc: 'Nav app picker cancel button' },
   picker_title:       { default: 'Open directions in:', desc: 'Nav app picker dialog title' },
   progress_label:     { default: 'Tour progress', desc: 'Aria label for progress track' },
@@ -73,6 +77,7 @@ const I18N_DEFAULTS: Record<string, { default: string; desc: string }> = {
   transit_dir:        { default: 'Get transit directions', desc: 'Nav button for transit mode' },
   transit_label:      { default: 'Stop {n}: {stop}', desc: 'Transit bar label. Placeholders: {n}, {stop}' },
   walk_me:            { default: 'Walk me there', desc: 'Nav button for walk mode' },
+  waypoint_no_route:  { default: 'Add a route before adding waypoints', desc: 'Error when adding waypoint to leg without route' },
   welcome:            { default: 'Welcome', desc: 'Header label on welcome screen' },
 };
 
@@ -100,6 +105,8 @@ export class TourEditor {
   private dirtyLegs: Set<number> = new Set();
   private selectedLeg: number = -1;
   private previewDevice = 'iphone-14';
+  private waypointPlacementMode = false;
+  private waypointMarkers: L.CircleMarker[] = [];
 
   private static readonly DEVICES: Array<{
     id: string; label: string; category: 'phone' | 'tablet' | 'desktop';
@@ -114,7 +121,7 @@ export class TourEditor {
     { id: 'ipad-air',   label: 'iPad Air',        category: 'tablet',  width: 820, height: 1180, minPanelWidth: 400 },
     { id: 'desktop',    label: 'Desktop',          category: 'desktop', width: 0,   height: 0,    minPanelWidth: 780 },
   ];
-  private detailTab: 'stop' | 'journey' = 'stop';
+  private detailTab: 'stop' = 'stop';
   private sidePanel!: HTMLElement;
   private detailPanel!: HTMLElement;
   private mapContainer!: HTMLElement;
@@ -221,6 +228,11 @@ export class TourEditor {
       if (this.mapMode === 'addStop') {
         this.addStop(e.latlng.lat, e.latlng.lng);
         this.setMapMode('default');
+        return;
+      }
+      // Waypoint placement mode: place on nearest route point
+      if (this.waypointPlacementMode && this.editingRouteSegment >= 0) {
+        this.placeWaypointOnRoute(e.latlng);
         return;
       }
       // In route edit mode, click on map adds a point
@@ -494,6 +506,7 @@ export class TourEditor {
     };
 
     buildMarkers();
+    this.renderWaypointMarkers(stopIdx);
     // Only show editing bar if one doesn't already exist (e.g. transitioned from selection bar)
     if (!this.mapContainer.querySelector('.maptour-leg-action-bar')) {
       this.showEditingActionBar(stopIdx);
@@ -538,6 +551,18 @@ export class TourEditor {
       this.setStatus('Route editing finished.');
     };
     bar.appendChild(doneBtn);
+
+    const wpBtn = document.createElement('button');
+    wpBtn.className = 'btn btn-sm';
+    wpBtn.innerHTML = `<i class="fa-solid fa-map-pin"></i> ${I18N_DEFAULTS.add_waypoint.default}`;
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.route?.length) {
+      wpBtn.disabled = true;
+      wpBtn.title = I18N_DEFAULTS.waypoint_no_route.default;
+    } else {
+      wpBtn.onclick = () => this.enterWaypointPlacementMode(stopIdx);
+    }
+    bar.appendChild(wpBtn);
 
     this.mapContainer.appendChild(bar);
     L.DomEvent.disableClickPropagation(bar);
@@ -593,6 +618,18 @@ export class TourEditor {
       this.setStatus('Route editing finished.');
     };
     bar.appendChild(doneBtn);
+
+    const wpBtn2 = document.createElement('button');
+    wpBtn2.className = 'btn btn-sm';
+    wpBtn2.innerHTML = `<i class="fa-solid fa-map-pin"></i> ${I18N_DEFAULTS.add_waypoint.default}`;
+    const stop2 = this.tour.stops[stopIdx];
+    if (!stop2.getting_here?.route?.length) {
+      wpBtn2.disabled = true;
+      wpBtn2.title = I18N_DEFAULTS.waypoint_no_route.default;
+    } else {
+      wpBtn2.onclick = () => this.enterWaypointPlacementMode(stopIdx);
+    }
+    bar.appendChild(wpBtn2);
   }
 
   private startReviewingRoute(stopIdx: number): void {
@@ -740,6 +777,9 @@ export class TourEditor {
   private stopEditingRoute(): void {
     this.routePointMarkers.forEach(m => m.remove());
     this.routePointMarkers = [];
+    this.waypointMarkers.forEach(m => m.remove());
+    this.waypointMarkers = [];
+    this.exitWaypointPlacementMode();
     this.editingRouteSegment = -1;
     this.hideLegActionBar();
     // Restore the map view from before editing
@@ -1916,51 +1956,34 @@ export class TourEditor {
   private renderStopCardTab(stop: Stop, stopIdx: number): HTMLElement {
     const frag = document.createElement('div');
 
-    // Zone 1: Title (click to edit)
+    // Zone 1: Title + Getting Here (click to edit)
     const titleZone = document.createElement('div');
-    titleZone.className = 'card-edit-zone';
+    titleZone.className = 'card-edit-zone card-edit-zone--title';
     titleZone.style.cursor = 'pointer';
-    titleZone.onclick = () => this.showTitleModal(stop);
+    titleZone.onclick = () => this.showTitleModal(stop, stopIdx);
 
     const titleContent = document.createElement('div');
+    titleContent.style.cssText = 'flex:1; min-width:0;';
     const titleHeading = document.createElement('div');
     titleHeading.className = 'card-title';
     titleHeading.textContent = stop.title || 'Untitled Stop';
     titleContent.appendChild(titleHeading);
 
-    titleZone.appendChild(titleContent);
-    frag.appendChild(titleZone);
-
-    // Zone 2: Getting Here (all stops, click to edit)
+    // Getting here summary below title
     const gh = stop.getting_here;
-    const ghZone = document.createElement('div');
-    ghZone.className = 'card-edit-zone card-getting-here';
-    ghZone.style.cursor = 'pointer';
-    ghZone.onclick = () => this.showGettingHereModal(stop, stopIdx);
-
-    const ghContent = document.createElement('div');
-    ghContent.style.cssText = 'display:flex; align-items:center; gap:6px; flex:1; min-width:0;';
-
     if (gh && (gh.note || gh.mode)) {
+      const ghSummary = document.createElement('div');
+      ghSummary.className = 'card-gh-summary';
       const iconClass = TourEditor.MODE_ICONS[gh.mode] || 'fa-person-walking';
-      const modeIcon = document.createElement('i');
-      modeIcon.className = `fa-solid ${iconClass} card-gh-icon`;
-      ghContent.appendChild(modeIcon);
-
-      const noteText = document.createElement('span');
-      noteText.className = 'card-gh-note';
-      noteText.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
-      ghContent.appendChild(noteText);
-    } else {
-      const placeholder = document.createElement('span');
-      placeholder.className = 'card-gh-placeholder';
-      const fromIdx = stopIdx === 0 ? this.tour.stops.length : stopIdx;
-      placeholder.textContent = `Click to add notes on getting here from stop ${fromIdx}`;
-      ghContent.appendChild(placeholder);
+      ghSummary.innerHTML = `<i class="fa-solid ${iconClass} card-gh-icon"></i> `;
+      const noteSpan = document.createElement('span');
+      noteSpan.textContent = gh.note || `${gh.mode.charAt(0).toUpperCase() + gh.mode.slice(1)} to this stop`;
+      ghSummary.appendChild(noteSpan);
+      titleContent.appendChild(ghSummary);
     }
 
-    ghZone.appendChild(ghContent);
-    frag.appendChild(ghZone);
+    titleZone.appendChild(titleContent);
+    frag.appendChild(titleZone);
 
     // Divider
     const divider = document.createElement('div');
@@ -2001,42 +2024,7 @@ export class TourEditor {
     return frag;
   }
 
-  private renderJourneyTab(stop: Stop): HTMLElement {
-    const frag = document.createElement('div');
-    frag.style.padding = '8px 0';
-    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-    const gh = stop.getting_here;
-
-    if (gh.journey && gh.journey.length > 0) {
-      frag.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn btn-sm btn-danger';
-      removeBtn.style.marginTop = '8px';
-      removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Remove all journey content';
-      removeBtn.onclick = () => {
-        if (!confirm('Remove all journey content for this route?')) return;
-        this.withUndo(() => { gh.journey = undefined; });
-        this.renderDetailPanel();
-      };
-      frag.appendChild(removeBtn);
-    } else {
-      const emptyMsg = document.createElement('div');
-      emptyMsg.className = 'empty-msg';
-      emptyMsg.textContent = 'No journey content yet.';
-      frag.appendChild(emptyMsg);
-
-      const addBtn = document.createElement('button');
-      addBtn.className = 'cb-add-btn';
-      addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add journey content';
-      addBtn.onclick = () => {
-        this.withUndo(() => { gh.journey = [{ type: 'text', body: '' }]; });
-        this.renderDetailPanel();
-      };
-      frag.appendChild(addBtn);
-    }
-
-    return frag;
-  }
+  // Journey tab removed — journey content is now authored via waypoints (B3)
 
   private makeGutterButton(onClick: () => void): HTMLElement {
     const btn = document.createElement('button');
@@ -2099,8 +2087,11 @@ export class TourEditor {
     }
   }
 
-  private showTitleModal(stop: Stop): void {
-    this.showEditZoneModal('Edit Title', (body) => {
+  private showTitleModal(stop: Stop, stopIdx: number): void {
+    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
+    const gh = stop.getting_here;
+
+    this.showEditZoneModal('Edit Stop', (body) => {
       // Title
       const titleRow = document.createElement('div');
       titleRow.className = 'input-row';
@@ -2118,42 +2109,12 @@ export class TourEditor {
       titleRow.appendChild(titleInput);
       body.appendChild(titleRow);
 
-      // Coords (readonly)
-      const coordsRow = document.createElement('div');
-      coordsRow.className = 'input-row';
-      coordsRow.innerHTML = '<label class="input-label">Coords</label>';
-      const coordsInput = document.createElement('input');
-      coordsInput.type = 'text';
-      coordsInput.className = 'input';
-      coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
-      coordsInput.readOnly = true;
-      coordsRow.appendChild(coordsInput);
-      body.appendChild(coordsRow);
+      // Getting Here section
+      const ghHeader = document.createElement('div');
+      ghHeader.style.cssText = 'margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:13px; font-weight:600; color:#334155; margin-bottom:8px;';
+      ghHeader.textContent = 'Getting Here';
+      body.appendChild(ghHeader);
 
-      // Arrival radius
-      const radiusRow = document.createElement('div');
-      radiusRow.className = 'input-row';
-      radiusRow.innerHTML = '<label class="input-label">Arrival Radius (m)</label>';
-      const radiusInput = document.createElement('input');
-      radiusInput.type = 'number';
-      radiusInput.className = 'input';
-      radiusInput.placeholder = 'Default';
-      radiusInput.value = stop.arrival_radius?.toString() ?? '';
-      radiusInput.oninput = () => {
-        stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
-        this.changed();
-        this.updateRadiusCircle();
-      };
-      radiusRow.appendChild(radiusInput);
-      body.appendChild(radiusRow);
-    });
-  }
-
-  private showGettingHereModal(stop: Stop, stopIdx: number): void {
-    if (!stop.getting_here) stop.getting_here = { mode: 'walk' };
-    const gh = stop.getting_here;
-
-    this.showEditZoneModal('Edit Getting Here', (body) => {
       // Mode
       const modeRow = document.createElement('div');
       modeRow.className = 'input-row';
@@ -2184,7 +2145,7 @@ export class TourEditor {
       noteRow.appendChild(noteInput);
       body.appendChild(noteRow);
 
-      // Route section — mirrors the selection bar buttons
+      // Route section
       const routeDiv = document.createElement('div');
       routeDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
       const routeBtnRow = document.createElement('div');
@@ -2261,54 +2222,43 @@ export class TourEditor {
       routeDiv.appendChild(routeBtnRow);
       body.appendChild(routeDiv);
 
-      // Journey card section
-      const journeyDiv = document.createElement('div');
-      journeyDiv.style.cssText = 'margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;';
+      // Coords (readonly)
+      const metaHeader = document.createElement('div');
+      metaHeader.style.cssText = 'margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:13px; font-weight:600; color:#334155; margin-bottom:8px;';
+      metaHeader.textContent = 'Advanced';
+      body.appendChild(metaHeader);
 
-      const journeyHeader = document.createElement('div');
-      journeyHeader.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;';
-      const journeyLabel = document.createElement('div');
-      journeyLabel.className = 'subsection-title';
-      journeyLabel.style.margin = '0';
-      journeyLabel.textContent = 'Journey Card';
-      journeyHeader.appendChild(journeyLabel);
+      const coordsRow = document.createElement('div');
+      coordsRow.className = 'input-row';
+      coordsRow.innerHTML = '<label class="input-label">Coords</label>';
+      const coordsInput = document.createElement('input');
+      coordsInput.type = 'text';
+      coordsInput.className = 'input';
+      coordsInput.value = `${stop.coords[0].toFixed(6)}, ${stop.coords[1].toFixed(6)}`;
+      coordsInput.readOnly = true;
+      coordsRow.appendChild(coordsInput);
+      body.appendChild(coordsRow);
 
-      if (gh.journey && gh.journey.length > 0) {
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'btn btn-sm btn-danger';
-        removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        removeBtn.onclick = () => {
-          if (!confirm('Remove all journey content for this stop?')) return;
-          this.withUndo(() => { gh.journey = undefined; });
-          // Close current modal, re-open with updated state
-          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
-          this.renderDetailPanel();
-          this.showGettingHereModal(stop, stopIdx);
-        };
-        journeyHeader.appendChild(removeBtn);
-        journeyDiv.appendChild(journeyHeader);
-
-        // Embed content block editor for journey blocks
-        journeyDiv.appendChild(renderContentBlockEditor(gh.journey, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs)));
-      } else {
-        journeyDiv.appendChild(journeyHeader);
-
-        const addBtn = document.createElement('button');
-        addBtn.className = 'btn btn-sm';
-        addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Journey Card';
-        addBtn.onclick = () => {
-          this.withUndo(() => { gh.journey = [{ type: 'text', body: '' }]; });
-          // Close current modal, re-open with updated state
-          document.querySelectorAll('.cb-modal-overlay').forEach(el => el.remove());
-          this.renderDetailPanel();
-          this.showGettingHereModal(stop, stopIdx);
-        };
-        journeyDiv.appendChild(addBtn);
-      }
-
-      body.appendChild(journeyDiv);
+      // Arrival radius
+      const radiusRow = document.createElement('div');
+      radiusRow.className = 'input-row';
+      radiusRow.innerHTML = '<label class="input-label">Arrival Radius (m)</label>';
+      const radiusInput = document.createElement('input');
+      radiusInput.type = 'number';
+      radiusInput.className = 'input';
+      radiusInput.placeholder = 'Default';
+      radiusInput.value = stop.arrival_radius?.toString() ?? '';
+      radiusInput.oninput = () => {
+        stop.arrival_radius = radiusInput.value ? Number(radiusInput.value) : undefined;
+        this.changed();
+        this.updateRadiusCircle();
+      };
+      radiusRow.appendChild(radiusInput);
+      body.appendChild(radiusRow);
     });
   }
+
+  // Getting Here editing is now consolidated into showTitleModal (Edit Stop)
 
   private renderGettingHereSection(): HTMLElement {
     if (!this.tour.tour.getting_here) this.tour.tour.getting_here = [];
@@ -2650,6 +2600,9 @@ export class TourEditor {
       } else if (e.key === 'Escape' && this.selectedLeg >= 0) {
         e.preventDefault();
         this.deselectLeg();
+      } else if (e.key === 'Escape' && this.waypointPlacementMode) {
+        e.preventDefault();
+        this.exitWaypointPlacementMode();
       } else if (e.key === 'Escape' && this.reviewingRouteSegment >= 0) {
         e.preventDefault();
         this.stopReviewingRoute();
@@ -2663,6 +2616,448 @@ export class TourEditor {
         this.setMapMode('default');
       }
     });
+  }
+
+  // ---- Waypoint placement & editing ----
+
+  private enterWaypointPlacementMode(stopIdx: number): void {
+    this.waypointPlacementMode = true;
+    this.mapContainer.classList.add('waypoint-placing');
+    this.setStatus('Click on the route to place a waypoint. Press Esc to cancel.');
+  }
+
+  private exitWaypointPlacementMode(): void {
+    this.waypointPlacementMode = false;
+    this.mapContainer.classList.remove('waypoint-placing');
+  }
+
+  private placeWaypointOnRoute(latlng: L.LatLng): void {
+    const stopIdx = this.editingRouteSegment;
+    if (stopIdx < 0) return;
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.route?.length) return;
+    const route = stop.getting_here.route;
+
+    // Snap to nearest point on polyline
+    const snapped = this.snapToPolyline(latlng, route);
+
+    const wp: Waypoint = {
+      coords: snapped.coords,
+      text: '',
+    };
+
+    this.exitWaypointPlacementMode();
+
+    this.withUndo(() => {
+      if (!stop.getting_here!.waypoints) stop.getting_here!.waypoints = [];
+      stop.getting_here!.waypoints.push(wp);
+      this.sortWaypointsByPosition(stop.getting_here!.waypoints, route);
+    });
+
+    const wpIndex = stop.getting_here!.waypoints!.indexOf(wp);
+    this.renderWaypointMarkers(stopIdx);
+    this.showWaypointModal(stop, stopIdx, wpIndex);
+  }
+
+  private snapToPolyline(latlng: L.LatLng, route: [number, number][]): { coords: [number, number]; frac: number } {
+    let bestDist = Infinity;
+    let bestCoords: [number, number] = route[0];
+    let bestFrac = 0;
+
+    for (let i = 0; i < route.length - 1; i++) {
+      const p1 = route[i];
+      const p2 = route[i + 1];
+      const dx = p2[0] - p1[0];
+      const dy = p2[1] - p1[1];
+      let t: number;
+      if (dx === 0 && dy === 0) {
+        t = 0;
+      } else {
+        t = ((latlng.lat - p1[0]) * dx + (latlng.lng - p1[1]) * dy) / (dx * dx + dy * dy);
+        t = Math.max(0, Math.min(1, t));
+      }
+      const projLat = p1[0] + t * dx;
+      const projLng = p1[1] + t * dy;
+      const dist = Math.sqrt((latlng.lat - projLat) ** 2 + (latlng.lng - projLng) ** 2);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestCoords = [projLat, projLng];
+        bestFrac = i + t;
+      }
+    }
+
+    return { coords: bestCoords, frac: bestFrac };
+  }
+
+  private sortWaypointsByPosition(waypoints: Waypoint[], route: [number, number][]): void {
+    const fracMap = new Map<Waypoint, number>();
+    for (const wp of waypoints) {
+      const snapped = this.snapToPolyline(L.latLng(wp.coords[0], wp.coords[1]), route);
+      fracMap.set(wp, snapped.frac);
+    }
+    waypoints.sort((a, b) => (fracMap.get(a) ?? 0) - (fracMap.get(b) ?? 0));
+  }
+
+  private renderWaypointMarkers(stopIdx: number): void {
+    this.waypointMarkers.forEach(m => m.remove());
+    this.waypointMarkers = [];
+
+    const stop = this.tour.stops[stopIdx];
+    if (!stop.getting_here?.waypoints?.length) return;
+    const route = stop.getting_here.route;
+    if (!route?.length) return;
+
+    stop.getting_here.waypoints.forEach((wp, wpIdx) => {
+      const m = L.circleMarker([wp.coords[0], wp.coords[1]], {
+        radius: 7,
+        fillColor: '#ec4899',
+        color: '#fff',
+        weight: 2,
+        fillOpacity: 0.9,
+        pane: 'routeEditPoints',
+        bubblingMouseEvents: false,
+      }).addTo(this.map);
+
+      let wpJustDragged = false;
+
+      // Drag support: mousedown → mousemove → mouseup, snap to polyline
+      m.on('mousedown', (e) => {
+        wpJustDragged = false;
+        pushUndo(this.tour, this.dirtyLegs); // snapshot before drag
+        this.map.dragging.disable();
+        L.DomEvent.stopPropagation(e);
+
+        const onMove = (ev: L.LeafletMouseEvent) => {
+          wpJustDragged = true;
+          // Snap to nearest point on route polyline
+          const snapped = this.snapToPolyline(ev.latlng, route);
+          m.setLatLng([snapped.coords[0], snapped.coords[1]]);
+          m.setStyle({ fillColor: '#f472b6', radius: 9 }); // highlight during drag
+        };
+
+        const onUp = (ev: L.LeafletMouseEvent) => {
+          this.map.dragging.enable();
+          this.map.off('mousemove', onMove);
+          this.map.off('mouseup', onUp);
+
+          if (wpJustDragged) {
+            const snapped = this.snapToPolyline(ev.latlng, route);
+            this.withUndo(() => {
+              wp.coords = snapped.coords;
+              this.sortWaypointsByPosition(stop.getting_here!.waypoints!, route);
+            });
+            this.renderWaypointMarkers(stopIdx);
+          }
+          setTimeout(() => { wpJustDragged = false; }, 50);
+        };
+
+        this.map.on('mousemove', onMove);
+        this.map.on('mouseup', onUp);
+      });
+
+      m.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        if (wpJustDragged) return;
+        this.showWaypointModal(stop, stopIdx, wpIdx);
+      });
+
+      this.waypointMarkers.push(m);
+    });
+  }
+
+  private showWaypointModal(stop: Stop, stopIdx: number, wpIdx: number): void {
+    const waypoints = stop.getting_here?.waypoints;
+    if (!waypoints || wpIdx < 0 || wpIdx >= waypoints.length) return;
+    const wp = waypoints[wpIdx];
+
+    // Remove any existing modal
+    this.mapContainer.querySelector('.waypoint-modal')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'waypoint-modal';
+
+    const modal = document.createElement('div');
+    modal.className = 'waypoint-modal-content';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Edit Waypoint';
+    title.style.cssText = 'margin:0 0 16px; font-size:16px; font-weight:600;';
+    modal.appendChild(title);
+
+    // === Mode toggle: Basic Waypoint / Journey Card ===
+    const isJourneyCard = !!wp.journey_card || (wp.content !== undefined && wp.content.length > 0);
+    let mode: 'basic' | 'journey' = isJourneyCard ? 'journey' : 'basic';
+
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'wp-mode-toggle';
+
+    const basicBtn = document.createElement('button');
+    basicBtn.className = 'wp-mode-toggle__btn';
+    basicBtn.textContent = 'Basic Waypoint';
+
+    const journeyBtn = document.createElement('button');
+    journeyBtn.className = 'wp-mode-toggle__btn';
+    journeyBtn.textContent = 'Journey Card';
+
+    toggleRow.appendChild(basicBtn);
+    toggleRow.appendChild(journeyBtn);
+    modal.appendChild(toggleRow);
+
+    // === Basic waypoint fields ===
+    const basicFields = document.createElement('div');
+
+    // Text field
+    const textLabel = document.createElement('label');
+    textLabel.textContent = 'Guidance text';
+    textLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    basicFields.appendChild(textLabel);
+    const textArea = document.createElement('textarea');
+    textArea.className = 'input';
+    textArea.placeholder = 'e.g. Head towards the red house';
+    textArea.value = wp.text || '';
+    textArea.rows = 3;
+    textArea.style.cssText = 'width:100%; margin-bottom:12px; resize:vertical;';
+    basicFields.appendChild(textArea);
+
+    // Image section — "Add Image" / expanded fields
+    const imageSection = document.createElement('div');
+    imageSection.style.cssText = 'margin-bottom:12px;';
+
+    const addImageBtn = document.createElement('button');
+    addImageBtn.className = 'btn btn-sm';
+    addImageBtn.textContent = '+ Add Image';
+    addImageBtn.style.cssText = 'margin-bottom:8px;';
+
+    const imageFields = document.createElement('div');
+    imageFields.className = 'wp-image-fields';
+
+    // Image URL
+    const urlLabel = document.createElement('label');
+    urlLabel.textContent = 'Image URL';
+    urlLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    imageFields.appendChild(urlLabel);
+    const photoInput = document.createElement('input');
+    photoInput.type = 'text';
+    photoInput.className = 'input';
+    photoInput.placeholder = 'https://...';
+    photoInput.value = wp.photo || '';
+    photoInput.style.cssText = 'width:100%; margin-bottom:8px;';
+    imageFields.appendChild(photoInput);
+
+    // Preview
+    const photoPreview = document.createElement('div');
+    photoPreview.style.cssText = 'margin-bottom:8px;';
+    let previewTimer: ReturnType<typeof setTimeout> | null = null;
+    const updatePhotoPreview = () => {
+      if (previewTimer) clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        photoPreview.innerHTML = '';
+        const url = photoInput.value.trim();
+        if (url) {
+          const img = document.createElement('img');
+          img.src = url;
+          img.style.cssText = 'max-width:100%; max-height:150px; border-radius:4px;';
+          img.onerror = () => { photoPreview.textContent = 'Image not found'; };
+          photoPreview.appendChild(img);
+        }
+      }, 400);
+    };
+    photoInput.oninput = updatePhotoPreview;
+    imageFields.appendChild(photoPreview);
+
+    // Caption
+    const captionLabel = document.createElement('label');
+    captionLabel.textContent = 'Caption (optional)';
+    captionLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    imageFields.appendChild(captionLabel);
+    const captionInput = document.createElement('input');
+    captionInput.type = 'text';
+    captionInput.className = 'input';
+    captionInput.placeholder = 'Caption';
+    captionInput.value = wp.photo_caption || '';
+    captionInput.style.cssText = 'width:100%; margin-bottom:8px;';
+    imageFields.appendChild(captionInput);
+
+    // Alt text
+    const altLabel = document.createElement('label');
+    altLabel.textContent = 'Alt text (optional)';
+    altLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    imageFields.appendChild(altLabel);
+    const altInput = document.createElement('input');
+    altInput.type = 'text';
+    altInput.className = 'input';
+    altInput.placeholder = 'Alt text';
+    altInput.value = wp.photo_alt || '';
+    altInput.style.cssText = 'width:100%; margin-bottom:8px;';
+    imageFields.appendChild(altInput);
+
+    // Remove image button
+    const removeImageBtn = document.createElement('button');
+    removeImageBtn.className = 'btn btn-sm btn-danger';
+    removeImageBtn.textContent = 'Remove Image';
+    removeImageBtn.style.cssText = 'margin-bottom:4px;';
+    imageFields.appendChild(removeImageBtn);
+
+    const hasImage = !!wp.photo;
+    const showImageFields = (show: boolean) => {
+      addImageBtn.style.display = show ? 'none' : '';
+      imageFields.style.display = show ? '' : 'none';
+      if (show) updatePhotoPreview();
+    };
+    showImageFields(hasImage);
+
+    addImageBtn.onclick = () => showImageFields(true);
+    removeImageBtn.onclick = () => {
+      photoInput.value = '';
+      captionInput.value = '';
+      altInput.value = '';
+      photoPreview.innerHTML = '';
+      showImageFields(false);
+    };
+
+    imageSection.appendChild(addImageBtn);
+    imageSection.appendChild(imageFields);
+    basicFields.appendChild(imageSection);
+
+    modal.appendChild(basicFields);
+
+    // === Journey card fields ===
+    const journeyFields = document.createElement('div');
+    journeyFields.style.cssText = 'margin-bottom:12px;';
+
+    const rebuildContentBlocks = () => {
+      journeyFields.innerHTML = '';
+      if (!wp.content) wp.content = [];
+      const contentLabel = document.createElement('div');
+      contentLabel.textContent = 'Content Blocks';
+      contentLabel.style.cssText = 'font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+      journeyFields.appendChild(contentLabel);
+      journeyFields.appendChild(renderContentBlockEditor(
+        wp.content!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
+      ));
+    };
+
+    modal.appendChild(journeyFields);
+
+    // === Mode switch logic ===
+    const setMode = (m: 'basic' | 'journey') => {
+      mode = m;
+      basicBtn.classList.toggle('wp-mode-toggle__btn--active', m === 'basic');
+      journeyBtn.classList.toggle('wp-mode-toggle__btn--active', m === 'journey');
+      basicFields.style.display = m === 'basic' ? '' : 'none';
+      journeyFields.style.display = m === 'journey' ? '' : 'none';
+      if (m === 'journey' && (!wp.content || wp.content.length === 0)) {
+        wp.content = [{ type: 'text', body: '' }];
+      }
+      if (m === 'journey') rebuildContentBlocks();
+    };
+
+    basicBtn.onclick = () => setMode('basic');
+    journeyBtn.onclick = () => setMode('journey');
+    setMode(mode);
+
+    // === Approach radius override ===
+    const radiusLabel = document.createElement('label');
+    radiusLabel.textContent = 'Approach radius override (optional)';
+    radiusLabel.style.cssText = 'display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
+    modal.appendChild(radiusLabel);
+    const radiusInput = document.createElement('input');
+    radiusInput.type = 'number';
+    radiusInput.className = 'input';
+    radiusInput.placeholder = 'Default: 15m';
+    radiusInput.value = wp.radius != null ? String(wp.radius) : '';
+    radiusInput.style.cssText = 'width:100%; margin-bottom:16px;';
+    modal.appendChild(radiusInput);
+
+    // === Validation message ===
+    const validationMsg = document.createElement('div');
+    validationMsg.style.cssText = 'color:#dc2626; font-size:13px; margin-bottom:8px; display:none;';
+    modal.appendChild(validationMsg);
+
+    // === Buttons ===
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-sm btn-danger';
+    delBtn.textContent = 'Delete';
+    delBtn.style.marginRight = 'auto';
+    delBtn.onclick = () => {
+      if (!confirm('Delete this waypoint?')) return;
+      this.withUndo(() => {
+        waypoints.splice(wpIdx, 1);
+        if (waypoints.length === 0) stop.getting_here!.waypoints = undefined;
+      });
+      overlay.remove();
+      this.renderWaypointMarkers(stopIdx);
+      this.setStatus('Waypoint deleted.');
+    };
+    btnRow.appendChild(delBtn);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-sm';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => {
+      overlay.remove();
+    };
+    btnRow.appendChild(cancelBtn);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-sm btn-primary';
+    saveBtn.textContent = 'Save';
+    saveBtn.onclick = () => {
+      // Validate
+      if (mode === 'basic') {
+        if (!textArea.value.trim()) {
+          validationMsg.textContent = 'Basic waypoint requires guidance text.';
+          validationMsg.style.display = '';
+          textArea.focus();
+          return;
+        }
+      } else {
+        const blocks = wp.content ?? [];
+        if (blocks.length === 0) {
+          validationMsg.textContent = 'Journey card requires at least one content block.';
+          validationMsg.style.display = '';
+          return;
+        }
+      }
+      validationMsg.style.display = 'none';
+
+      this.withUndo(() => {
+        if (mode === 'basic') {
+          wp.text = textArea.value;
+          wp.photo = photoInput.value.trim() || undefined;
+          wp.photo_caption = captionInput.value.trim() || undefined;
+          wp.photo_alt = altInput.value.trim() || undefined;
+          wp.journey_card = undefined;
+          wp.content = undefined;
+        } else {
+          wp.photo = undefined;
+          wp.photo_caption = undefined;
+          wp.photo_alt = undefined;
+          wp.journey_card = true;
+        }
+        const radiusVal = parseFloat(radiusInput.value);
+        wp.radius = isNaN(radiusVal) ? undefined : radiusVal;
+      });
+      overlay.remove();
+      this.renderWaypointMarkers(stopIdx);
+      this.setStatus('Waypoint saved.');
+    };
+    btnRow.appendChild(saveBtn);
+
+    modal.appendChild(btnRow);
+    overlay.appendChild(modal);
+
+    // Close on backdrop click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    this.mapContainer.appendChild(overlay);
+    L.DomEvent.disableClickPropagation(overlay);
+    if (mode === 'basic') textArea.focus();
   }
 
   private showOrsKeyModal(onSaved?: () => void): void {

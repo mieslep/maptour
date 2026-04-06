@@ -31,6 +31,8 @@ export interface TourMeta {
   getting_here?: ContentBlock[];  // content blocks for "Getting Here" card (directions to tour start)
   nudge_return?: boolean;          // if true, "Return to start" is the primary action in the finish modal (default false)
   require_scroll?: boolean;        // if true, user must scroll to bottom of stop content before advancing (default false)
+  tour_url?: string;               // URL for "Open in MapTour" badge (deep link to native app)
+  waypoint_radius?: number;        // default waypoint approach radius in metres (default: 15)
 }
 
 export interface TextBlock {
@@ -71,15 +73,34 @@ export interface AudioBlock {
   label?: string;
 }
 
-export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock;
+export interface MapBlock {
+  type: 'map';
+  height?: number;      // container height in px (default: 200)
+  zoom?: number;        // override zoom level
+  offset_x?: number;    // horizontal centre nudge in metres (positive = east)
+  offset_y?: number;    // vertical centre nudge in metres (positive = north)
+}
+
+export type ContentBlock = TextBlock | ImageBlock | GalleryBlock | VideoBlock | AudioBlock | MapBlock;
 
 export type LegMode = 'walk' | 'drive' | 'transit' | 'cycle';
+
+export interface Waypoint {
+  coords: [number, number];
+  text: string;
+  photo?: string;
+  photo_caption?: string;
+  photo_alt?: string;
+  journey_card?: boolean;
+  content?: ContentBlock[];
+  radius?: number;
+}
 
 export interface Leg {
   mode: LegMode;
   note?: string;
   route?: [number, number][];   // optional pre-computed waypoints for polyline
-  journey?: ContentBlock[];     // optional content shown between stops
+  waypoints?: Waypoint[];       // optional waypoints along the leg
 }
 
 export interface Stop {

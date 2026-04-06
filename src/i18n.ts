@@ -16,9 +16,11 @@ export interface StringOverrides {
 const DEFAULTS: Record<string, string> = {
   about_description: 'An open-source, embeddable map tour player for static websites.',
   about_heading:     'Powered by MapTour',
+  add_waypoint:      'Add waypoint',
   all_stops:         'All Stops',
   all_stops_title:   'All stops',
   arrived:           "I've arrived at {stop} →",
+  arriving_at:       'Arriving at {stop}',
   audio_error:       'Audio could not be loaded.',
   back:              'Back',
   begin_from:        'Begin Tour from {stop}',
@@ -26,6 +28,7 @@ const DEFAULTS: Record<string, string> = {
   change_direction:  'Change direction',
   close:             'Close',
   complete:          'Complete',
+  continue:          'Continue',
   cycle_dir:         'Get cycling directions',
   directions_to:     'Directions to this stop',
   drive_me:          'Drive me there',
@@ -55,6 +58,7 @@ const DEFAULTS: Record<string, string> = {
   next_journey:      'Next: Journey to {stop}',
   next_stop:         'Next: {stop}',
   open_app_nav:      'Open app to bring me to',
+  open_in_app:       'Open in MapTour',
   picker_cancel:     'Cancel',
   picker_title:      'Open directions in:',
   progress_label:    'Tour progress',
@@ -78,12 +82,14 @@ const DEFAULTS: Record<string, string> = {
   transit_dir:       'Get transit directions',
   transit_label:     'Stop {n}: {stop}',
   walk_me:           'Walk me there',
+  waypoint_no_route: 'Add a route before adding waypoints',
   welcome:           'Welcome',
 };
 
 /** Valid placeholder names per string key (for validation). */
 const PLACEHOLDERS: Record<string, string[]> = {
   arrived:         ['stop'],
+  arriving_at:     ['stop'],
   begin_from:      ['stop'],
   gallery_counter: ['n', 'total'],
   gps_near_stop:   ['stop'],

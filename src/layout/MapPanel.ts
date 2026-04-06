@@ -1,56 +1,28 @@
 import { t } from '../i18n';
 import type { Stop, LegMode } from '../types';
-import { NavButton } from '../card/NavButton';
-import { NavAppPreference } from '../navigation/NavAppPreference';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 export class MapPanel {
   private readonly panel: HTMLElement;
-  private readonly header: HTMLElement;
-  private readonly headerNav: HTMLElement;
-  private readonly closeBtn: HTMLButtonElement;
-  private readonly openBtn: HTMLButtonElement;
-  private readonly navPreference: NavAppPreference;
+  private readonly fab: HTMLButtonElement;
   private open = false;
   private toggleCallbacks: Array<(open: boolean) => void> = [];
-  private currentStop: Stop | null = null;
-  private tourNavMode: LegMode | undefined;
 
   constructor(container: HTMLElement, mapPane: HTMLElement) {
     this.panel = document.createElement('div');
     this.panel.className = 'maptour-map-panel';
 
-    // Header bar — directions button + close
-    this.header = document.createElement('div');
-    this.header.className = 'maptour-map-panel__header';
-
-    this.headerNav = document.createElement('div');
-    this.headerNav.className = 'maptour-map-panel__header-nav';
-
-    this.closeBtn = document.createElement('button');
-    this.closeBtn.className = 'maptour-map-panel__close';
-    this.closeBtn.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
-    this.closeBtn.setAttribute('aria-label', t('show_stop'));
-    this.closeBtn.addEventListener('click', () => this.hide());
-
-    this.header.appendChild(this.headerNav);
-    this.header.appendChild(this.closeBtn);
-
-    this.panel.appendChild(this.header);
     this.panel.appendChild(mapPane);
-
     container.appendChild(this.panel);
 
-    this.navPreference = new NavAppPreference();
-
-    // Open button — placed in the card header by the caller
-    this.openBtn = document.createElement('button');
-    this.openBtn.className = 'maptour-map-open-btn';
-    this.openBtn.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
-    this.openBtn.setAttribute('aria-label', t('show_map'));
-    this.openBtn.title = t('show_map');
-    this.openBtn.addEventListener('click', () => this.show());
+    // FAB — toggles between map icon and close icon
+    this.fab = document.createElement('button');
+    this.fab.className = 'maptour-map-open-btn';
+    this.fab.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
+    this.fab.setAttribute('aria-label', t('show_map'));
+    this.fab.title = t('show_map');
+    this.fab.addEventListener('click', () => this.toggle());
 
     this.panel.addEventListener('transitionend', (e) => {
       if (e.propertyName === 'transform') {
@@ -60,31 +32,11 @@ export class MapPanel {
   }
 
   getOpenButton(): HTMLButtonElement {
-    return this.openBtn;
+    return this.fab;
   }
 
-  setActiveStop(stop: Stop, tourNavMode?: LegMode): void {
-    this.currentStop = stop;
-    this.tourNavMode = tourNavMode;
-    this.renderHeader();
-  }
-
-  private renderHeader(): void {
-    this.headerNav.innerHTML = '';
-    if (!this.currentStop) return;
-
-    const navBtnContainer = document.createElement('div');
-    navBtnContainer.className = 'maptour-map-panel__nav-btn';
-    new NavButton(
-      navBtnContainer,
-      this.currentStop,
-      this.navPreference,
-      undefined,
-      this.tourNavMode,
-      'full',
-    );
-    this.headerNav.appendChild(navBtnContainer);
-  }
+  /** Keep for API compat — no longer renders nav button. */
+  setActiveStop(_stop: Stop, _tourNavMode?: LegMode): void {}
 
   toggle(): void {
     if (this.open) this.hide(); else this.show();
@@ -94,6 +46,10 @@ export class MapPanel {
     if (this.open) return;
     this.open = true;
     this.panel.classList.add('maptour-map-panel--open');
+    this.fab.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    this.fab.setAttribute('aria-label', t('show_stop'));
+    this.fab.title = t('show_stop');
+    this.fab.classList.add('maptour-map-open-btn--close');
     if (this.prefersReducedMotion()) {
       this.toggleCallbacks.forEach((cb) => cb(this.open));
     }
@@ -103,8 +59,10 @@ export class MapPanel {
     if (!this.open) return;
     this.open = false;
     this.panel.classList.remove('maptour-map-panel--open');
-    // Reset the nav button so the picker is dismissed
-    this.renderHeader();
+    this.fab.innerHTML = '<i class="fa-solid fa-map" aria-hidden="true"></i>';
+    this.fab.setAttribute('aria-label', t('show_map'));
+    this.fab.title = t('show_map');
+    this.fab.classList.remove('maptour-map-open-btn--close');
     if (this.prefersReducedMotion()) {
       this.toggleCallbacks.forEach((cb) => cb(this.open));
     }
@@ -121,9 +79,9 @@ export class MapPanel {
       && window.matchMedia(REDUCED_MOTION_QUERY).matches;
   }
 
-  /** Show or hide the header bar (nav button + close). Hidden during overview mode. */
+  /** Hide or show the FAB. */
   setHeaderVisible(visible: boolean): void {
-    this.header.style.display = visible ? '' : 'none';
+    this.fab.hidden = !visible;
     this.panel.classList.toggle('maptour-map-panel--full-height', !visible);
   }
 
@@ -133,6 +91,6 @@ export class MapPanel {
 
   destroy(): void {
     this.panel.remove();
-    this.openBtn.remove();
+    this.fab.remove();
   }
 }

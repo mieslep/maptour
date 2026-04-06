@@ -547,6 +547,63 @@ textarea.input {
   font-size: 11px;
 }
 
+/* ---- Waypoint Placement & Modal ---- */
+
+.waypoint-placing {
+  cursor: crosshair !important;
+}
+
+.waypoint-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waypoint-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.wp-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.wp-mode-toggle__btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.wp-mode-toggle__btn + .wp-mode-toggle__btn {
+  border-left: 1px solid #cbd5e1;
+}
+
+.wp-mode-toggle__btn--active {
+  background: #3b82f6;
+  color: white;
+}
+
 /* ---- Device Preview Frame ---- */
 
 /* Device category tabs */
@@ -746,11 +803,30 @@ textarea.input {
 }
 
 /* Title zone */
+.card-edit-zone--title {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.card-edit-zone--title:hover {
+  background: rgba(37, 99, 235, 0.03);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
 .card-title {
   font-size: 20px;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.3;
+}
+.card-gh-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
 }
 .card-coords {
   font-size: 11px;

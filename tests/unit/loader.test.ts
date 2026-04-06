@@ -344,4 +344,279 @@ stops:
     const result = parseTourFromString(yaml);
     expect(result.error).toContain('welcome');
   });
+
+  // === Waypoint schema validation ===
+
+  it('parses waypoints on a leg with a route', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.503, -6.557], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: "Head towards the bridge"
+        - coords: [52.5035, -6.5565]
+          text: "Turn left at the old mill"
+          photo: "https://example.com/mill.jpg"
+          journey_card: true
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    const leg = result.tour?.stops[1].getting_here;
+    expect(leg?.waypoints).toHaveLength(2);
+    expect(leg?.waypoints?.[0].text).toBe('Head towards the bridge');
+    expect(leg?.waypoints?.[1].journey_card).toBe(true);
+    expect(leg?.waypoints?.[1].photo).toBe('https://example.com/mill.jpg');
+  });
+
+  it('parses waypoint with content blocks (auto-promoted journey card)', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: "The old warehouses"
+          content:
+            - type: text
+              body: "These warehouses were built in 1847"
+            - type: image
+              url: "https://example.com/warehouses.jpg"
+              caption: "The restored warehouses"
+          radius: 25
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    const wp = result.tour?.stops[1].getting_here?.waypoints?.[0];
+    expect(wp?.content).toHaveLength(2);
+    expect(wp?.radius).toBe(25);
+  });
+
+  it('returns error for waypoints without a route', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: "Head towards the bridge"
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeDefined();
+  });
+
+  it('accepts journey card waypoint with empty text', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: "Rich content here"
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.stops[1].getting_here?.waypoints?.[0].text).toBe('');
+  });
+
+  it('returns error for light waypoint with empty text', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: ""
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeDefined();
+  });
+
+  it('returns error for waypoint with missing coords', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - text: "Missing coords"
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeDefined();
+  });
+
+  it('accepts a leg with empty waypoints array', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      waypoints: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+  });
+
+  it('accepts a leg without waypoints (backward compatible)', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+    getting_here:
+      mode: walk
+      note: "Walk 5 min"
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.stops[0].getting_here?.waypoints).toBeUndefined();
+  });
+
+  it('parses tour_url and waypoint_radius in tour metadata', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+  tour_url: "https://example.com/tour.yaml"
+  waypoint_radius: 20
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.tour_url).toBe('https://example.com/tour.yaml');
+    expect(result.tour?.tour.waypoint_radius).toBe(20);
+  });
+
+  it('returns error for negative waypoint_radius', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+  waypoint_radius: -5
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeDefined();
+  });
+
+  it('returns error for waypoint with out-of-range coords', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [95.0, -6.557]
+          text: "Invalid latitude"
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeDefined();
+  });
 });

@@ -4,6 +4,7 @@ import { renderImageBlock } from './ImageBlock';
 import { renderGalleryBlock } from './GalleryBlock';
 import { renderVideoBlock } from './VideoBlock';
 import { renderAudioBlock } from './AudioBlock';
+import { renderMapBlock } from './MapBlock';
 
 export function renderBlock(block: ContentBlock, active: boolean): HTMLElement {
   switch (block.type) {
@@ -17,5 +18,7 @@ export function renderBlock(block: ContentBlock, active: boolean): HTMLElement {
       return renderVideoBlock(block, active);
     case 'audio':
       return renderAudioBlock(block);
+    case 'map':
+      return renderMapBlock(block);
   }
 }

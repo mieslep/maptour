@@ -12,7 +12,9 @@ export class TourFooter {
   private prevCallbacks: Array<() => void> = [];
   private nextCallbacks: Array<() => void> = [];
   private finishCallbacks: Array<() => void> = [];
+  private imHereCallbacks: Array<() => void> = [];
   private scrollGated = false;
+  private inWaypointMode = false;
 
   constructor() {
     this.el = document.createElement('div');
@@ -47,12 +49,16 @@ export class TourFooter {
     const spacer = document.createElement('div');
     spacer.className = 'maptour-tour-footer__spacer';
 
-    // Next label (tappable, right-aligned)
+    // Next label (tappable, right-aligned) — also serves as "Continue" in waypoint mode
     this.label = document.createElement('button');
     this.label.className = 'maptour-tour-footer__label';
     this.label.addEventListener('click', () => {
       if (this.scrollGated) { this.bounceIndicator(); return; }
-      this.nextCallbacks.forEach((cb) => cb());
+      if (this.inWaypointMode) {
+        this.imHereCallbacks.forEach((cb) => cb());
+      } else {
+        this.nextCallbacks.forEach((cb) => cb());
+      }
     });
 
     // Finish text button (hidden by default, shown on last stop)
@@ -99,10 +105,8 @@ export class TourFooter {
   }
 
   /** Show the "Next: Stop Name" label and next arrow, hide the finish button. */
-  setNextStop(title: string, hasJourney = false): void {
-    this.label.textContent = hasJourney
-      ? t('next_journey', { stop: title })
-      : t('next_stop', { stop: title });
+  setNextStop(title: string): void {
+    this.label.textContent = t('next_stop', { stop: title });
     this.label.hidden = false;
     this.nextBtn.hidden = false;
     this.finishBtn.hidden = true;
@@ -152,6 +156,40 @@ export class TourFooter {
 
   onFinish(cb: () => void): void {
     this.finishCallbacks.push(cb);
+  }
+
+  onImHere(cb: () => void): void {
+    this.imHereCallbacks.push(cb);
+  }
+
+  /** Enter waypoint transit mode: show "Continue" button, hide prev/next/finish. */
+  enterWaypointMode(progress: { current: number; total: number }): void {
+    this.inWaypointMode = true;
+    this.prevBtn.hidden = true;
+    this.nextBtn.hidden = true;
+    this.finishBtn.hidden = true;
+    this.scrollIndicator.hidden = true;
+    this.label.textContent = t('continue');
+    this.label.hidden = false;
+    this.label.className = 'maptour-tour-footer__label maptour-tour-footer__label--waypoint';
+    this.el.classList.add('maptour-tour-footer--waypoint');
+    this.updateWaypointProgress(progress);
+    this.el.hidden = false;
+  }
+
+  /** Update waypoint progress in the track bar. */
+  updateWaypointProgress(progress: { current: number; total: number }): void {
+    const ratio = progress.total > 0 ? progress.current / progress.total : 0;
+    this.fill.style.width = `${Math.round(ratio * 100)}%`;
+    this.track.setAttribute('aria-valuenow', String(progress.current));
+    this.track.setAttribute('aria-valuemax', String(progress.total));
+  }
+
+  /** Exit waypoint mode, restore normal footer state. */
+  exitWaypointMode(): void {
+    this.inWaypointMode = false;
+    this.label.className = 'maptour-tour-footer__label';
+    this.el.classList.remove('maptour-tour-footer--waypoint');
   }
 
   show(): void {

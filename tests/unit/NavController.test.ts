@@ -15,16 +15,6 @@ function createTour(stopCount = 3): Tour {
   };
 }
 
-function createTourWithJourney(stopCount = 3, journeyOnStop = 1): Tour {
-  const tour = createTour(stopCount);
-  tour.stops[journeyOnStop].getting_here = {
-    mode: 'walk',
-    note: 'Walk along the path',
-    journey: [{ type: 'text', body: 'Follow the river' }],
-  };
-  return tour;
-}
-
 function setup(tour: Tour, callbacks = {}) {
   const session = new TourSession(tour.tour.id, tour.stops.length);
   const nav = new NavController(tour, session, callbacks);
@@ -163,45 +153,6 @@ describe('NavController', () => {
     expect(onTourEnd).toHaveBeenCalledOnce();
   });
 
-  // === Journey cards ===
-
-  it('emits onJourneyStart when next stop has journey content', () => {
-    const tour = createTourWithJourney(3, 1); // journey on stop index 1
-    const onJourneyStart = vi.fn();
-    const { nav } = setup(tour, { onJourneyStart });
-    nav.next(); // 0 → journey for stop 1
-    expect(onJourneyStart).toHaveBeenCalledOnce();
-    expect(onJourneyStart).toHaveBeenCalledWith(tour.stops[1], 1);
-    expect(nav.isInJourney()).toBe(true);
-  });
-
-  it('completeJourney advances to destination and emits onNavigate', () => {
-    const tour = createTourWithJourney(3, 1);
-    const onNavigate = vi.fn();
-    const { nav } = setup(tour, { onNavigate, onJourneyStart: vi.fn() });
-    nav.next(); // triggers journey
-    nav.completeJourney(); // "I've arrived"
-    expect(nav.getCurrentIndex()).toBe(1);
-    expect(nav.isInJourney()).toBe(false);
-    expect(onNavigate).toHaveBeenCalledWith(tour.stops[1], 1);
-  });
-
-  it('next during journey skips to destination', () => {
-    const tour = createTourWithJourney(3, 1);
-    const { nav } = setup(tour, { onJourneyStart: vi.fn() });
-    nav.next(); // triggers journey
-    nav.next(); // should skip to destination
-    expect(nav.getCurrentIndex()).toBe(1);
-  });
-
-  it('prev during journey returns to origin', () => {
-    const tour = createTourWithJourney(3, 1);
-    const { nav } = setup(tour, { onJourneyStart: vi.fn() });
-    nav.next(); // triggers journey (origin = stop 0)
-    nav.prev(); // should go back to origin
-    expect(nav.getCurrentIndex()).toBe(0);
-  });
-
   // === Return to start ===
 
   it('returnToStart navigates to start index', () => {
@@ -234,26 +185,14 @@ describe('NavController', () => {
     expect(onTourEnd).toHaveBeenCalledOnce();
   });
 
-  it('returnToStart emits onJourneyStart if start stop has journey content', () => {
-    const tour = createTourWithJourney(4, 0); // journey on stop 0 (start)
-    const onJourneyStart = vi.fn();
-    const { nav } = setup(tour, { onJourneyStart });
-    nav.goTo(3);
-    nav.returnToStart();
-    expect(onJourneyStart).toHaveBeenCalledOnce();
-    expect(onJourneyStart).toHaveBeenCalledWith(tour.stops[0], 0);
-  });
-
-  it('returnToStart goes directly if no journey content', () => {
+  it('returnToStart goes directly to start', () => {
     const tour = createTour(4);
     const onNavigate = vi.fn();
-    const onJourneyStart = vi.fn();
-    const { nav } = setup(tour, { onNavigate, onJourneyStart });
+    const { nav } = setup(tour, { onNavigate });
     nav.goTo(3);
     onNavigate.mockClear();
     nav.returnToStart();
     expect(nav.getCurrentIndex()).toBe(0);
-    expect(onJourneyStart).not.toHaveBeenCalled();
     expect(onNavigate).toHaveBeenCalledWith(tour.stops[0], 0);
   });
 

@@ -9,24 +9,25 @@ tour:
   close_url: https://visitennis.ie
   welcome:
     - type: text
-      body: |
+      body: |-
         Welcome to the **Ennis Sculpture Trail** - a short walking tour
         through the heart of Ennis, County Clare.
 
         In 1997, sculptor Carmel Doherty spearheaded the first public
-        sculpture trail in her native town. Five artists - Doherty,
-        Fiona O'Dwyer, Shane Gilmore, Barry Wrafter, and Colin Grehan -
-        carved, cast, and shaped the works you are about to see. Several
+        sculpture trail in her native town. Six artists - Doherty,
+        Diarmuid O'Twohigk, Fiona O'Dwyer, Shane Gilmore, Barry Wrafter, and Colin Grehan - carved, cast, and shaped the works you are about to see. Several
         had never worked in stone before; they learned together.
-
-        Today the trail weaves along the River Fergus, through medieval
+    - type: image
+      url: https://images.ennistidytowns.ie/sculpture/1997-sculpture-trail-marker.jpg
+      caption: Marker of the original Sculpture Train (1997)
+    - type: text
+      body: |
+        Today the expanded trail weaves along the River Fergus, through medieval
         laneways, and across the town's main streets. The sculptures
         celebrate Clare's culture, history, sport, and the bond between
         people and nature.
 
-        **Before you start:**
-        - There is one set of stairs between stops 5 and 6 (a step-free
-          alternative is noted at that stop)
+        We hope you enjoy this stroll through our town!
   goodbye:
     - type: text
       body: |
@@ -95,8 +96,8 @@ stops:
   - id: 2
     title: Bláth na hÍnse
     coords:
-      - 52.845062
-      - -8.983044
+      - 52.845193090728294
+      - -8.983077952914941
     content:
       - type: text
         body: |
@@ -113,7 +114,6 @@ stops:
         caption: "\"Bláth na hÍnse\" by Conor & Paddy Murray, Kilkee Forge"
     getting_here:
       mode: walk
-      note: Continue along the path, ~3 min
       route:
         - - 52.846411
           - -8.982617
@@ -139,10 +139,42 @@ stops:
           - -8.98299695420792
         - - 52.84553374595728
           - -8.983163210049893
-        - - 52.845255185747355
-          - -8.983291924250132
-        - - 52.845062
-          - -8.983044
+        - - 52.84525383976781
+          - -8.983302563475572
+        - - 52.84519066076495
+          - -8.98307582909578
+        - - 52.845193090728294
+          - -8.983077952914941
+      waypoints:
+        - coords:
+            - 52.84626628257487
+            - -8.982611072567158
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: |-
+                Look across the road towards the brown road sign; below it to the left you will spot a troll! You may come across more of this public artwork, created by local artist Rachel Macmanus as part of the Negative Space art collective.
+
+                Cross to the side of the road with the troll, turning right and then immediately left between two buildings.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/troll.jpg
+              caption: Billy Goats Gruff by Rachel Macmanus
+              alt: "Billy Goats Gruff, Club Bridge, Ennis. Painted in association with PRISM and Clare Co Co "
+        - coords:
+            - 52.84575730022048
+            - -8.983170138912394
+          text: Cross over the bridge and turn right down the ramp.
+        - coords:
+            - 52.84527942833186
+            - -8.983289824014308
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: Turn left at the Friendship Seating Area. This was developed in 2022 with a partnership between Ennis Municipal District and the Ennis Mental Health Association, in the hope that it will become a special place to for people to meet and connect with one another in the town centre.
+            - type: map
+              height: 350
   - id: 3
     title: Contentment is Wealth
     coords:
@@ -167,10 +199,9 @@ stops:
         caption: The stone chair - "Contentment is Wealth" by Fiona O'Dwyer (1998)
     getting_here:
       mode: walk
-      note: Continue along the path, ~6 min
       route:
-        - - 52.845062
-          - -8.983044
+        - - 52.845193090728294
+          - -8.983077952914941
         - - 52.844894
           - -8.983421
         - - 52.844792
@@ -183,6 +214,11 @@ stops:
           - -8.983599
         - - 52.844562
           - -8.983567
+      waypoints:
+        - coords:
+            - 52.84486698417298
+            - -8.98344722124387
+          text: Head up the small hill past the Costa Coffee. At the top of the hill you will see the next stop diagonally across the junction.
   - id: 4
     title: Sleepy Head - Helping Hands
     coords:
@@ -203,7 +239,6 @@ stops:
         caption: "\"Helping Hands\" by Shane Gilmore (1998)"
     getting_here:
       mode: walk
-      note: Continue along the path, ~3 min
       route:
         - - 52.844562
           - -8.983567
@@ -219,6 +254,15 @@ stops:
           - -8.984188
         - - 52.844473
           - -8.984257
+      waypoints:
+        - coords:
+            - 52.844590047523305
+            - -8.983633112019215
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: "To the next statue, you will turn down the hill, "
   - id: 5
     title: Clara
     coords:
@@ -243,30 +287,33 @@ stops:
         caption: "\"Clara\" by Carmel Doherty"
     getting_here:
       mode: walk
-      note: |
-        Up the stairs past AIB to Bindon Street, ~4 min.
-        Step-free alternative: double back and turn left at the road.
       route:
         - - 52.844473
           - -8.984257
-        - - 52.844568
-          - -8.984331
-        - - 52.844589
-          - -8.984261
-        - - 52.844634
-          - -8.984049
-        - - 52.844672
-          - -8.983958
-        - - 52.844691
-          - -8.983918
-        - - 52.844751
-          - -8.984017
-        - - 52.844842
-          - -8.984202
-        - - 52.845114
-          - -8.984859
-        - - 52.845174
-          - -8.985049
+        - - 52.8444381405762
+          - -8.98417986618449
+        - - 52.844425990546824
+          - -8.984123517995435
+        - - 52.844425990546824
+          - -8.984123517995435
+        - - 52.84442518054476
+          - -8.983978622652153
+        - - 52.84450618067777
+          - -8.983785428861086
+        - - 52.84460176064039
+          - -8.983668707612342
+        - - 52.84464874054486
+          - -8.983628458905853
+        - - 52.844738650220364
+          - -8.983867267897574
+        - - 52.844738650220364
+          - -8.983867267897574
+        - - 52.8448884992658
+          - -8.984147667219316
+        - - 52.845146076416476
+          - -8.984775547040252
+        - - 52.845214115408716
+          - -8.984959349466472
         - - 52.845235
           - -8.985009
         - - 52.845268
@@ -275,19 +322,26 @@ stops:
           - -8.98565
         - - 52.845447
           - -8.985658
-      journey:
-        - type: text
-          body: |
-            As you head up the steps from Bank Place, look around at the
-            red-brick Georgian terraces. Ennis grew rapidly in the 18th and
-            early 19th centuries as a market town and parliamentary borough.
-            Many of these terraced houses date from that period, built for
-            the merchants and professionals who served the town's thriving
-            economy. Bindon Street is one of Clare's best surviving
-            Georgian streetscapes.
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-5to6-georgian.jpg
-          caption: Georgian terraced houses on the route between stops 5 and 6
+      waypoints:
+        - coords:
+            - 52.84444963042041
+            - -8.983920307140911
+          text: You will now go back up the hill, cross the road, and turn left at the Eason's, crossing over the bridge.
+          journey_card: true
+          content:
+            - type: text
+              body: Look up at the building to the right on the wall and notice the tightrope walker!
+        - coords:
+            - 52.84490273720613
+            - -8.984182374162076
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: You are now passing through the heart of Georgian Ennis. Ennis grew rapidly in the 18th and early 19th centuries as a market town and parliamentary borough.            Many of these terraced houses date from that period, built for the merchants and professionals who served the town's thriving economy. Bindon Street is one of Clare's best surviving Georgian streetscapes.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/journey-5to6-georgian.jpg
+              caption: Georgian terraced houses on Bank Place and Bindon Street
   - id: 6
     title: Figurative Sculptures, Harmony Row
     coords:
@@ -309,7 +363,6 @@ stops:
         url: https://images.ennistidytowns.ie/sculpture/stop7-figures.jpg
     getting_here:
       mode: walk
-      note: Continue along the path, ~3 min
       route:
         - - 52.845447
           - -8.985658
@@ -363,7 +416,6 @@ stops:
         caption: The Maid of Erin monument (1897)
     getting_here:
       mode: walk
-      note: Continue along the path, ~5 min
       route:
         - - 52.846143
           - -8.984485
@@ -405,8 +457,7 @@ stops:
     content:
       - type: text
         body: |
-          This piece celebrates Clare's historic win in the All-Ireland
-          Senior Hurling Championship final of 1995. 
+          This piece is the start of the original 1997 trail and celebrates Clare's historic win in the All-Ireland Senior Hurling Championship final of 1995. 
 
           Clare had not won an All-Ireland hurling title since its first in 
           1914 - an 81-year wait. When Ger Loughnane's team defeated Offaly 
@@ -421,7 +472,6 @@ stops:
         caption: "\"Memory of Meaning\" by Colin Grehan & Barry Wrafter"
     getting_here:
       mode: walk
-      note: Continue along the path, ~2 min
       route:
         - - 52.846979
           - -8.988706
@@ -470,7 +520,6 @@ stops:
         caption: "\"Four Minds\" by Diarmuid Twohig & Marcel Twohig"
     getting_here:
       mode: walk
-      note: Continue along the path, ~1 min
       route:
         - - 52.846547
           - -8.989682
@@ -507,7 +556,6 @@ stops:
         caption: "\"Dreamboat\" by Fiona Dwyer"
     getting_here:
       mode: walk
-      note: Continue along the path, ~2 min
       route:
         - - 52.84652
           - -8.989155
@@ -546,7 +594,6 @@ stops:
         caption: "\"Embrace Nature\" by Shane Gilmore (1997)"
     getting_here:
       mode: walk
-      note: Along the riverside path, ~4 min
       route:
         - - 52.846404
           - -8.988386
@@ -576,22 +623,6 @@ stops:
           - -8.987923
         - - 52.844301
           - -8.987508
-      journey:
-        - type: text
-          body: |
-            As you walk along the River Fergus, you are following the
-            waterway that gave Ennis its name. "Inis" in Irish means
-            island - the town grew up around a small island in the river
-            where a Franciscan friary was founded in the 13th century.
-
-            The Fergus has shaped the town for centuries.
-
-            Across the water you can see Post Office Field, an important
-            part of the flood plain and a valuable green space for birds 
-            and other wildlife within the town.
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-11to12-fergus.jpg
-          caption: The River Fergus and Post Office Field
   - id: 12
     title: Market Day
     coords:
@@ -613,7 +644,6 @@ stops:
         caption: "\"Market Day\" by Barry Wrafter (c. 2012)"
     getting_here:
       mode: walk
-      note: Through Enright's Bow and along the laneways, ~4 min
       route:
         - - 52.844301
           - -8.987508
@@ -655,24 +685,37 @@ stops:
           - -8.984778
         - - 52.843121
           - -8.984797
-      journey:
-        - type: text
-          body: |
-            You are passing through Enright's Bow, one of Ennis's 
-            characteristic "bowways" - arched passageways that connect
-            the town's main streets to the lanes and yards behind. 
-            These medieval passages originally gave access to the long 
-            narrow plots of land(burgage plots) that ran behind the 
-            street-front buildings, where merchants kept workshops, stores, 
-            and kitchen gardens.
+      waypoints:
+        - coords:
+            - 52.84431583617331
+            - -8.98598704622042
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: |-
+                Continue along the river for about 75 metres, where you will cross over two roadways on your way between two buildings. 
+                 
+                You will pass through Enright's Bow, one of Ennis's 
+                characteristic "bow-ways" - arched passageways that connect
+                the town's main streets to the lanes and yards behind. 
+                These medieval passages originally gave access to the long 
+                narrow plots of land(burgage plots) that ran behind the 
+                street-front buildings, where merchants kept workshops, stores, 
+                and kitchen gardens.
 
-            Ennis restored and reopened many of these laneways
-            and bowways as part of a town renewal initiative, turning
-            forgotten back passages into attractive pedestrian routes that
-            reveal the town's historic street pattern.
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-12to13-bowway.jpg
-          caption: Enright's Bow - one of Ennis's restored bowways
+                Ennis restored and reopened many of these laneways
+                and bow-ways as part of a town renewal initiative, turning
+                forgotten back passages into attractive pedestrian routes that
+                reveal the town's historic street pattern.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/journey-12to13-bowway.jpg
+              caption: Enright's Bow - one of Ennis's restored bowways
+            - type: text
+              body: Many of these bow-ways have artwork, including this dedication to Ennis native Laura Brennan who, upon learning at the age of 25 learned her cervical cancer was terminal dedicated the rest of her life as a campaigner for HPV vaccination. Laura died 20th March 2019, at just 26 years of age.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/enright-bow-laura-brennan.jpg
+              caption: Mural dedicated to Laura Brennan, Enright's Bow
   - id: 13
     title: Weathered Woman
     coords:
@@ -695,7 +738,6 @@ stops:
         caption: "\"Weathered Woman\" by Jose Croft (1998)"
     getting_here:
       mode: walk
-      note: Continue along the path, ~4 min
       route:
         - - 52.843121
           - -8.984797
@@ -737,7 +779,6 @@ stops:
         caption: "\"Hands\" by Shane Gilmore (2008)"
     getting_here:
       mode: walk
-      note: Continue along the path, ~1 min
       route:
         - - 52.842067
           - -8.984443
@@ -760,6 +801,108 @@ stops:
         - - 52.842014
           - -8.983296
   - id: 15
+    title: Sisters of Mercy
+    coords:
+      - 52.84415467400237
+      - -8.982054965168928
+    content:
+      - type: text
+        body: |-
+          This work was sponsored by Ennis Tidy Towns and commemorates the arrival of the Sisters of Mercy to Ennis in 1854. 
+
+          Nowel Crowley, then-chairperson of Ennis Tidy Towns, said “[We] have sponsored this particular piece and really it is in commemoration of Mother Catherine McAuley and the inspiration she gave by giving up her fortune to help the poor. The Sisters came to Ennis in 1854 to work with the poor here."
+
+          This statue has become [somewhat controversial](https://www.independent.ie/irish-news/its-distortion-of-history-locals-call-for-statue-dedicated-to-sisters-of-mercy-to-be-removed/36039387.html) in the wake of the Ryan Report; whilst the Sisters of Mercy undoubtedly did good works in Ennis, the location of this monument is also on the site of the former Industrial School and Magdalene laundry. 
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/sisters-of-mercy.jpg
+        caption: Dedication to the Sisters of Mercy by Barry Wrafter (2011)
+    getting_here:
+      mode: walk
+      route:
+        - - 52.842014
+          - -8.983296
+        - - 52.842024302985116
+          - -8.983383005351053
+        - - 52.842063995263786
+          - -8.983519878981303
+        - - 52.84211907836589
+          - -8.983478288651282
+        - - 52.84213365917536
+          - -8.983557444440665
+        - - 52.842796
+          - -8.983043
+        - - 52.843128
+          - -8.982897
+        - - 52.843405
+          - -8.982794
+        - - 52.843587
+          - -8.982746
+        - - 52.843877
+          - -8.982709
+        - - 52.844219
+          - -8.982603
+        - - 52.844116
+          - -8.982085
+        - - 52.844157
+          - -8.982068
+        - - 52.84415467400237
+          - -8.982054965168928
+      waypoints:
+        - coords:
+            - 52.84254073235794
+            - -8.983241268043361
+          text: |-
+            Return back in the direction you came from, turning right up the main street. 
+
+            You are walking up O'Connell Street, the main street of Ennis.
+            Lined with colourful shopfronts and pubs, this pedestrianised
+            street is the commercial heart of the town.
+
+            At the top of the street stands the **O'Connell Monument**, a
+            tall column erected in 1867 to honour Daniel O'Connell, "The
+            Liberator". O'Connell was elected MP for Clare in 1828 in a
+            landmark by-election held in Ennis - his victory forced the
+            British government to pass Catholic Emancipation the following
+            year, allowing Catholics to sit in Parliament for the first
+            time. The connection between O'Connell and Ennis is one of the
+            most significant in Irish political history.
+
+            The square at the top of the street is known locally as
+            "The Height".
+          content:
+            - type: text
+              body: |-
+                Return back in the direction you came from, turning right up the main street. 
+
+                You are walking up O'Connell Street, the main street of Ennis.
+                Lined with colourful shopfronts and pubs, this pedestrianised
+                street is the commercial heart of the town.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-st.jpg
+              caption: O'Connell Street, Ennis - the pedestrianised main street
+        - coords:
+            - 52.84351218717291
+            - -8.982765730855496
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: |-
+                At the top of the street stands the **O'Connell Monument**, a
+                tall column erected in 1867 to honour Daniel O'Connell, "The
+                Liberator". O'Connell was elected MP for Clare in 1828 in a
+                landmark by-election held in Ennis - his victory forced the
+                British government to pass Catholic Emancipation the following
+                year, allowing Catholics to sit in Parliament for the first
+                time. The connection between O'Connell and Ennis is one of the
+                most significant in Irish political history.
+
+                The square at the top of the street is known locally as
+                "The Height".
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-column.jpg
+              caption: he O'Connell Monument at The Height
+  - id: 16
     title: Celtic Rest
     coords:
       - 52.844034
@@ -779,64 +922,18 @@ stops:
         caption: "\"Celtic Rest\" by Rory McNamara (2004)"
     getting_here:
       mode: walk
-      note: Up O'Connell Street to The Height, ~4 min
       route:
-        - - 52.842014
-          - -8.983296
-        - - 52.84202511303199
-          - -8.983384608028283
-        - - 52.842063590240706
-          - -8.983516663593585
-        - - 52.84211907836589
-          - -8.983485828283921
-        - - 52.84213406419778
-          - -8.98355688356272
-        - - 52.842796
-          - -8.983043
-        - - 52.843128
-          - -8.982897
-        - - 52.843405
-          - -8.982794
-        - - 52.843587
-          - -8.982746
-        - - 52.843877
-          - -8.982709
-        - - 52.844219
-          - -8.982603
+        - - 52.84415467400237
+          - -8.982054965168928
         - - 52.844116
           - -8.982085
-        - - 52.844046
-          - -8.98198
-        - - 52.844017
-          - -8.98188
+        - - 52.84404086785118
+          - -8.981975598698112
+        - - 52.844034792781336
+          - -8.981864243943535
         - - 52.844034
           - -8.981866
-      journey:
-        - type: text
-          body: |
-            You are walking up O'Connell Street, the main street of Ennis.
-            Lined with colourful shopfronts and pubs, this pedestrianised
-            street is the commercial heart of the town. On your right you
-            will pass the Old Ground Hotel, one of Clare's oldest hotels.
-
-            At the top of the street stands the **O'Connell Monument**, a
-            tall column erected in 1867 to honour Daniel O'Connell, "The
-            Liberator". O'Connell was elected MP for Clare in 1828 in a
-            landmark by-election held in Ennis - his victory forced the
-            British government to pass Catholic Emancipation the following
-            year, allowing Catholics to sit in Parliament for the first
-            time. The connection between O'Connell and Ennis is one of the
-            most significant in Irish political history.
-
-            The square at the top of the street is known locally as
-            "The Height".
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-st.jpg
-          caption: O'Connell Street, Ennis - the pedestrianised main street
-        - type: image
-          url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-column.jpg
-          caption: The O'Connell Monument at The Height
-  - id: 16
+  - id: 17
     title: The Centurial Sphere & Easter Rising Memorial
     coords:
       - 52.846129
@@ -865,7 +962,6 @@ stops:
         caption: Easter Rising Memorial Stone (1966)
     getting_here:
       mode: walk
-      note: Continue along the path, ~2 min
       route:
         - - 52.844034
           - -8.981866

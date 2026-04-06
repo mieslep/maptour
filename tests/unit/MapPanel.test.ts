@@ -29,15 +29,27 @@ describe('MapPanel', () => {
     expect(panel.isOpen()).toBe(false);
   });
 
-  it('creates panel with header in container', () => {
+  it('creates panel in container', () => {
     expect(container.querySelector('.maptour-map-panel')).not.toBeNull();
-    expect(container.querySelector('.maptour-map-panel__header')).not.toBeNull();
   });
 
-  it('header has close button with X icon', () => {
-    const closeBtn = container.querySelector('.maptour-map-panel__close');
-    expect(closeBtn).not.toBeNull();
-    expect(closeBtn!.querySelector('.fa-xmark')).not.toBeNull();
+  it('FAB shows map icon initially', () => {
+    const btn = panel.getOpenButton();
+    expect(btn.querySelector('.fa-map')).not.toBeNull();
+  });
+
+  it('FAB switches to X icon when map is open', () => {
+    panel.show();
+    const btn = panel.getOpenButton();
+    expect(btn.querySelector('.fa-xmark')).not.toBeNull();
+    expect(btn.querySelector('.fa-map')).toBeNull();
+  });
+
+  it('FAB switches back to map icon when closed', () => {
+    panel.show();
+    panel.hide();
+    const btn = panel.getOpenButton();
+    expect(btn.querySelector('.fa-map')).not.toBeNull();
   });
 
   it('getOpenButton returns a button with map icon', () => {
@@ -70,9 +82,9 @@ describe('MapPanel', () => {
     expect(panel.isOpen()).toBe(true);
   });
 
-  it('close button click closes', () => {
+  it('FAB click when open closes the panel', () => {
     panel.show();
-    container.querySelector<HTMLElement>('.maptour-map-panel__close')!.click();
+    panel.getOpenButton().click();
     expect(panel.isOpen()).toBe(false);
   });
 
@@ -106,10 +118,11 @@ describe('MapPanel', () => {
     expect(calls).toEqual([true]);
   });
 
-  it('setActiveStop renders directions button in header', () => {
+  it('setActiveStop is callable without error (nav button removed)', () => {
     const stop = { id: 1, title: 'Test', coords: [52.84, -8.98] as [number, number], content: [], getting_here: { mode: 'walk' as const } };
     panel.setActiveStop(stop);
-    expect(container.querySelector('.maptour-map-panel__nav-btn .maptour-nav-btn')).not.toBeNull();
+    // Nav button was removed from map panel — setActiveStop is a no-op for API compat
+    expect(true).toBe(true);
   });
 
   it('destroy removes panel from DOM', () => {

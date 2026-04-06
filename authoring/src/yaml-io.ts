@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import type { Tour, TourMeta, Stop, ContentBlock, Leg, GpsConfig } from './types';
+import type { Tour, TourMeta, Stop, ContentBlock, Leg, GpsConfig, Waypoint } from './types';
 
 /** Remove undefined/null/empty-array fields from an object (shallow). */
 function cleanObj(obj: Record<string, unknown>): Record<string, unknown> {
@@ -35,11 +35,25 @@ function cleanBlock(block: ContentBlock): Record<string, unknown> {
   return block as Record<string, unknown>;
 }
 
+function cleanWaypoint(wp: Waypoint): Record<string, unknown> {
+  const result: Record<string, unknown> = {
+    coords: wp.coords,
+    text: wp.text,
+  };
+  if (wp.photo) result.photo = wp.photo;
+  if (wp.photo_caption) result.photo_caption = wp.photo_caption;
+  if (wp.photo_alt) result.photo_alt = wp.photo_alt;
+  if (wp.journey_card === true) result.journey_card = true;
+  if (wp.content && wp.content.length > 0) result.content = wp.content.map(cleanBlock);
+  if (wp.radius !== undefined) result.radius = wp.radius;
+  return result;
+}
+
 function cleanLeg(leg: Leg): Record<string, unknown> {
   const result: Record<string, unknown> = { mode: leg.mode };
   if (leg.note) result.note = leg.note;
   if (leg.route && leg.route.length > 0) result.route = leg.route;
-  if (leg.journey && leg.journey.length > 0) result.journey = leg.journey.map(cleanBlock);
+  if (leg.waypoints && leg.waypoints.length > 0) result.waypoints = leg.waypoints.map(cleanWaypoint);
   return result;
 }
 
@@ -149,7 +163,15 @@ export function yamlToTour(text: string): Tour {
       content: Array.isArray(raw.content) ? (raw.content as ContentBlock[]) : [],
     };
     if (raw.getting_here && typeof raw.getting_here === 'object') {
-      stop.getting_here = raw.getting_here as Leg;
+      const gh = raw.getting_here as Record<string, unknown>;
+      const leg: Leg = {
+        mode: (gh.mode as Leg['mode']) ?? 'walk',
+      };
+      if (gh.note) leg.note = String(gh.note);
+      if (Array.isArray(gh.route)) leg.route = gh.route as [number, number][];
+      if (Array.isArray(gh.waypoints)) leg.waypoints = gh.waypoints as Waypoint[];
+      // Legacy: silently drop 'journey' field (replaced by waypoints)
+      stop.getting_here = leg;
     }
     if (typeof raw.arrival_radius === 'number') {
       stop.arrival_radius = raw.arrival_radius;

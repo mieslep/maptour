@@ -3,8 +3,6 @@ import type { TourSession } from '../session/TourSession';
 
 export interface NavControllerCallbacks {
   onNavigate?: (stop: Stop, index: number) => void;
-  onJourneyStart?: (destinationStop: Stop, destinationIndex: number) => void;
-  onJourneyEnd?: () => void;
   onTourEnd?: () => void;
 }
 
@@ -12,8 +10,6 @@ export class NavController {
   private tour: Tour;
   private session: TourSession;
   private currentIndex: number;
-  private inJourney = false;
-  private journeyDestIndex = -1;
   private returningToStart = false;
   private callbacks: NavControllerCallbacks;
 
@@ -55,20 +51,12 @@ export class NavController {
   goTo(index: number): void {
     if (index < 0 || index >= this.tour.stops.length) return;
 
-    this.clearJourney();
     this.currentIndex = index;
     this.session.setCurrentStop(index);
-    const stop = this.currentStop;
-    this.callbacks.onNavigate?.(stop, index);
+    this.callbacks.onNavigate?.(this.currentStop, index);
   }
 
   next(): void {
-    // If in a journey, "next" skips to the destination stop
-    if (this.inJourney) {
-      this.goTo(this.journeyDestIndex);
-      return;
-    }
-
     this.session.markVisited(this.currentStop.id);
 
     if (this.isLastTourStop(this.currentIndex)) {
@@ -79,32 +67,13 @@ export class NavController {
     const nextIndex = this.session.reversed
       ? (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length
       : (this.currentIndex + 1) % this.tour.stops.length;
-    const nextStop = this.tour.stops[nextIndex];
 
-    // Journey content sourcing: for the segment between stops A and B (A < B),
-    // always use stops[B].getting_here.journey regardless of direction.
-    const journeySourceStop = this.session.reversed
-      ? this.tour.stops[this.currentIndex]  // current is the higher-numbered stop
-      : nextStop;                           // destination is the higher-numbered stop
-
-    if (journeySourceStop.getting_here?.journey && journeySourceStop.getting_here.journey.length > 0) {
-      this.inJourney = true;
-      this.journeyDestIndex = nextIndex;
-      this.callbacks.onJourneyStart?.(journeySourceStop, nextIndex);
-    } else {
-      this.goTo(nextIndex);
-    }
+    this.goTo(nextIndex);
   }
 
   prev(): void {
-    // If in a journey, go back to the origin stop
-    if (this.inJourney) {
-      this.goTo(this.currentIndex);
-      return;
-    }
     // Don't go before the starting stop
     if (this.currentIndex === this.session.startIndex) return;
-    // In reverse mode, "prev" goes toward higher indices (back toward original last stop)
     const prevIndex = this.session.reversed
       ? (this.currentIndex + 1) % this.tour.stops.length
       : (this.currentIndex - 1 + this.tour.stops.length) % this.tour.stops.length;
@@ -115,32 +84,7 @@ export class NavController {
   returnToStart(): void {
     this.session.markVisited(this.currentStop.id);
     this.returningToStart = true;
-    const startStop = this.tour.stops[this.session.startIndex];
-
-    // Show journey card if the start stop has journey content
-    if (startStop.getting_here?.journey && startStop.getting_here.journey.length > 0) {
-      this.inJourney = true;
-      this.journeyDestIndex = this.session.startIndex;
-      this.callbacks.onJourneyStart?.(startStop, this.session.startIndex);
-    } else {
-      this.goTo(this.session.startIndex);
-    }
-  }
-
-  /** Called by the orchestrator when the journey "I've arrived" button is pressed. */
-  completeJourney(): void {
-    if (!this.inJourney) return;
-    const destIndex = this.journeyDestIndex;
-    this.clearJourney();
-    this.callbacks.onJourneyEnd?.();
-    this.goTo(destIndex);
-  }
-
-  private clearJourney(): void {
-    if (this.inJourney) {
-      this.inJourney = false;
-      this.journeyDestIndex = -1;
-    }
+    this.goTo(this.session.startIndex);
   }
 
   /** Reset returning-to-start flag (called when starting a new tour). */
@@ -154,9 +98,5 @@ export class NavController {
 
   getCurrentStop(): Stop {
     return this.currentStop;
-  }
-
-  isInJourney(): boolean {
-    return this.inJourney;
   }
 }

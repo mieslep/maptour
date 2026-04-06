@@ -3,7 +3,6 @@ import '../styles/maptour.css';
 import { loadTour } from './loader';
 import { MapView } from './map/MapView';
 import { NavController } from './navigation/NavController';
-import { NavAppPreference } from './navigation/NavAppPreference';
 import { GpsTracker } from './gps/GpsTracker';
 import { nearestStop } from './gps/nearestStop';
 import { ProximityDetector } from './gps/proximityDetector';
@@ -25,6 +24,8 @@ import { OverviewControls } from './layout/OverviewControls';
 import { buildMobileLayout } from './layout/buildMobileLayout';
 import { buildDesktopLayout } from './layout/buildDesktopLayout';
 import { createJourneyHandler } from './orchestrator/journeyHandler';
+import { GuidanceBanner } from './waypoint/GuidanceBanner';
+import { ArrivingBanner } from './card/ArrivingBanner';
 import { setStrings, t } from './i18n';
 import type { MapTourInitOptions } from './types';
 
@@ -81,14 +82,15 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // === Card system ===
   const cardHost = new CardHost(cardEl);
-  const navPreference = new NavAppPreference();
-  const stopCardRenderer = new StopCardRenderer(navPreference);
-  stopCardRenderer.setTourNavMode(tour.tour.nav_mode);
-  const journeyCardRenderer = new JourneyCardRenderer(navPreference);
-  journeyCardRenderer.setTourNavMode(tour.tour.nav_mode);
+  const stopCardRenderer = new StopCardRenderer();
+  const journeyCardRenderer = new JourneyCardRenderer();
 
   // === UI components ===
   const transitBar = new InTransitBar(container);
+  const guidanceBanner = new GuidanceBanner();
+  const arrivingBanner = new ArrivingBanner();
+  mapPane.appendChild(guidanceBanner.getElement());
+  container.appendChild(arrivingBanner.getElement());
   const stopListOverlay = new StopListOverlay(container);
   const overviewControls = new OverviewControls();
   const mapView = new MapView(mapPane, tour);
@@ -181,12 +183,8 @@ async function init(options: MapTourInitOptions): Promise<void> {
       if (!isOpen) mapPanelCentred = false;
     });
 
-    const mapOpenBtn = mapPanel.getOpenButton();
-    new MutationObserver(() => {
-      if (viewingSystemCard) return;
-      const header = cardEl.querySelector('.maptour-card__header');
-      if (header && !header.contains(mapOpenBtn)) header.appendChild(mapOpenBtn);
-    }).observe(cardEl, { childList: true });
+    // Map open FAB — append to container, positioned by CSS
+    container.appendChild(mapPanel.getOpenButton());
   }
 
   // === NavController ===
@@ -195,13 +193,11 @@ async function init(options: MapTourInitOptions): Promise<void> {
       setStopListOpen(false);
       const nextStop = navController.getNextStop(index);
       cardHost.render((c) => stopCardRenderer.render(c, stop, index + 1, tour.stops.length));
-      stopCardRenderer.setSuppressGettingHereNote(false);
       mapView.setActiveStop(stop);
       mapView.setVisitedStops(session.getVisited());
       tourFooter.update(session.getVisited().size, tour.stops.length);
       if (nextStop) {
-        const hasJourney = !!(nextStop.getting_here?.journey && nextStop.getting_here.journey.length > 0);
-        tourFooter.setNextStop(nextStop.title, hasJourney);
+        tourFooter.setNextStop(nextStop.title);
       } else {
         tourFooter.setLastStop(isReturningToStart);
       }
@@ -209,14 +205,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
       if (mapPanel) mapPanel.setActiveStop(stop, tour.tour.nav_mode);
       resetScrollHint?.();
       updateScrollGate();
-    },
-    onJourneyStart: (destinationStop) => {
-      tourFooter.setNextStop(destinationStop.title);
-      cardHost.render((c) => journeyCardRenderer.render(c, destinationStop, () => {
-        stopCardRenderer.setSuppressGettingHereNote(true);
-        navController.completeJourney();
-      }));
-      tourFooter.setScrollGate(false);
     },
     onTourEnd: () => {
       const lastIdx = session.reversed ? 0 : tour.stops.length - 1;
@@ -233,7 +221,18 @@ async function init(options: MapTourInitOptions): Promise<void> {
       navController.prev();
     }
   });
-  tourFooter.onNext(() => navController.next());
+  tourFooter.onNext(() => {
+    const currentIdx = navController.getCurrentIndex();
+    const nextStop = navController.getNextStop(currentIdx);
+    if (nextStop?.getting_here?.waypoints?.length) {
+      // Enter waypoint transit mode
+      session.markVisited(tour.stops[currentIdx].id);
+      tourFooter.update(session.getVisited().size, tour.stops.length);
+      journeyState.transition('in_transit', currentIdx);
+    } else {
+      navController.next();
+    }
+  });
   tourFooter.onFinish(async () => {
     // Mark the current stop as visited before finishing
     const currentStop = tour.stops[navController.getCurrentIndex()];
@@ -266,7 +265,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
   overviewControls.onBegin((index, reversed) => {
     session.setStartIndex(index);
     session.setReversed(reversed);
-    stopCardRenderer.setStartingStop(index);
     navController.resetReturnState();
     if (mapPanel) mapPanel.hide();
     journeyState.transition('at_stop', index);
@@ -279,7 +277,6 @@ async function init(options: MapTourInitOptions): Promise<void> {
     welcome: tour.tour.welcome, hideFooterCta: !isMobile,
     onBegin: () => {
       session.setStartIndex(session.overviewSelectedIndex);
-      stopCardRenderer.setStartingStop(session.overviewSelectedIndex);
       navController.resetReturnState();
       journeyState.transition('at_stop', session.overviewSelectedIndex);
     },
@@ -343,10 +340,13 @@ async function init(options: MapTourInitOptions): Promise<void> {
   journeyState.onStateChange(createJourneyHandler({
     tour, session, mapView, navController, sheet, mapPanel, menuBar,
     tourFooter, overviewControls, stopListOverlay, transitBar,
-    sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
+    cardHost, journeyCardRenderer, guidanceBanner, arrivingBanner,
+    container, mapPane, sheetContentEl, isMobile, setStopListOpen, setViewingSystemCard: (c) => { viewingSystemCard = c; },
     renderWelcome, renderGoodbye,
     onStopActivated: (stopIndex) => { proximityDetector?.setCurrentStop(stopIndex); },
     onOverviewEnter: () => { gpsOverviewApplied = false; },
+    transitionToStop: (stopIndex) => { journeyState.transition('at_stop', stopIndex); },
+    setMapFabVisible: isMobile && mapPanel ? (visible) => { mapPanel!.setHeaderVisible(visible); } : undefined,
   }));
 
   // === GPS (deferred — starts on user action) ===
@@ -403,7 +403,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // Locate button + GPS denied toast
   let locateBtn: HTMLElement | null = null;
-  if (gpsTracker.isAvailable()) {
+  if (!isMobile && gpsTracker.isAvailable()) {
     locateBtn = mapView.addLocateButton(() => {
       if (gpsDenied) {
         showGpsToast();
