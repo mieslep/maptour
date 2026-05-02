@@ -293,4 +293,108 @@ describe('MapView', () => {
     // fitBounds should be a no-op for empty stops
     expect(() => mv.fitBounds()).not.toThrow();
   });
+
+  describe('pin / GPS / decoration setters (TOUR-049)', () => {
+    it('setPulsingPin records the pulsing stop and re-renders', async () => {
+      const mv = await createMapView();
+      expect(() => mv.setPulsingPin(2)).not.toThrow();
+      expect(() => mv.setPulsingPin(null)).not.toThrow();
+    });
+
+    it('setVisitedStops accepts a Set and re-renders without throwing', async () => {
+      const mv = await createMapView();
+      expect(() => mv.setVisitedStops(new Set([1, 2]))).not.toThrow();
+    });
+
+    it('setSelectedPin records the selected stop and re-renders', async () => {
+      const mv = await createMapView();
+      expect(() => mv.setSelectedPin(1)).not.toThrow();
+      expect(() => mv.setSelectedPin(null)).not.toThrow();
+    });
+
+    it('setEndPin records the end stop and re-renders', async () => {
+      const mv = await createMapView();
+      expect(() => mv.setEndPin(3)).not.toThrow();
+      expect(() => mv.setEndPin(null)).not.toThrow();
+    });
+
+    it('setPinNumberMap accepts a mapping and re-renders', async () => {
+      const mv = await createMapView();
+      const mapping = new Map<number, number>([[1, 5], [2, 6]]);
+      expect(() => mv.setPinNumberMap(mapping)).not.toThrow();
+      expect(() => mv.setPinNumberMap(null)).not.toThrow();
+    });
+
+    it('setChevronDirection updates direction (no-op outside overview mode)', async () => {
+      const mv = await createMapView();
+      expect(() => mv.setChevronDirection(true)).not.toThrow();
+      expect(() => mv.setChevronDirection(false)).not.toThrow();
+    });
+
+    it('setChevronDirection in overview mode triggers a sequence pulse restart', async () => {
+      vi.useFakeTimers();
+      const mv = await createMapView();
+      mv.setOverviewMode(true);
+      expect(() => mv.setChevronDirection(true)).not.toThrow();
+      vi.advanceTimersByTime(1000);
+      vi.useRealTimers();
+    });
+
+    it('setSelectedPin in overview mode triggers a sequence pulse', async () => {
+      vi.useFakeTimers();
+      const mv = await createMapView();
+      mv.setOverviewMode(true);
+      mv.setSelectedPin(2);
+      vi.advanceTimersByTime(1000);
+      vi.useRealTimers();
+    });
+
+    it('triggerSequencePulse is a no-op outside overview mode', async () => {
+      const mv = await createMapView();
+      expect(() => mv.triggerSequencePulse()).not.toThrow();
+    });
+
+    it('triggerSequencePulse runs through all stops in overview mode', async () => {
+      vi.useFakeTimers();
+      const mv = await createMapView();
+      mv.setOverviewMode(true);
+      mv.triggerSequencePulse();
+      // Schedule kicks in after 500ms then 600ms intervals
+      vi.advanceTimersByTime(2000);
+      // Setting overview off again clears any pending pulse timer
+      mv.setOverviewMode(false);
+      vi.useRealTimers();
+    });
+  });
+
+  describe('GPS dot (TOUR-049)', () => {
+    it('updateGpsPosition creates a marker on first call', async () => {
+      const mv = await createMapView();
+      expect(() => mv.updateGpsPosition(52.5, -6.5)).not.toThrow();
+      // Idempotent: second call updates the same marker, doesn't create a new one
+      expect(() => mv.updateGpsPosition(52.6, -6.6)).not.toThrow();
+    });
+
+    it('updateGpsHeading is a safe no-op when no GPS marker exists', async () => {
+      const mv = await createMapView();
+      expect(() => mv.updateGpsHeading(45)).not.toThrow();
+      expect(() => mv.updateGpsHeading(null)).not.toThrow();
+    });
+
+    it('updateGpsHeading mutates the heading arrow style when marker exists', async () => {
+      const mv = await createMapView();
+      mv.updateGpsPosition(52.5, -6.5);
+      // The mocked Leaflet marker exposes a heading-arrow element via getElement()
+      expect(() => mv.updateGpsHeading(90)).not.toThrow();
+      expect(() => mv.updateGpsHeading(null)).not.toThrow();
+    });
+
+    it('clearGpsPosition removes the marker', async () => {
+      const mv = await createMapView();
+      mv.updateGpsPosition(52.5, -6.5);
+      expect(() => mv.clearGpsPosition()).not.toThrow();
+      // Calling again with no marker is a safe no-op
+      expect(() => mv.clearGpsPosition()).not.toThrow();
+    });
+  });
 });

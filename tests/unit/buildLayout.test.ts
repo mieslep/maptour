@@ -171,6 +171,120 @@ describe('buildMobileLayout', () => {
 
     expect(container.querySelector('.maptour-map-panel')).not.toBeNull();
   });
+
+  describe('auto-hide menu bar (TOUR-049)', () => {
+    it('scrolling down past 56px hides the menu bar and adds card-view modifier', () => {
+      const menuBar = makeMenuBar();
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: menuBar,
+      });
+      const cardView = container.querySelector('.maptour-card-view') as HTMLElement;
+
+      // Simulate scrolling down past the threshold.
+      Object.defineProperty(cardView, 'scrollTop', { value: 100, configurable: true });
+      cardView.dispatchEvent(new Event('scroll'));
+
+      expect(menuBar.classList.contains('maptour-menu-bar--hidden')).toBe(true);
+      expect(cardView.classList.contains('maptour-card-view--menu-hidden')).toBe(true);
+      // Sanity: layout returned ok
+      expect(layout.cardEl).toBeInstanceOf(HTMLElement);
+    });
+
+    it('scrolling up reveals the menu bar again', () => {
+      const menuBar = makeMenuBar();
+      buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: menuBar,
+      });
+      const cardView = container.querySelector('.maptour-card-view') as HTMLElement;
+
+      Object.defineProperty(cardView, 'scrollTop', { value: 100, configurable: true });
+      cardView.dispatchEvent(new Event('scroll'));
+      expect(menuBar.classList.contains('maptour-menu-bar--hidden')).toBe(true);
+
+      // Scroll back up
+      Object.defineProperty(cardView, 'scrollTop', { value: 50, configurable: true });
+      cardView.dispatchEvent(new Event('scroll'));
+      expect(menuBar.classList.contains('maptour-menu-bar--hidden')).toBe(false);
+      expect(cardView.classList.contains('maptour-card-view--menu-hidden')).toBe(false);
+    });
+
+    it('staying near the top (<= 56px) keeps the menu bar visible', () => {
+      const menuBar = makeMenuBar();
+      buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: menuBar,
+      });
+      const cardView = container.querySelector('.maptour-card-view') as HTMLElement;
+
+      Object.defineProperty(cardView, 'scrollTop', { value: 30, configurable: true });
+      cardView.dispatchEvent(new Event('scroll'));
+
+      expect(menuBar.classList.contains('maptour-menu-bar--hidden')).toBe(false);
+    });
+  });
+
+  describe('scroll-hint observer + reset (TOUR-049)', () => {
+    function makeOverflowingCard(layout: ReturnType<typeof buildMobileLayout>) {
+      const card = layout.cardEl;
+      // Force "has overflow" by stubbing scroll metrics.
+      Object.defineProperty(card, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(card, 'clientHeight', { value: 200, configurable: true });
+      Object.defineProperty(card, 'scrollTop', { value: 0, configurable: true, writable: true });
+      return card;
+    }
+
+    it('resetScrollHint removes the --hidden class so the hint reappears', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+      });
+      const hint = container.querySelector('.maptour-scroll-hint') as HTMLElement;
+      hint.classList.add('maptour-scroll-hint--hidden');
+
+      layout.resetScrollHint!();
+      expect(hint.classList.contains('maptour-scroll-hint--hidden')).toBe(false);
+    });
+
+    it('hides the hint once the card is scrolled past 20px', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+      });
+      const card = makeOverflowingCard(layout);
+      const hint = container.querySelector('.maptour-scroll-hint') as HTMLElement;
+
+      // Initial: scrollTop=0 -> hint visible (no --hidden)
+      card.dispatchEvent(new Event('scroll'));
+      expect(hint.classList.contains('maptour-scroll-hint--hidden')).toBe(false);
+
+      // Scroll past 20px -> hidden
+      Object.defineProperty(card, 'scrollTop', { value: 50, configurable: true });
+      card.dispatchEvent(new Event('scroll'));
+      expect(hint.classList.contains('maptour-scroll-hint--hidden')).toBe(true);
+    });
+
+    it('hides the hint when the card has no overflow', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+      });
+      const card = layout.cardEl;
+      Object.defineProperty(card, 'scrollHeight', { value: 100, configurable: true });
+      Object.defineProperty(card, 'clientHeight', { value: 200, configurable: true });
+      const hint = container.querySelector('.maptour-scroll-hint') as HTMLElement;
+
+      card.dispatchEvent(new Event('scroll'));
+      expect(hint.classList.contains('maptour-scroll-hint--hidden')).toBe(true);
+    });
+  });
 });
 
 describe('buildDesktopLayout', () => {
