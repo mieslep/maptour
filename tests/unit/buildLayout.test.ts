@@ -107,6 +107,61 @@ describe('buildMobileLayout', () => {
     expect(container.querySelector('.maptour-scroll-hint')).not.toBeNull();
   });
 
+  describe('scrollHintMode', () => {
+    it('default (auto) renders the scroll-hint element without --always modifier', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+      });
+      const hint = container.querySelector('.maptour-scroll-hint');
+      expect(hint).not.toBeNull();
+      expect(hint!.classList.contains('maptour-scroll-hint--always')).toBe(false);
+      expect(typeof layout.resetScrollHint).toBe('function');
+    });
+
+    it('"always" adds the --always modifier and injects the explicit content', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+        scrollHintMode: 'always',
+      });
+      const hint = container.querySelector('.maptour-scroll-hint');
+      expect(hint).not.toBeNull();
+      expect(hint!.classList.contains('maptour-scroll-hint--always')).toBe(true);
+      expect(hint!.querySelector('i.fa-solid.fa-chevron-down')).not.toBeNull();
+      expect(hint!.textContent).toContain('Scroll for more');
+      expect(typeof layout.resetScrollHint).toBe('function');
+    });
+
+    it('"off" omits the scroll-hint element entirely and returns null resetScrollHint', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+        scrollHintMode: 'off',
+      });
+      expect(container.querySelector('.maptour-scroll-hint')).toBeNull();
+      expect(layout.resetScrollHint).toBeNull();
+    });
+
+    it('"off" mode does not throw when card content mutates', () => {
+      const layout = buildMobileLayout({
+        container,
+        mapPane: makeMapPane(),
+        menuBarEl: makeMenuBar(),
+        scrollHintMode: 'off',
+      });
+      expect(() => {
+        const child = document.createElement('p');
+        child.textContent = 'mutate';
+        layout.cardEl.appendChild(child);
+      }).not.toThrow();
+      expect(container.querySelector('.maptour-scroll-hint')).toBeNull();
+    });
+  });
+
   it('creates a map panel in the container', () => {
     buildMobileLayout({
       container,

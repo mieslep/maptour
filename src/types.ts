@@ -33,6 +33,7 @@ export interface TourMeta {
   require_scroll?: boolean;        // if true, user must scroll to bottom of stop content before advancing (default false)
   tour_url?: string;               // URL for "Open in MapTour" badge (deep link to native app)
   waypoint_radius?: number;        // default waypoint approach radius in metres (default: 15)
+  scroll_hint?: 'auto' | 'always' | 'off';  // mobile scroll-hint rendering mode (default: 'auto')
 }
 
 export interface TextBlock {

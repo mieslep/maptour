@@ -146,6 +146,7 @@ export const TourMetaSchema = z.object({
   require_scroll: z.boolean().optional(),
   tour_url: z.string().optional(),
   waypoint_radius: z.number().positive().optional(),
+  scroll_hint: z.enum(['auto', 'always', 'off']).optional(),
 });
 
 // ---- Top-level tour file ----

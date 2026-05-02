@@ -68,7 +68,9 @@ async function init(options: MapTourInitOptions): Promise<void> {
   const mapPane = document.createElement('div');
   mapPane.className = 'maptour-map-pane';
   const layoutDeps = { container, mapPane, menuBarEl: menuBar.getElement() };
-  const layout = isMobile ? buildMobileLayout(layoutDeps) : buildDesktopLayout(layoutDeps);
+  const layout = isMobile
+    ? buildMobileLayout({ ...layoutDeps, scrollHintMode: tour.tour.scroll_hint })
+    : buildDesktopLayout(layoutDeps);
   const { mapPanel, sheet, sheetContentEl, cardEl, stopListWrapper, stopListEl, resetScrollHint } = layout;
 
   // Append tour footer after card element in the appropriate container
