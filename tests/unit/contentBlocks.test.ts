@@ -364,3 +364,97 @@ describe('renderMapBlock', () => {
     expect(el.dataset.offsetY).toBe('0');
   });
 });
+
+import { renderBlock } from '../../src/card/blocks/renderBlock';
+import { renderTextBlock } from '../../src/card/blocks/TextBlock';
+
+describe('renderBlock dispatcher (TOUR-050)', () => {
+  it('dispatches text blocks to renderTextBlock', () => {
+    const el = renderBlock({ type: 'text', body: 'hello' }, true);
+    expect(el.classList.contains('maptour-block--text')).toBe(true);
+  });
+
+  it('dispatches image blocks', () => {
+    const el = renderBlock({ type: 'image', url: 'x.jpg' }, true);
+    expect(el.classList.contains('maptour-block--image')).toBe(true);
+  });
+
+  it('dispatches gallery blocks', () => {
+    const el = renderBlock({ type: 'gallery', images: [{ url: 'a.jpg' }] }, true);
+    expect(el.classList.contains('maptour-block--gallery')).toBe(true);
+  });
+
+  it('dispatches video blocks (passes active flag through)', () => {
+    const el = renderBlock({ type: 'video', url: 'https://youtube.com/watch?v=x' }, true);
+    expect(el.classList.contains('maptour-block--video')).toBe(true);
+  });
+
+  it('dispatches audio blocks', () => {
+    const el = renderBlock({ type: 'audio', url: 'a.mp3' }, true);
+    expect(el.classList.contains('maptour-block--audio')).toBe(true);
+  });
+
+  it('dispatches map blocks', () => {
+    const el = renderBlock({ type: 'map' }, true);
+    // MapBlock is a card-level map embed placeholder, not a maptour-block-- variant.
+    expect(el.classList.contains('maptour-card__map-embed')).toBe(true);
+  });
+});
+
+describe('TextBlock — async marked path (TOUR-050)', () => {
+  it('renders inline markdown synchronously (sync branch)', () => {
+    const el = renderTextBlock({ type: 'text', body: '**bold**' });
+    expect(el.innerHTML).toContain('<strong>');
+  });
+
+  it('handles a Promise return from marked.parse via the loading shim', async () => {
+    // The async branch is only entered when marked.parse returns a Promise.
+    // Force it by stubbing marked.parse for this test.
+    const marked = await import('marked');
+    const original = marked.marked.parse;
+    const html = '<p>delayed content</p>';
+    // @ts-expect-error monkey patch for branch coverage
+    marked.marked.parse = vi.fn(() => Promise.resolve(html));
+    try {
+      const el = renderTextBlock({ type: 'text', body: 'irrelevant' });
+      // Loading shim renders synchronously
+      expect(el.innerHTML).toContain('Loading');
+      // Flush the microtask queue so the inner .then() callback runs.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(el.innerHTML).toContain('delayed content');
+    } finally {
+      // @ts-expect-error restore
+      marked.marked.parse = original;
+    }
+  });
+});
+
+describe('Image/Audio/Gallery onerror handlers (TOUR-050)', () => {
+  it('ImageBlock onerror replaces the image with a placeholder', () => {
+    const el = renderBlock({ type: 'image', url: 'broken.jpg', alt: 'alt text' }, true) as HTMLElement;
+    const img = el.querySelector('img') as HTMLImageElement;
+    img.dispatchEvent(new Event('error'));
+    expect(el.querySelector('.maptour-image-placeholder')).not.toBeNull();
+    expect(img.style.display).toBe('none');
+  });
+
+  it('AudioBlock onerror replaces the player with a fallback message', () => {
+    const el = renderBlock({ type: 'audio', url: 'broken.mp3', label: 'Test' }, true) as HTMLElement;
+    const audio = el.querySelector('audio') as HTMLAudioElement;
+    audio.dispatchEvent(new Event('error'));
+    expect(el.querySelector('.maptour-audio-error')).not.toBeNull();
+    expect(audio.style.display).toBe('none');
+  });
+
+  it('GalleryBlock image onerror replaces with a placeholder', () => {
+    const el = renderBlock({
+      type: 'gallery',
+      images: [{ url: 'broken.jpg', alt: 'one' }, { url: 'good.jpg' }],
+    }, true) as HTMLElement;
+    const imgs = el.querySelectorAll('img');
+    expect(imgs.length).toBe(2);
+    imgs[0].dispatchEvent(new Event('error'));
+    // Existing gallery uses placeholder swap on error
+    expect(el.querySelector('.maptour-image-placeholder, .maptour-gallery__placeholder')).not.toBeNull();
+  });
+});

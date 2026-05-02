@@ -63,4 +63,22 @@ describe('renderGoodbyeCard', () => {
     renderGoodbyeCard(container, makeOpts());
     expect(container.getAttribute('aria-label')).toBe('Tour complete');
   });
+
+  it('renders goodbye content blocks when provided (TOUR-050)', () => {
+    renderGoodbyeCard(container, makeOpts({
+      goodbye: [
+        { type: 'text', body: 'Thanks for visiting!' },
+        { type: 'text', body: 'Come back soon.' },
+      ],
+    }));
+    const content = container.querySelector('.maptour-card__content');
+    expect(content).not.toBeNull();
+    // Two text blocks rendered
+    expect(content!.querySelectorAll('.maptour-block--text').length).toBe(2);
+  });
+
+  it('does not render goodbye content section when array is empty (TOUR-050)', () => {
+    renderGoodbyeCard(container, makeOpts({ goodbye: [] }));
+    expect(container.querySelector('.maptour-card__content')).toBeNull();
+  });
 });
