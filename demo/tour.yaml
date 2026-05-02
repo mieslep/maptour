@@ -164,7 +164,7 @@ stops:
         - coords:
             - 52.84575730022048
             - -8.983170138912394
-          text: Cross over the bridge and turn right down the ramp.
+          text: Cross over the bridge {dot} and turn right down the ramp.
         - coords:
             - 52.84527942833186
             - -8.983289824014308
