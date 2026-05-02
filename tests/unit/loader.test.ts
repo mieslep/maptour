@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseTourFromString } from '../../src/loader';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { parseTourFromString, loadTour } from '../../src/loader';
 
 const VALID_TOUR_YAML = `
 tour:
@@ -662,5 +662,113 @@ stops:
 `;
     const result = parseTourFromString(yaml);
     expect(result.error).toBeDefined();
+  });
+});
+
+const VALID_YAML = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5, -6.5]
+    content: []
+`;
+
+describe('loadTour (fetch path)', () => {
+  let originalFetch: typeof fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('returns the parsed tour on a successful fetch', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => VALID_YAML,
+    } as Response));
+
+    const result = await loadTour('https://example.com/tour.yaml');
+    expect(result.error).toBeUndefined();
+    expect(result.tour?.tour.id).toBe('test');
+    expect(result.tour?.stops.length).toBe(1);
+  });
+
+  it('returns a network error when fetch throws', async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw new TypeError('Failed to connect');
+    });
+
+    const result = await loadTour('https://example.com/tour.yaml');
+    expect(result.error).toContain('Network error');
+    expect(result.error).toContain('Failed to connect');
+    expect(result.tour).toBeUndefined();
+  });
+
+  it('returns an HTTP error when the response is not ok', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      text: async () => '',
+    } as Response));
+
+    const result = await loadTour('https://example.com/missing.yaml');
+    expect(result.error).toContain('HTTP 404 Not Found');
+    expect(result.tour).toBeUndefined();
+  });
+
+  it('returns an error when text() throws', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => { throw new Error('stream broken'); },
+    } as Response));
+
+    const result = await loadTour('https://example.com/tour.yaml');
+    expect(result.error).toContain('Failed to read tour file response');
+    expect(result.error).toContain('stream broken');
+  });
+
+  it('returns a YAML parse error on malformed YAML', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => 'tour:\n  id: [unclosed',
+    } as Response));
+
+    const result = await loadTour('https://example.com/tour.yaml');
+    expect(result.error).toContain('YAML parse error');
+  });
+
+  it('returns a validation error when the parsed YAML fails the schema', async () => {
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => 'tour:\n  id: x\nstops: []',
+    } as Response));
+
+    const result = await loadTour('https://example.com/tour.yaml');
+    expect(result.error).toContain('Tour validation error');
+  });
+
+  it('handles non-Error rejections from fetch', async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw 'plain string error';
+    });
+
+    const result = await loadTour('https://example.com/tour.yaml');
+    expect(result.error).toContain('Network error');
+    expect(result.error).toContain('plain string error');
   });
 });
