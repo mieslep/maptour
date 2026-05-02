@@ -6,10 +6,11 @@ export interface MobileLayoutDeps {
   container: HTMLElement;
   mapPane: HTMLElement;
   menuBarEl: HTMLElement;
+  scrollHintMode?: 'auto' | 'always' | 'off';
 }
 
 export function buildMobileLayout(deps: MobileLayoutDeps): LayoutComponents {
-  const { container, mapPane, menuBarEl } = deps;
+  const { container, mapPane, menuBarEl, scrollHintMode = 'auto' } = deps;
 
   // Card element
   const cardEl = document.createElement('div');
@@ -28,35 +29,41 @@ export function buildMobileLayout(deps: MobileLayoutDeps): LayoutComponents {
   cardView.appendChild(stopListWrapper);
   cardView.appendChild(cardEl);
 
-  // Scroll hint
-  const scrollHint = document.createElement('div');
-  scrollHint.className = 'maptour-scroll-hint';
-  const usesContrast = window.matchMedia?.('(prefers-contrast: more)').matches;
-  if (usesContrast) {
-    scrollHint.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i> ' + t('scroll_more');
-  }
-  cardView.appendChild(scrollHint);
-
-  // Scroll hint behaviour
-  const updateScrollHint = () => {
-    const scrollable = cardEl;
-    const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 10;
-    const hasOverflow = scrollable.scrollHeight > scrollable.clientHeight + 10;
-    if (!hasOverflow || scrollable.scrollTop > 20 || atBottom) {
-      scrollHint.classList.add('maptour-scroll-hint--hidden');
-    } else {
-      scrollHint.classList.remove('maptour-scroll-hint--hidden');
+  // Scroll hint (skipped entirely when 'off')
+  let resetScrollHint: (() => void) | null = null;
+  if (scrollHintMode !== 'off') {
+    const scrollHint = document.createElement('div');
+    scrollHint.className = 'maptour-scroll-hint';
+    const usesContrast = window.matchMedia?.('(prefers-contrast: more)').matches;
+    if (scrollHintMode === 'always') {
+      scrollHint.classList.add('maptour-scroll-hint--always');
     }
-  };
-  cardEl.addEventListener('scroll', updateScrollHint, { passive: true });
-  const cardContentObserver = new MutationObserver(() => {
-    requestAnimationFrame(updateScrollHint);
-  });
-  cardContentObserver.observe(cardEl, { childList: true, subtree: true });
-  const resetScrollHint = () => {
-    scrollHint.classList.remove('maptour-scroll-hint--hidden');
-    requestAnimationFrame(updateScrollHint);
-  };
+    if (usesContrast || scrollHintMode === 'always') {
+      scrollHint.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i> ' + t('scroll_more');
+    }
+    cardView.appendChild(scrollHint);
+
+    // Scroll hint behaviour
+    const updateScrollHint = () => {
+      const scrollable = cardEl;
+      const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 10;
+      const hasOverflow = scrollable.scrollHeight > scrollable.clientHeight + 10;
+      if (!hasOverflow || scrollable.scrollTop > 20 || atBottom) {
+        scrollHint.classList.add('maptour-scroll-hint--hidden');
+      } else {
+        scrollHint.classList.remove('maptour-scroll-hint--hidden');
+      }
+    };
+    cardEl.addEventListener('scroll', updateScrollHint, { passive: true });
+    const cardContentObserver = new MutationObserver(() => {
+      requestAnimationFrame(updateScrollHint);
+    });
+    cardContentObserver.observe(cardEl, { childList: true, subtree: true });
+    resetScrollHint = () => {
+      scrollHint.classList.remove('maptour-scroll-hint--hidden');
+      requestAnimationFrame(updateScrollHint);
+    };
+  }
 
   // Auto-hide menu bar on scroll down, show on scroll up
   let lastScrollTop = 0;

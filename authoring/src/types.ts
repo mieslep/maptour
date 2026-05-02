@@ -98,6 +98,7 @@ export interface TourMeta {
   getting_here?: ContentBlock[];
   nudge_return?: boolean;
   require_scroll?: boolean;
+  scroll_hint?: 'auto' | 'always' | 'off';
 }
 
 export interface Tour {

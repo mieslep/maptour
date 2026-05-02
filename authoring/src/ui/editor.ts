@@ -1707,6 +1707,32 @@ export class TourEditor {
     navRow.appendChild(navSelect);
     content.appendChild(navRow);
 
+    // Scroll hint dropdown
+    const scrollHintRow = document.createElement('div');
+    scrollHintRow.className = 'input-row';
+    scrollHintRow.innerHTML = `<label class="input-label">Scroll Hint${makeTip('Auto: subtle fade gradient at the bottom of stop cards (default). Always shown: explicit "Scroll for more" indicator on every card — useful for tours aimed at audiences less familiar with scrolling. Off: no indicator at all.')}</label>`;
+    const scrollHintSelect = document.createElement('select');
+    scrollHintSelect.className = 'input';
+    const scrollHintOptions: Array<{ value: 'auto' | 'always' | 'off'; label: string }> = [
+      { value: 'auto', label: 'Auto (default)' },
+      { value: 'always', label: 'Always shown' },
+      { value: 'off', label: 'Off' },
+    ];
+    for (const opt of scrollHintOptions) {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      if (opt.value === (meta.scroll_hint ?? 'auto')) o.selected = true;
+      scrollHintSelect.appendChild(o);
+    }
+    scrollHintSelect.onchange = () => {
+      const v = scrollHintSelect.value as 'auto' | 'always' | 'off';
+      meta.scroll_hint = v === 'auto' ? undefined : v;
+      this.changed();
+    };
+    scrollHintRow.appendChild(scrollHintSelect);
+    content.appendChild(scrollHintRow);
+
     // Boolean toggles
     const toggles: Array<{ label: string; key: 'nudge_return' | 'require_scroll'; tip: string }> = [
       { label: 'Require Scroll', key: 'require_scroll', tip: 'Prevent advancing to next stop until the user has scrolled to the bottom of the content.' },

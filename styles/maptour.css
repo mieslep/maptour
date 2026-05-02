@@ -89,11 +89,29 @@
   transition: opacity 0.3s;
 }
 
+/* When the tour footer is hidden (welcome / goodbye / system cards), the
+   scroll hint sits at the actual viewport bottom instead of leaving a gap. */
+.maptour-scroll-hint:has(~ .maptour-tour-footer[hidden]) {
+  bottom: 0;
+}
+
 .maptour-scroll-hint--hidden {
   opacity: 0;
 }
 
-/* Accessibility: replace gradient with explicit text indicator */
+/* Explicit text indicator: applied for prefers-contrast: more (accessibility)
+   or when tour.scroll_hint: 'always' is set (author opt-in).
+   The two rule bodies below MUST stay in sync — same property values, same output. */
+.maptour-scroll-hint--always {
+  background: var(--maptour-surface);
+  height: auto;
+  padding: 6px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--maptour-text);
+  border-top: 1px solid var(--maptour-border);
+}
+
 @media (prefers-contrast: more) {
   .maptour-scroll-hint {
     background: var(--maptour-surface);

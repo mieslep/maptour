@@ -374,13 +374,25 @@ TourSession as single source of truth for tour config + visited state. StopCard 
 
 ---
 
+## Milestone: v1.5 — Scroll-indicator control
+
+### TOUR-044 — Explicit scroll indicator (`tour.scroll_hint`) (small)
+
+Tour-level YAML field `tour.scroll_hint: 'auto' | 'always' | 'off'` lets authors override the default fade-gradient scroll hint per tour. `'always'` forces the explicit text+chevron strip (the existing `prefers-contrast: more` visual) for every visitor; `'off'` suppresses the indicator entirely. Authoring tool gains a 3-way control in tour settings. Default behaviour unchanged.
+
+**Spec:** `specs/TOUR-044-spec.md`
+**Dependencies:** TOUR-038 (mobile layout owns the scroll-hint element)
+**Status:** Specced — awaiting sign-off
+
+---
+
 ## Backlog (unsequenced)
 
 ### Architecture
 
-- **Tour reversal mechanics** — direction toggle is hidden pending review. Journey cards, getting_here notes, and CTA buttons need correct behaviour in reverse direction. Needs spec work before re-enabling.
+- **Tour reversal mechanics** — direction toggle is hidden pending review. Journey cards, getting_here notes, and CTA buttons need correct behaviour in reverse direction. **Status:** punted indefinitely — Phil may not adopt.
 
-### Player UX
+### Process
 
-- **Explicit scroll indicator** — `tour.scroll_hint: 'always'` option to show a persistent "Scroll for more" text+chevron instead of the subtle fade gradient. Aimed at older users or tours where accessibility is a priority. Default remains the gradient with automatic `prefers-contrast` fallback
+- **MapTour spec & review process** — decide what level of rigor specs warrant for this project (FR/AC depth, whether to formalise hazard-surfaces / adversarial review, where specs live, what approval gate is). Surfaced after TOUR-044 spec accidentally ran a heavyweight pre-handoff loop that didn't fit the project's working model. Needs a separate, deliberate discussion — not a per-ticket decision.
 

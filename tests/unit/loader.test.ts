@@ -595,6 +595,50 @@ stops:
     expect(result.error).toBeDefined();
   });
 
+  describe('scroll_hint', () => {
+    const baseYaml = (extra: string) => `
+tour:
+  id: test
+  title: Test
+${extra}
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+
+    it.each(['auto', 'always', 'off'])('accepts scroll_hint: %s', (value) => {
+      const result = parseTourFromString(baseYaml(`  scroll_hint: ${value}`));
+      expect(result.error).toBeUndefined();
+      expect(result.tour?.tour.scroll_hint).toBe(value);
+    });
+
+    it('accepts tour with scroll_hint absent', () => {
+      const result = parseTourFromString(baseYaml(''));
+      expect(result.error).toBeUndefined();
+      expect(result.tour?.tour.scroll_hint).toBeUndefined();
+    });
+
+    it('rejects invalid scroll_hint string', () => {
+      const result = parseTourFromString(baseYaml('  scroll_hint: maybe'));
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('scroll_hint');
+    });
+
+    it('rejects scroll_hint with wrong type (boolean)', () => {
+      const result = parseTourFromString(baseYaml('  scroll_hint: true'));
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('scroll_hint');
+    });
+
+    it('rejects scroll_hint with wrong type (number)', () => {
+      const result = parseTourFromString(baseYaml('  scroll_hint: 1'));
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('scroll_hint');
+    });
+  });
+
   it('returns error for waypoint with out-of-range coords', () => {
     const yaml = `
 tour:

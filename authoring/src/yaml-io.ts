@@ -103,6 +103,7 @@ function cleanTourMeta(meta: TourMeta): Record<string, unknown> {
   if (meta.getting_here && meta.getting_here.length > 0) result.getting_here = meta.getting_here.map(cleanBlock);
   if (meta.nudge_return) result.nudge_return = true;
   if (meta.require_scroll) result.require_scroll = true;
+  if (meta.scroll_hint && meta.scroll_hint !== 'auto') result.scroll_hint = meta.scroll_hint;
   return result;
 }
 
@@ -152,6 +153,9 @@ export function yamlToTour(text: string): Tour {
   if (Array.isArray(tourMeta.getting_here)) meta.getting_here = tourMeta.getting_here as ContentBlock[];
   if (tourMeta.nudge_return === true) meta.nudge_return = true;
   if (tourMeta.require_scroll === true) meta.require_scroll = true;
+  if (tourMeta.scroll_hint === 'always' || tourMeta.scroll_hint === 'off' || tourMeta.scroll_hint === 'auto') {
+    meta.scroll_hint = tourMeta.scroll_hint;
+  }
 
   // Parse stops
   const parsedStops: Stop[] = stops.map((s, i) => {
