@@ -47,9 +47,38 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
+      // TOUR-051: Per-file thresholds with risk-tiered floors.
+      // Tier registry and rationale: see TESTING.md.
+      // Tier B is the global default (DOM-touching UI components).
+      // Tier A files (pure logic, parsers, orchestrators) override per glob.
+      // Tier C (jsdom-hostile) is currently empty; entries land alongside
+      // a paired Playwright spec and a coverage:check enforcement script.
       thresholds: {
-        lines: 80,
-        statements: 80,
+        perFile: true,
+        // Tier B baseline
+        lines: 70,
+        statements: 70,
+        functions: 70,
+        branches: 60,
+
+        // Tier A overrides (Functions ≥85, Lines/Statements ≥80, Branches ≥70)
+        'src/i18n.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/loader.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/schema.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/breadcrumb/Breadcrumb.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/gps/GpsTracker.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/gps/nearestStop.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/gps/proximityDetector.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/journey/JourneyStateManager.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/map/chevrons.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/map/layers.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/navigation/NavAppPreference.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/navigation/NavController.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/orchestrator/journeyHandler.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/session/TourSession.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/util/markedExtensions.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/util/sanitiseHtml.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
+        'src/waypoint/WaypointTracker.ts': { lines: 80, statements: 80, functions: 85, branches: 70 },
       },
       exclude: [
         'node_modules/**',
@@ -60,7 +89,9 @@ export default defineConfig({
         'native/**',
         'scripts/**',
         '*.config.*',
-        'src/index.ts',
+        'src/index.ts',          // entry point — exempt per TESTING.md tier registry
+        'src/types.ts',          // type-only file
+        'src/layout/types.ts',   // type-only file
       ],
     },
   },

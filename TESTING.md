@@ -1,17 +1,21 @@
 # MapTour — Testing strategy
 
-Status: **DRAFT v3** — not yet adopted. Iterated through two rounds of
-adversarial review.
+Status: **ADOPTED** as of TOUR-051. The risk-tiered per-file thresholds
+defined here are enforced by `vite.config.ts` and run on every CI build.
 
 ## Why this exists
 
-The 80% aggregate coverage threshold currently configured in `vite.config.ts`
-masks serious unevenness. As of 2026-05-02 the suite passes at 80.65% lines
-aggregate, but **12 source files are below the proposed per-file floor on at
-least one metric**, including `src/orchestrator/journeyHandler.ts` at **0%**
-(324 lines) and `src/loader.ts` at **43% lines** (the YAML tour-file parser
-— a critical-path file). Per-file gates would surface these immediately.
-Aggregate-only gates hide them indefinitely.
+Before TOUR-046..051, the 80% aggregate coverage threshold in
+`vite.config.ts` masked serious unevenness. At the start of this work the
+suite passed at 80.65% lines aggregate, but **12 source files were below
+the per-file floor on at least one metric**, including
+`src/orchestrator/journeyHandler.ts` at **0%** (324 lines) and
+`src/loader.ts` at **43% lines** (the YAML tour-file parser — a
+critical-path file). After TOUR-047..050 brought all 12 files above
+their tier floors, TOUR-051 flipped the gate to per-file enforcement.
+
+Aggregate as of TOUR-051: **95.6% lines / 95% functions / 93% branches**
+across 533+ unit tests + 4 E2E smoke tests.
 
 ## Threshold model: risk-tiered, functions-authoritative
 
@@ -163,62 +167,41 @@ Empty at adoption. Format:
 - src/path/to/File.ts — E2E: tests/e2e/<basename>.spec.ts
 ```
 
-## Below-threshold inventory
+## Below-threshold inventory (historical — all remediated)
 
-Generated from `coverage/lcov.info` 2026-05-02 against each file's assigned
-tier floor. Each row requires an explicit disposition before TOUR-051
-flips the per-file gate.
+The 13 files below are what triggered the rampup. All cleared their tier
+floors via TOUR-047..050 and now pass the per-file gate enabled by TOUR-051.
 
-| File | Tier | Lines | Functions | Branches | Failing on | Disposition |
-|---|---|---:|---:|---:|---|---|
-| `src/orchestrator/journeyHandler.ts` | A | 0% | 0% | 0% | All | TOUR-047 unit tests |
-| `src/loader.ts` | A | 43% | 50% | 80% | Lines, functions | TOUR-048 unit tests |
-| `src/gps/GpsTracker.ts` | A | 85% | **72%** | 78% | Functions (Tier A floor 85%) | TOUR-048 unit tests (battery-saver branches) |
-| `src/card/NavButton.ts` | B | 33% | 50% | 89% | Lines, functions | TOUR-049 unit tests |
-| `src/waypoint/GuidanceBanner.ts` | B | 66% | 86% | 100% | Lines | TOUR-049 unit tests (existing photo-modal gap; consider extraction) |
-| `src/map/MapView.ts` | B | 73% | **61%** | 85% | Functions | TOUR-049 unit tests (existing 24-test suite is the foundation; expand jsdom mocking) |
-| `src/layout/buildMobileLayout.ts` | B | 76% | **25%** | 80% | Functions | TOUR-049 unit tests (helper closures, scroll-hint observers) |
-| `src/card/blocks/renderBlock.ts` | B | 79% | 100% | **17%** | Branches | TOUR-050 unit tests (block-type dispatch) |
-| `src/card/blocks/TextBlock.ts` | B | 82% | 100% | **50%** | Branches | TOUR-050 unit tests (async path) |
-| `src/card/blocks/AudioBlock.ts` | B | 82% | 50% | 100% | Functions | TOUR-050 unit tests |
-| `src/card/blocks/GalleryBlock.ts` | B | 83% | 50% | 100% | Functions | TOUR-050 unit tests |
-| `src/card/blocks/ImageBlock.ts` | B | 84% | 67% | 100% | Functions | TOUR-050 unit tests |
-| `src/card/GoodbyeCard.ts` | B | 91% | 100% | **50%** | Branches | TOUR-050 unit tests (restart-vs-back branch) |
+| File | Tier | Before (lines / func / branch) | After | Remediated by |
+|---|---|---|---|---|
+| `src/orchestrator/journeyHandler.ts` | A | 0/0/0 | 89/100/89 | TOUR-047 |
+| `src/loader.ts` | A | 43/50/80 | 100/100/86 | TOUR-048 |
+| `src/gps/GpsTracker.ts` | A | 85/72/78 | 97/100/88 | TOUR-048 |
+| `src/card/NavButton.ts` | B | 33/50/89 | 100/100/97 | TOUR-049 |
+| `src/waypoint/GuidanceBanner.ts` | B | 66/86/100 | 100/100/100 | TOUR-049 |
+| `src/map/MapView.ts` | B | 73/61/85 | 96/97/88 | TOUR-049 |
+| `src/layout/buildMobileLayout.ts` | B | 76/25/80 | 99/100/93 | TOUR-049 |
+| `src/card/blocks/renderBlock.ts` | B | 79/100/17 | 100/100/100 | TOUR-050 |
+| `src/card/blocks/TextBlock.ts` | B | 82/100/50 | 100/100/100 | TOUR-050 |
+| `src/card/blocks/AudioBlock.ts` | B | 82/50/100 | 100/100/100 | TOUR-050 |
+| `src/card/blocks/GalleryBlock.ts` | B | 83/50/100 | 92/100/100 | TOUR-050 |
+| `src/card/blocks/ImageBlock.ts` | B | 84/67/100 | 100/100/92 | TOUR-050 |
+| `src/card/GoodbyeCard.ts` | B | 91/100/50 | 100/100/100 | TOUR-050 |
 
-13 files (12 reported by codex round 1 plus `GpsTracker` which only fails
-under Tier A's stricter 85% functions floor). The inventory is the source
-of truth for what TOUR-051 must achieve before the gate flips.
+## Restoration plan (completed)
 
-## Restoration plan (revised order)
+All six tickets shipped to main:
 
-The order matters — earlier critique surfaced a CI-sequencing hole.
+1. **TOUR-046 — Playwright in CI** ✅ Replaced stale E2E spec with current-selector smoke suite; added build → demo-stage → install browsers → e2e to `.github/workflows/ci.yml`.
+2. **TOUR-047 — `journeyHandler.ts` unit tests** ✅ 0% → 89/100/89.
+3. **TOUR-048 — Tier A remediation** ✅ `loader.ts` and `GpsTracker.ts` to Tier A floors.
+4. **TOUR-049 — Tier B batch 1** ✅ `NavButton`, `GuidanceBanner`, `buildMobileLayout`, `MapView`.
+5. **TOUR-050 — Tier B batch 2** ✅ Block renderers and `GoodbyeCard` branches.
+6. **TOUR-051 — Per-file thresholds, flip the gate** ✅ Tiered thresholds in `vite.config.ts` enforced per-file.
 
-1. **TOUR-046 — Playwright in CI** (M).
-   Today CI runs `npm run coverage` only; Playwright is not exercised.
-   Playwright's config uses `vite preview` which needs a built bundle, so
-   simply adding `npm run test:e2e` to the workflow would fail. This ticket
-   either (a) adds an explicit `npm run build` step before E2E, or (b)
-   switches `playwright.config.ts` to use `npm run dev` (no build needed).
-   No Tier C disposition is valid until this ticket lands and CI runs
-   Playwright on every PR.
-2. **TOUR-047 — `journeyHandler.ts` unit tests** (M). 0% → Tier A. Largest
-   single coverage win; pure orchestration, no DOM mocking required.
-3. **TOUR-048 — Tier A remediation** (M). `loader.ts` and `GpsTracker.ts`
-   to Tier A floors. Both are pure-logic files with substantial decision
-   surfaces; clearing them is high-confidence.
-4. **TOUR-049 — Tier B remediation, batch 1** (S-M). `NavButton.ts`,
-   `GuidanceBanner.ts` (excluding photo modal — see TOUR-051 if extraction
-   needed), `buildMobileLayout.ts`, `MapView.ts` function gaps.
-5. **TOUR-050 — Tier B remediation, batch 2** (S). Block renderer functions
-   and branches: `AudioBlock`, `GalleryBlock`, `ImageBlock`, `renderBlock`
-   branch dispatch, `TextBlock` async path, `GoodbyeCard` restart branch.
-6. **TOUR-051 — Per-file thresholds + Tier C registry, flip the gate** (S).
-   Implement the tier model in `vite.config.ts`. Add `coverage:check`
-   script that validates for every Tier C entry: paired spec file exists,
-   header comment names the source file, spec contains explicit assertions
-   against the source's exported tags/selectors, and the spec is included
-   in CI. Decide whether to extract any portion (e.g., `BottomSheet` drag
-   handlers, `GuidanceBanner` photo modal) before classifying as Tier C.
+The `coverage:check` script for Tier C registry validation is **deferred** —
+no Tier C entries currently exist. When the first Tier C disposition is
+added, the script lands alongside it.
 
 ## Maintenance model
 
