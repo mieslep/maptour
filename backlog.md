@@ -388,11 +388,69 @@ Tour-level YAML field `tour.scroll_hint: 'auto' | 'always' | 'off'` lets authors
 
 ### TOUR-045 — Inline waypoint dot in narrative text (small)
 
-Authors can write `:dot:` in any markdown text block to render a small filled circle inline with surrounding text — visually matching the active pink waypoint marker on the map. New CSS variable `--maptour-waypoint-color` lets advanced embedders override the colour; the map marker reads the same variable so inline and on-map dots stay in sync.
+Authors can write `{dot}` in any markdown text block (and waypoint guidance text) to render a small filled circle inline — visually matching the active pink waypoint marker on the map. New CSS variable `--maptour-waypoint-color` lets advanced embedders override the colour; the map marker reads the same variable so inline and on-map dots stay in sync.
 
 **Spec:** `specs/TOUR-045-spec.md`
 **Dependencies:** TOUR-043 (waypoints + journey cards exist)
-**Status:** Specced — implementation in progress
+**Status:** ✅ Implemented — merged to main
+
+---
+
+## Milestone: v1.6 — Test coverage rampup
+
+Strategy doc: **`TESTING.md`** (risk-tiered per-file coverage thresholds, three tiers A/B/C plus Phil-approved exception). Tickets in this milestone restore coverage on the 13 currently-below-threshold files, then flip the per-file gate.
+
+### TOUR-046 — Playwright in CI (medium)
+
+Add `npm run test:e2e` to `.github/workflows/ci.yml`. Resolve the build-vs-dev sequencing — Playwright's current config uses `vite preview` which needs a built bundle. Either add an explicit build step before E2E or switch the Playwright `webServer` to `vite dev`. Required before any Tier C disposition is valid.
+
+**Dependencies:** none
+**Status:** Open
+
+---
+
+### TOUR-047 — `journeyHandler.ts` unit tests (medium)
+
+0% → Tier A (85% functions / 80% lines / 70% branches). Pure orchestration, biggest single coverage win available. No DOM mocking required.
+
+**Dependencies:** TOUR-042 (architecture refactor that extracted journeyHandler)
+**Status:** Open
+
+---
+
+### TOUR-048 — Tier A remediation (medium)
+
+`loader.ts` (43% lines, the YAML parser) and `GpsTracker.ts` (72% functions, battery-saver logic) to Tier A floors. Both are pure-logic with substantial decision surfaces.
+
+**Dependencies:** none
+**Status:** Open
+
+---
+
+### TOUR-049 — Tier B remediation, batch 1 (small-medium)
+
+`NavButton.ts`, `GuidanceBanner.ts`, `buildMobileLayout.ts`, `MapView.ts` function gaps to Tier B (70% functions / 70% lines / 60% branches).
+
+**Dependencies:** none
+**Status:** Open
+
+---
+
+### TOUR-050 — Tier B remediation, batch 2 (small)
+
+Block renderer functions and branches: `AudioBlock`, `GalleryBlock`, `ImageBlock`, `renderBlock` branch dispatch, `TextBlock` async path, `GoodbyeCard` restart branch.
+
+**Dependencies:** none
+**Status:** Open
+
+---
+
+### TOUR-051 — Per-file thresholds + flip the gate (small)
+
+Implement the three-tier model in `vite.config.ts`. Add a `coverage:check` script that validates the Tier C registry (paired Playwright spec exists, headers name the source file, asserted selectors come from the source). Flip the per-file gate.
+
+**Dependencies:** TOUR-046, TOUR-047, TOUR-048, TOUR-049, TOUR-050
+**Status:** Open
 
 ---
 
