@@ -42,6 +42,24 @@ jobs:
           fi
           echo "Bundle size OK"
 
+      - name: Stage built bundle for demo (Playwright serves demo/)
+        run: cp dist/maptour.js dist/maptour.css demo/
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E smoke tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright results on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-results
+          path: |
+            test-results/
+            playwright-report/
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5
         with:
