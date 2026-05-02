@@ -14,6 +14,23 @@
   --maptour-surface-2: #f9fafb;
   --maptour-pin-size: 32px;
   --maptour-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  /* Active waypoint marker colour. Used by the on-map dot AND the inline
+     :dot: shortcode so the two stay in sync. Override on :root or a host
+     element to recolour both at once. */
+  --maptour-waypoint-color: #ec4899;
+}
+
+/* Inline waypoint dot (TOUR-045) -- emitted by the :dot: markdown shortcode.
+   Sized in em so it scales with surrounding text. */
+.maptour-dot {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: var(--maptour-waypoint-color);
+  vertical-align: middle;
+  margin: 0 0.1em;
 }
 
 /* === Layout === */

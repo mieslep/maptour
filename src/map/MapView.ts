@@ -352,6 +352,14 @@ export class MapView {
   setWaypoints(waypoints: Waypoint[], activeIndex: number): void {
     this.clearWaypoints();
 
+    // Read the active waypoint colour from the CSS variable so on-map and
+    // inline (`:dot:`) dots stay in sync when an embedder overrides it.
+    const activeColor = (
+      typeof getComputedStyle === 'function' && typeof document !== 'undefined'
+        ? getComputedStyle(document.documentElement).getPropertyValue('--maptour-waypoint-color').trim()
+        : ''
+    ) || '#ec4899';
+
     this.waypointLayer = L.layerGroup().addTo(this.map);
     this.waypointMarkers = waypoints.map((wp, i) => {
       let className: string;
@@ -360,23 +368,23 @@ export class MapView {
       let color: string;
 
       if (i < activeIndex) {
-        // Passed — muted pink
+        // Passed — muted pink (kept hardcoded; out of TOUR-045 scope)
         className = 'maptour-waypoint-marker maptour-waypoint-marker--passed';
         fillColor = '#f9a8d4';
         fillOpacity = 0.5;
         color = '#f9a8d4';
       } else if (i === activeIndex) {
-        // Active (next target)
+        // Active (next target) — picks up --maptour-waypoint-color
         className = 'maptour-waypoint-marker maptour-waypoint-marker--active';
-        fillColor = '#ec4899';
+        fillColor = activeColor;
         fillOpacity = 0.9;
-        color = '#ec4899';
+        color = activeColor;
       } else {
-        // Future
+        // Future — ring uses the active colour
         className = 'maptour-waypoint-marker maptour-waypoint-marker--future';
         fillColor = 'transparent';
         fillOpacity = 0;
-        color = '#ec4899';
+        color = activeColor;
       }
 
       const marker = L.circleMarker(wp.coords, {

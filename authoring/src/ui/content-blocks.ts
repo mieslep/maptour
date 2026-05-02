@@ -1,4 +1,7 @@
 import { marked } from 'marked';
+import { registerMarkedExtensions } from '../../../src/util/markedExtensions';
+
+registerMarkedExtensions();
 import type { ContentBlock, GalleryImage } from '../types';
 import { resolveAssetUrl } from '../store';
 
@@ -575,6 +578,10 @@ function renderTextModalFields(container: HTMLElement, block: { type: 'text'; bo
   textarea.value = block.body;
   textarea.rows = 6;
 
+  const hint = document.createElement('div');
+  hint.style.cssText = 'color:#64748b; font-size:12px; padding:4px 0;';
+  hint.innerHTML = 'Markdown supported. Use <code>{dot}</code> for an inline waypoint marker.';
+
   const preview = document.createElement('div');
   preview.className = 'cb-modal-md-preview markdown-preview';
   preview.innerHTML = marked.parse(block.body || '') as string;
@@ -586,6 +593,7 @@ function renderTextModalFields(container: HTMLElement, block: { type: 'text'; bo
   };
 
   container.appendChild(textarea);
+  container.appendChild(hint);
   container.appendChild(preview);
 }
 

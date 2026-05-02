@@ -71,6 +71,36 @@ describe('GuidanceBanner', () => {
     expect(banner.getElement().hidden).toBe(false);
   });
 
+  it('renders {dot} shortcode in waypoint text as a maptour-dot span (TOUR-045)', () => {
+    const wp = makeWaypoint({ text: 'Head towards the {dot} on the bridge' });
+    banner.setWaypoint(wp);
+
+    const text = banner.getElement().querySelector('.maptour-guidance-banner__text')!;
+    const dot = text.querySelector('.maptour-dot');
+    expect(dot).not.toBeNull();
+    expect(dot!.getAttribute('aria-label')).toBe('waypoint marker');
+    expect(text.textContent).toContain('Head towards the');
+    expect(text.textContent).toContain('on the bridge');
+  });
+
+  it('escapes HTML in waypoint text while preserving {dot} substitution (TOUR-045)', () => {
+    const wp = makeWaypoint({ text: 'Pass <script>x</script> the {dot}' });
+    banner.setWaypoint(wp);
+
+    const text = banner.getElement().querySelector('.maptour-guidance-banner__text')!;
+    expect(text.querySelector('script')).toBeNull();
+    expect(text.querySelector('.maptour-dot')).not.toBeNull();
+    expect(text.innerHTML).toContain('&lt;script&gt;');
+  });
+
+  it('strips {dot} from photo alt text so screen readers do not announce it (TOUR-045)', () => {
+    const wp = makeWaypoint({ text: 'Towards the {dot} bridge', photo: 'https://example.com/p.jpg' });
+    banner.setWaypoint(wp);
+
+    const photo = banner.getElement().querySelector('.maptour-guidance-banner__photo') as HTMLImageElement;
+    expect(photo.alt).toBe('Towards the bridge');
+  });
+
   it('switching from photo waypoint to text-only hides photo', () => {
     const withPhoto = makeWaypoint({ photo: 'https://example.com/a.jpg' });
     banner.setWaypoint(withPhoto);

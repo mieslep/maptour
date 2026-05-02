@@ -1,4 +1,5 @@
 import type { Waypoint } from '../types';
+import { replaceDotShortcode } from '../util/markedExtensions';
 
 export class GuidanceBanner {
   private readonly el: HTMLElement;
@@ -24,10 +25,12 @@ export class GuidanceBanner {
   }
 
   setWaypoint(waypoint: Waypoint): void {
-    this.textEl.textContent = waypoint.text;
+    this.textEl.innerHTML = replaceDotShortcode(waypoint.text);
     if (waypoint.photo) {
       this.photoEl.src = waypoint.photo;
-      this.photoEl.alt = waypoint.photo_alt || waypoint.text;
+      // Strip {dot} shortcodes from alt text — assistive tech doesn't need
+      // a "waypoint marker" injection in the photo description.
+      this.photoEl.alt = (waypoint.photo_alt || waypoint.text).replace(/\{dot\}/g, '').replace(/\s+/g, ' ').trim();
       this.photoEl.hidden = false;
     } else {
       this.photoEl.hidden = true;

@@ -1,5 +1,8 @@
 import { marked } from 'marked';
+import { registerMarkedExtensions } from '../../util/markedExtensions';
 import type { TextBlock as TextBlockType } from '../../types';
+
+registerMarkedExtensions();
 
 export function renderTextBlock(block: TextBlockType): HTMLElement {
   const el = document.createElement('div');
