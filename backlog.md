@@ -405,7 +405,7 @@ Strategy doc: **`TESTING.md`** (risk-tiered per-file coverage thresholds, three 
 Add `npm run test:e2e` to `.github/workflows/ci.yml`. Resolve the build-vs-dev sequencing — Playwright's current config uses `vite preview` which needs a built bundle. Either add an explicit build step before E2E or switch the Playwright `webServer` to `vite dev`. Required before any Tier C disposition is valid.
 
 **Dependencies:** none
-**Status:** Open
+**Status:** ✅ Implemented — merged to main
 
 ---
 
@@ -414,7 +414,7 @@ Add `npm run test:e2e` to `.github/workflows/ci.yml`. Resolve the build-vs-dev s
 0% → Tier A (85% functions / 80% lines / 70% branches). Pure orchestration, biggest single coverage win available. No DOM mocking required.
 
 **Dependencies:** TOUR-042 (architecture refactor that extracted journeyHandler)
-**Status:** Open
+**Status:** ✅ Implemented — merged to main
 
 ---
 
@@ -423,7 +423,7 @@ Add `npm run test:e2e` to `.github/workflows/ci.yml`. Resolve the build-vs-dev s
 `loader.ts` (43% lines, the YAML parser) and `GpsTracker.ts` (72% functions, battery-saver logic) to Tier A floors. Both are pure-logic with substantial decision surfaces.
 
 **Dependencies:** none
-**Status:** Open
+**Status:** ✅ Implemented — merged to main
 
 ---
 
@@ -432,7 +432,7 @@ Add `npm run test:e2e` to `.github/workflows/ci.yml`. Resolve the build-vs-dev s
 `NavButton.ts`, `GuidanceBanner.ts`, `buildMobileLayout.ts`, `MapView.ts` function gaps to Tier B (70% functions / 70% lines / 60% branches).
 
 **Dependencies:** none
-**Status:** Open
+**Status:** ✅ Implemented — merged to main
 
 ---
 
@@ -441,7 +441,7 @@ Add `npm run test:e2e` to `.github/workflows/ci.yml`. Resolve the build-vs-dev s
 Block renderer functions and branches: `AudioBlock`, `GalleryBlock`, `ImageBlock`, `renderBlock` branch dispatch, `TextBlock` async path, `GoodbyeCard` restart branch.
 
 **Dependencies:** none
-**Status:** Open
+**Status:** ✅ Implemented — merged to main
 
 ---
 
@@ -450,7 +450,7 @@ Block renderer functions and branches: `AudioBlock`, `GalleryBlock`, `ImageBlock
 Implement the three-tier model in `vite.config.ts`. Add a `coverage:check` script that validates the Tier C registry (paired Playwright spec exists, headers name the source file, asserted selectors come from the source). Flip the per-file gate.
 
 **Dependencies:** TOUR-046, TOUR-047, TOUR-048, TOUR-049, TOUR-050
-**Status:** Open
+**Status:** ✅ Implemented — merged to main
 
 ---
 
