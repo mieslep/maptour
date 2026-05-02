@@ -378,11 +378,21 @@ TourSession as single source of truth for tour config + visited state. StopCard 
 
 ### TOUR-044 — Explicit scroll indicator (`tour.scroll_hint`) (small)
 
-Tour-level YAML field `tour.scroll_hint: 'auto' | 'always' | 'off'` lets authors override the default fade-gradient scroll hint per tour. `'always'` forces the explicit text+chevron strip (the existing `prefers-contrast: more` visual) for every visitor; `'off'` suppresses the indicator entirely. Authoring tool gains a 3-way control in tour settings. Default behaviour unchanged.
+Tour-level YAML field `tour.scroll_hint: 'auto' | 'always' | 'off'` lets authors override the default fade-gradient scroll hint per tour. `'always'` forces the explicit text+chevron strip (the existing `prefers-contrast: more` visual) for every visitor; `'off'` suppresses the indicator entirely. Authoring tool gains a 3-way control in tour settings. Default behaviour unchanged. Also fixes a latent v1.4.1 positioning bug where the gradient sat 44px short of the viewport on welcome / goodbye / system cards.
 
 **Spec:** `specs/TOUR-044-spec.md`
 **Dependencies:** TOUR-038 (mobile layout owns the scroll-hint element)
-**Status:** Specced — awaiting sign-off
+**Status:** ✅ Implemented — merged to main
+
+---
+
+### TOUR-045 — Inline waypoint dot in narrative text (small)
+
+Authors can write `:dot:` in any markdown text block to render a small filled circle inline with surrounding text — visually matching the active pink waypoint marker on the map. New CSS variable `--maptour-waypoint-color` lets advanced embedders override the colour; the map marker reads the same variable so inline and on-map dots stay in sync.
+
+**Spec:** `specs/TOUR-045-spec.md`
+**Dependencies:** TOUR-043 (waypoints + journey cards exist)
+**Status:** Specced — implementation in progress
 
 ---
 
