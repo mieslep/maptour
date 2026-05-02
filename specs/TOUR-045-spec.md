@@ -47,6 +47,12 @@ Authors writing narrative content for journey cards (and stop content generally)
 - **When** the modal opens
 - **Then** a single muted helper line is shown under the textarea: *"Markdown supported. Use `{dot}` for an inline waypoint marker."* The live preview below the textarea picks up the shortcode (per FR-2) so authors see the rendered dot as they type.
 
+### FR-7: `{dot}` in waypoint guidance text
+- **Given** a `Waypoint` with a `text` field containing `{dot}` (the in-transit guidance message shown by `GuidanceBanner`)
+- **When** the banner renders the waypoint
+- **Then** each `{dot}` is replaced with the same `<span class="maptour-dot" aria-label="waypoint marker"></span>` shown in markdown content blocks. The text is HTML-escaped before substitution to prevent XSS injection from waypoint content.
+- **Photo `alt` text:** if the waypoint has a photo and no explicit `photo_alt`, the alt text is derived from `waypoint.text` with `{dot}` stripped — assistive tech does not announce a "waypoint marker" injection in image descriptions.
+
 ## Non-Functional Requirements
 
 - The inline dot is sized in `em` units so it scales with the surrounding text.
@@ -58,7 +64,7 @@ Authors writing narrative content for journey cards (and stop content generally)
 
 - Inline variants for passed / future waypoint states (only the active dot).
 - Other inline shortcodes (`:stop:`, `:car:`, etc.) — adopt as future tickets if needed.
-- Inline dots in non-markdown contexts (titles, footer labels, system labels).
+- Inline dots in tour-level / stop-level metadata fields (titles, descriptions, captions). Only text content blocks (FR-1) and waypoint guidance text (FR-7) are in scope.
 - Authoring-tool toolbar/button to insert `{dot}` (a hint line is included per FR-6, but no clickable insertion control).
 - Customisation of the dot's size or shape via author config.
 
@@ -81,6 +87,7 @@ Authors writing narrative content for journey cards (and stop content generally)
 5. **No regression on existing 525 tests.** New unit test covers AC-1 (basic substitution) and AC-2 (code-block protection).
 6. **Authoring preview parity.** The authoring tool's text-block edit modal renders `{dot}` in its live preview as the same `.maptour-dot` span the player produces (proves the shared extension module loads in both consumers).
 7. **Authoring hint visible.** The text-block edit modal shows the helper line naming the `{dot}` shortcode.
+8. **Waypoint guidance text supports `{dot}`.** Setting a waypoint's `text` to `Head towards the {dot} on the bridge` renders the dot inline within the guidance banner. HTML in the same field is escaped (no XSS injection); `{dot}` is stripped from any derived photo `alt` text.
 
 ## Test Approach
 
