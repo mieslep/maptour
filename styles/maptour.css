@@ -89,6 +89,12 @@
   transition: opacity 0.3s;
 }
 
+/* When the tour footer is hidden (welcome / goodbye / system cards), the
+   scroll hint sits at the actual viewport bottom instead of leaving a gap. */
+.maptour-scroll-hint:has(~ .maptour-tour-footer[hidden]) {
+  bottom: 0;
+}
+
 .maptour-scroll-hint--hidden {
   opacity: 0;
 }
