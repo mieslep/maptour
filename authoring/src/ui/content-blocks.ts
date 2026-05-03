@@ -398,11 +398,24 @@ function showTypePicker(anchor: HTMLElement, onPick: (type: ContentBlock['type']
     };
     menu.appendChild(btn);
   }
-  anchor.style.position = 'relative';
-  menu.style.top = '100%';
-  menu.style.left = '50%';
+
+  // Append to document.body and position via fixed coordinates so the menu
+  // is NOT clipped by an ancestor's overflow:auto / overflow:hidden (e.g.
+  // the waypoint modal's scroll container, which used to clip the bottom
+  // two items — Audio and Map — out of view).
+  const rect = anchor.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = `${rect.bottom + 4}px`;
+  menu.style.left = `${rect.left + rect.width / 2}px`;
   menu.style.transform = 'translateX(-50%)';
-  anchor.appendChild(menu);
+  document.body.appendChild(menu);
+
+  // Re-clamp inside the viewport if the picker would overflow the bottom.
+  const menuRect = menu.getBoundingClientRect();
+  if (menuRect.bottom > window.innerHeight - 8) {
+    // Flip above the anchor instead.
+    menu.style.top = `${rect.top - menuRect.height - 4}px`;
+  }
 
   const closeHandler = (e: MouseEvent) => {
     if (!menu.contains(e.target as Node)) {

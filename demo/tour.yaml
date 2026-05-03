@@ -10,13 +10,11 @@ tour:
   welcome:
     - type: text
       body: |-
-        Welcome to the **Ennis Sculpture Trail** - a short walking tour
-        through the heart of Ennis, County Clare.
+        Welcome to the **Ennis Sculpture Trail** — a short walking route through the heart of Ennis, County Clare.
 
-        In 1997, sculptor Carmel Doherty spearheaded the first public
-        sculpture trail in her native town. Six artists - Doherty,
-        Diarmuid O'Twohigk, Fiona O'Dwyer, Shane Gilmore, Barry Wrafter, and Colin Grehan - carved, cast, and shaped the works you are about to see. Several
-        had never worked in stone before; they learned together.
+        Launched in 1997, the trail set out to do something simple but unusual: to make sculpture part of everyday life in the town. Over the years, additional works have been introduced, creating a trail that continues to grow and change.
+
+        Along the way, you’ll find pieces that surprise, provoke, and invite curiosity — whether you’re seeing them for the first time or passing them again with fresh eyes.
     - type: image
       url: https://images.ennistidytowns.ie/sculpture/1997-sculpture-trail-marker.jpg
       caption: Marker of the original Sculpture Train (1997)
@@ -154,7 +152,7 @@ stops:
           content:
             - type: text
               body: |-
-                Look across the road towards the brown road sign; below it to the left you will spot a troll! You may come across more of this public artwork, created by local artist Rachel Macmanus as part of the Negative Space art collective.
+                Look across the road towards the brown road sign; below it to the left you will spot a {dot} troll! You may come across more of this public artwork, created by local artist Rachel Macmanus as part of the Negative Space art collective.
 
                 Cross to the side of the road with the troll, turning right and then immediately left between two buildings.
             - type: image
