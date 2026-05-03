@@ -2842,8 +2842,13 @@ export class TourEditor {
     textArea.placeholder = 'e.g. Head towards the red house';
     textArea.value = wp.text || '';
     textArea.rows = 3;
-    textArea.style.cssText = 'width:100%; margin-bottom:12px; resize:vertical;';
+    textArea.style.cssText = 'width:100%; resize:vertical;';
     basicFields.appendChild(textArea);
+
+    const textHint = document.createElement('div');
+    textHint.style.cssText = 'color:#64748b; font-size:12px; padding:4px 0 12px 0;';
+    textHint.innerHTML = 'Use <code>{dot}</code> to inline the waypoint marker, e.g. "Head towards the {dot}".';
+    basicFields.appendChild(textHint);
 
     // Image section — "Add Image" / expanded fields
     const imageSection = document.createElement('div');
