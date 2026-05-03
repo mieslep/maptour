@@ -471,6 +471,22 @@ textarea.input {
 .markdown-preview a { color: #2563eb; }
 .markdown-preview strong { font-weight: 600; }
 .markdown-preview code { background: #e2e8f0; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
+
+/* {dot} shortcode preview — mirrors styles/maptour.css .maptour-dot. Keep
+   the rule body in sync with the player's so the preview matches the
+   rendered tour. */
+.markdown-preview {
+  --maptour-waypoint-color: #ec4899;
+}
+.markdown-preview .maptour-dot {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: var(--maptour-waypoint-color);
+  vertical-align: middle;
+  margin: 0 0.1em;
+}
 .markdown-preview img { max-width: 100%; border-radius: 8px; }
 
 /* ---- Gallery ---- */
