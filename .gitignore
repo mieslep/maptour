@@ -14,3 +14,7 @@ coverage/
 # Built files copied to demo/ during local dev
 demo/maptour.js
 demo/maptour.css
+
+# Windows Mark-of-the-Web zone identifiers (NTFS alternate data streams
+# that surface as files in WSL when downloading content from a browser)
+*:Zone.Identifier
