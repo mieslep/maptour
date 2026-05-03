@@ -1014,7 +1014,10 @@ textarea.input {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 100;
+  /* Must sit above .waypoint-modal (1100) and .cb-modal-overlay (2000) since
+     the picker is appended to document.body and not nested in a modal's
+     stacking context. */
+  z-index: 2100;
   min-width: 160px;
   margin-top: 4px;
   padding: 4px 0;
