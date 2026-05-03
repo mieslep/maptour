@@ -70,11 +70,52 @@ WCAG 2.1 AA as a target. Stop cards must be keyboard-navigable. Map controls mus
 ### VI. Offline Resilience
 Core tour data (YAML) and the player JS/CSS are served as static files — they cache naturally. GPS and external media (YouTube, Drive) require connectivity. The player must not crash if GPS is unavailable or if a media URL fails to load.
 
-### VII. Testing
-- Unit tests for YAML parsing, stop sequencing, leg rendering logic
-- Integration tests for the full render pipeline against a sample tour
-- Playwright E2E tests for the visitor flow on a local static server
-- No test mocks for the YAML parser — use real fixture files
+### VII. Testing — risk-tiered per-file coverage
+
+Coverage is enforced per-file (not per-aggregate) by `vite.config.ts`. Files
+fall into one of four states; the `functions` metric is authoritative
+across all tiers because it most directly maps to "did we exercise this
+behaviour?" — lines can pass while whole functions go unentered.
+
+**Tier A — pure logic, parsers, orchestrators, validators.** No DOM, no
+Leaflet, no third-party rendering. Floors: Functions ≥85%, Lines/Statements
+≥80%, Branches ≥70%. Examples: `loader.ts`, `schema.ts`, `journeyHandler.ts`,
+`GpsTracker.ts`, `WaypointTracker.ts`, `markedExtensions.ts`.
+
+**Tier B — DOM-touching UI components testable in jsdom.** The default
+tier for new files. Floors: Functions ≥70%, Lines/Statements ≥70%,
+Branches ≥60%. Examples: `MapView.ts`, `buildMobileLayout.ts`, block
+renderers, card components.
+
+**Tier C — jsdom-hostile, isolated, paired with Playwright coverage.**
+Reduced unit floors (Functions ≥40%, Lines ≥50%, Branches ≥30%) **and** a
+dedicated Playwright spec at `tests/e2e/<basename>.spec.ts` that exercises
+the file's behaviour. **Only valid for files where the entire file is
+jsdom-hostile.** A mixed file must first have its hostile portion extracted
+into its own file. The `coverage:check` script (added when the first Tier C
+entry lands) verifies the paired spec exists, names the source file in its
+header, contains assertions against tags/selectors defined in the source,
+and runs in CI. Tier C is currently empty.
+
+**Phil-approved exception (escape hatch).** For a file where chasing more
+coverage is genuinely farcical (a thin third-party wrapper, a defensive
+logging helper where every branch is degenerate), a per-file override in
+`vite.config.ts` records a lower threshold with one-line rationale. Phil
+approves each entry individually. This is *not* a Tier C alternative —
+Tier C requires a replacement test; the exception is for files that need
+no coverage at any layer.
+
+**Other testing rules:**
+- No test mocks for the YAML parser — use real fixture files.
+- Integration tests cover the full render pipeline against a sample tour.
+- Playwright E2E runs in CI on every PR (build → stage demo → run smoke
+  spec). Smoke scope only at the unit-test layer — deeper interaction is
+  Tier C territory.
+- New files default to Tier B and must clear its floor on the introducing
+  PR. Promoting to Tier A is encouraged for pure-logic files.
+- Tier classification lives in `vite.config.ts` (per-file glob overrides)
+  and stays in sync with this section. Changes to thresholds, exclusions,
+  or tier assignments amend the constitution.
 
 ### VIII. Localisation (i18n)
 All user-visible UI text must go through the `t()` function in `src/i18n.ts`. No hardcoded strings in components. Default strings are English. Tour authors can override any label via `tour.strings` in the YAML file. Placeholders use named tokens (`{stop}`, `{n}`, `{total}`). New UI text requires: adding a default to `DEFAULTS`, adding placeholders to `PLACEHOLDERS` if applicable, and updating the README localisation table.
@@ -95,4 +136,4 @@ MIT licence. Dependencies must be MIT or Apache 2.0. Flag any GPL dependency imm
 
 This constitution governs all MapTour development. Amendments require a spec change approved by Phil before implementation. All architectural decisions must trace to a requirement in the spec or an explicit constitution principle.
 
-**Version**: 1.3.1 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-04-02
+**Version**: 1.4.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-05-03

@@ -398,7 +398,7 @@ Authors can write `{dot}` in any markdown text block (and waypoint guidance text
 
 ## Milestone: v1.6 — Test coverage rampup
 
-Strategy doc: **`TESTING.md`** (risk-tiered per-file coverage thresholds, three tiers A/B/C plus Phil-approved exception). Tickets in this milestone restore coverage on the 13 currently-below-threshold files, then flip the per-file gate.
+Policy now lives in `speckit.constitution` §VII (risk-tiered per-file coverage thresholds — Tier A pure logic, Tier B UI default, Tier C jsdom-hostile + paired E2E, Phil-approved exception). Tickets in this milestone restored coverage on the 13 below-threshold files and flipped the per-file gate.
 
 ### TOUR-046 — Playwright in CI (medium)
 

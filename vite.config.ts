@@ -47,8 +47,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      // TOUR-051: Per-file thresholds with risk-tiered floors.
-      // Tier registry and rationale: see TESTING.md.
+      // Per-file risk-tiered thresholds. Policy: speckit.constitution §VII.
       // Tier B is the global default (DOM-touching UI components).
       // Tier A files (pure logic, parsers, orchestrators) override per glob.
       // Tier C (jsdom-hostile) is currently empty; entries land alongside
@@ -89,7 +88,7 @@ export default defineConfig({
         'native/**',
         'scripts/**',
         '*.config.*',
-        'src/index.ts',          // entry point — exempt per TESTING.md tier registry
+        'src/index.ts',          // entry point — exempt per constitution §VII
         'src/types.ts',          // type-only file
         'src/layout/types.ts',   // type-only file
       ],
