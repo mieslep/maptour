@@ -15,9 +15,10 @@ type BeforeMutate = () => void;
  * like at runtime — without requiring a publish/play loop.
  */
 export interface MapPreviewContext {
-  from: [number, number];          // current waypoint position (segment start)
-  to: [number, number];            // next waypoint or destination stop (segment end)
+  from: [number, number];          // segment start (prev waypoint, or source stop for first waypoint)
+  to: [number, number];            // segment end + active marker location (the waypoint being edited)
   route?: [number, number][];      // pre-computed leg polyline, drawn for context
+  otherWaypoints?: [number, number][]; // all leg waypoints except the active one — drawn as inactive markers (player parity)
 }
 
 // Module-level ref so all internal functions can call it without threading it everywhere
@@ -554,12 +555,21 @@ function openEditModal(
     if (_mapPreviewContext) {
       const previewLabel = document.createElement('div');
       previewLabel.style.cssText = 'font-size:12px; color:#64748b; margin:12px 0 4px;';
-      previewLabel.textContent = 'Live preview — pan/zoom to set framing (matches player layout)';
+      previewLabel.textContent = 'Live preview — pan/zoom to set framing (mobile width, matches typical phone visitor)';
       body.appendChild(previewLabel);
+
+      // Constrain the preview to a typical phone card width so fitBounds
+      // produces the same framing the visitor will see at runtime. Most
+      // phones land at 360–400px viewport - 32px card padding ≈ 360px
+      // content. A wider modal-fitting preview would silently drift the
+      // captured zoom/offset values from what the visitor experiences.
+      const previewFrame = document.createElement('div');
+      previewFrame.style.cssText = 'width:360px; max-width:100%; margin:0 auto;';
+      body.appendChild(previewFrame);
 
       const previewMount = document.createElement('div');
       previewMount.style.cssText = 'border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;';
-      body.appendChild(previewMount);
+      previewFrame.appendChild(previewMount);
 
       // Footer: live readout of the captured framing + reset.
       const framingRow = document.createElement('div');
@@ -659,12 +669,23 @@ function mountMapBlockPreview(
   if (ctx.route && ctx.route.length > 1) {
     L.polyline(ctx.route, { color: '#475569', weight: 4, opacity: 0.85 }).addTo(map);
   }
-  // Match the player: a small grey marker at the segment start (where the
-  // visitor came from) and the pink active marker at the segment end (the
-  // waypoint being edited).
-  L.circleMarker(ctx.from, {
-    radius: 5, color: '#94a3b8', weight: 1.5, fillColor: '#cbd5e1', fillOpacity: 1,
-  }).addTo(map);
+  // Match the player's setWaypoints styling: small grey dots for every
+  // inactive waypoint in the leg, plus a small grey "from" marker if the
+  // segment starts somewhere other than a waypoint (i.e. the source stop
+  // for the first waypoint). Pink filled circle at the active waypoint.
+  if (ctx.otherWaypoints) {
+    for (const c of ctx.otherWaypoints) {
+      L.circleMarker(c, {
+        radius: 4, color: '#94a3b8', weight: 1.5, fillColor: '#cbd5e1', fillOpacity: 1,
+      }).addTo(map);
+    }
+  }
+  const fromIsWaypoint = ctx.otherWaypoints?.some(c => c[0] === ctx.from[0] && c[1] === ctx.from[1]);
+  if (!fromIsWaypoint) {
+    L.circleMarker(ctx.from, {
+      radius: 5, color: '#94a3b8', weight: 1.5, fillColor: '#cbd5e1', fillOpacity: 1,
+    }).addTo(map);
+  }
   L.circleMarker(ctx.to, {
     radius: 7, color: '#ec4899', weight: 2, fillColor: '#ec4899', fillOpacity: 1,
   }).addTo(map);

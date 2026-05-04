@@ -2972,10 +2972,17 @@ export class TourEditor {
       const prevWp = wpIdx > 0 ? waypoints[wpIdx - 1] : null;
       const sourceStopIdx = stopIdx > 0 ? stopIdx - 1 : this.tour.stops.length - 1;
       const sourceStop = this.tour.stops[sourceStopIdx];
+      // Pass all the leg's other waypoints so the preview can render them
+      // as inactive markers (player parity — the visitor sees small dots
+      // for every other waypoint along the leg, not just the current one).
+      const otherWaypoints: [number, number][] = waypoints
+        .map((w, i) => i !== wpIdx ? w.coords : null)
+        .filter((c): c is [number, number] => c !== null);
       const mapPreviewContext = {
         from: prevWp ? prevWp.coords : sourceStop.coords,
         to: wp.coords,
         route: stop.getting_here?.route,
+        otherWaypoints,
       };
       journeyFields.appendChild(renderContentBlockEditor(
         wp.content!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
