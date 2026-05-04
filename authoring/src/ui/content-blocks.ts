@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import L from 'leaflet';
 import { registerMarkedExtensions } from '../../../src/util/markedExtensions';
 
 registerMarkedExtensions();
@@ -8,8 +9,20 @@ import { resolveAssetUrl } from '../store';
 type OnChange = () => void;
 type BeforeMutate = () => void;
 
+/**
+ * Context for previewing a journey-card map block. Supplied by the
+ * waypoint editor so the modal can show what the inline map will look
+ * like at runtime — without requiring a publish/play loop.
+ */
+export interface MapPreviewContext {
+  from: [number, number];          // current waypoint position (segment start)
+  to: [number, number];            // next waypoint or destination stop (segment end)
+  route?: [number, number][];      // pre-computed leg polyline, drawn for context
+}
+
 // Module-level ref so all internal functions can call it without threading it everywhere
 let _beforeMutate: BeforeMutate = () => {};
+let _mapPreviewContext: MapPreviewContext | undefined;
 
 /**
  * Render a WYSIWYG-style content block editor with preview mode and edit-on-click.
@@ -22,14 +35,16 @@ export function renderContentBlockEditor(
   onChange: OnChange,
   label: string,
   onBeforeMutate?: BeforeMutate,
+  mapPreviewContext?: MapPreviewContext,
 ): HTMLElement {
   const container = document.createElement('div');
   container.className = 'cb-editor';
 
   function rebuild(): void {
     container.innerHTML = '';
-    // Set module-level ref for this editor instance during rebuild
+    // Set module-level refs for this editor instance during rebuild
     _beforeMutate = onBeforeMutate || (() => {});
+    _mapPreviewContext = mapPreviewContext;
 
     if (label) {
       const headerLabel = document.createElement('div');
@@ -449,6 +464,9 @@ function openEditModal(
   // Snapshot for undo before any edits in this modal
   _beforeMutate();
 
+  // Cleanup callbacks (e.g. dispose Leaflet preview) run when the modal closes.
+  const modalCleanups: Array<() => void> = [];
+
   // Overlay
   const overlay = document.createElement('div');
   overlay.className = 'cb-modal-overlay';
@@ -496,7 +514,9 @@ function openEditModal(
     const newBlock = createEmptyBlock(newType);
     blocks[idx] = newBlock;
     onChange();
-    overlay.remove();
+    // Use closeModal (not raw overlay.remove) so cleanup callbacks run —
+    // otherwise switching away from a map block leaks the Leaflet preview.
+    closeModal();
     openEditModal(newBlock, idx, blocks, onChange, rebuild);
   };
   typeRow.appendChild(typeLbl);
@@ -520,9 +540,13 @@ function openEditModal(
     info.textContent = 'Shows an inline map centred on the current waypoint segment.';
     body.appendChild(info);
 
+    // Forward declaration so input handlers can re-render the preview.
+    let refreshPreview: () => void = () => {};
+
     const heightInput = makeModalInput('Height', String(block.height ?? '200'), v => {
       block.height = v ? Number(v) : undefined;
       onChange();
+      refreshPreview();
     });
     (heightInput.querySelector('input') as HTMLInputElement).placeholder = '200 (pixels)';
     body.appendChild(heightInput);
@@ -530,6 +554,7 @@ function openEditModal(
     const zoomInput = makeModalInput('Zoom', String(block.zoom ?? ''), v => {
       block.zoom = v ? Number(v) : undefined;
       onChange();
+      refreshPreview();
     });
     (zoomInput.querySelector('input') as HTMLInputElement).placeholder = '0 (relative: +1 closer, −1 further)';
     body.appendChild(zoomInput);
@@ -537,6 +562,7 @@ function openEditModal(
     const oxInput = makeModalInput('Nudge east/west', String(block.offset_x ?? ''), v => {
       block.offset_x = v ? Number(v) : undefined;
       onChange();
+      refreshPreview();
     });
     (oxInput.querySelector('input') as HTMLInputElement).placeholder = '0 (metres, +east −west)';
     body.appendChild(oxInput);
@@ -544,9 +570,26 @@ function openEditModal(
     const oyInput = makeModalInput('Nudge north/south', String(block.offset_y ?? ''), v => {
       block.offset_y = v ? Number(v) : undefined;
       onChange();
+      refreshPreview();
     });
     (oyInput.querySelector('input') as HTMLInputElement).placeholder = '0 (metres, +north −south)';
     body.appendChild(oyInput);
+
+    if (_mapPreviewContext) {
+      const previewLabel = document.createElement('div');
+      previewLabel.style.cssText = 'font-size:12px; color:#64748b; margin:12px 0 4px;';
+      previewLabel.textContent = 'Live preview (matches the player layout)';
+      body.appendChild(previewLabel);
+
+      const previewMount = document.createElement('div');
+      previewMount.style.cssText = 'border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;';
+      body.appendChild(previewMount);
+
+      const ctx = _mapPreviewContext;
+      const teardown = mountMapBlockPreview(previewMount, block, ctx);
+      refreshPreview = teardown.refresh;
+      modalCleanups.push(teardown.dispose);
+    }
   }
 
   modal.appendChild(body);
@@ -577,9 +620,66 @@ function openEditModal(
 
   function closeModal(): void {
     document.removeEventListener('keydown', escHandler);
+    for (const cleanup of modalCleanups) cleanup();
     overlay.remove();
     rebuild();
   }
+}
+
+/**
+ * Mount a small Leaflet preview that mirrors how the inline map will render
+ * at runtime: same OSM tiles, the leg's pre-computed route polyline, a marker
+ * at the segment's "from" point, fitBounds with the same 60px padding the
+ * player uses, then the relative zoom delta + lat/lng nudge applied.
+ *
+ * Returns a `refresh` callback (rerun when inputs change) and a `dispose`
+ * callback (run on modal close) so the Leaflet instance is torn down cleanly.
+ */
+function mountMapBlockPreview(
+  mount: HTMLElement,
+  block: { type: 'map'; height?: number; zoom?: number; offset_x?: number; offset_y?: number },
+  ctx: MapPreviewContext,
+): { refresh: () => void; dispose: () => void } {
+  // Apply current configured height to the mount so the live preview matches
+  // what the visitor will see in the journey card.
+  const applyHeight = () => { mount.style.height = `${block.height ?? 200}px`; };
+  applyHeight();
+
+  const map = L.map(mount, { zoomControl: false, attributionControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  if (ctx.route && ctx.route.length > 1) {
+    L.polyline(ctx.route, { color: '#475569', weight: 4, opacity: 0.85 }).addTo(map);
+  }
+  L.circleMarker(ctx.from, {
+    radius: 7, color: '#ec4899', weight: 2, fillColor: '#ec4899', fillOpacity: 1,
+  }).addTo(map);
+
+  const apply = (): void => {
+    applyHeight();
+    map.invalidateSize();
+    const bounds = L.latLngBounds([ctx.from, ctx.to]);
+    map.fitBounds(bounds, { paddingTopLeft: [60, 60], paddingBottomRight: [60, 60], animate: false });
+    if (block.zoom != null && block.zoom !== 0) {
+      map.setZoom(map.getZoom() + block.zoom, { animate: false });
+    }
+    const ox = block.offset_x ?? 0;
+    const oy = block.offset_y ?? 0;
+    if (ox !== 0 || oy !== 0) {
+      const center = map.getCenter();
+      const dLat = oy / 111320;
+      const dLng = ox / (111320 * Math.cos(center.lat * Math.PI / 180));
+      map.setView([center.lat + dLat, center.lng + dLng], map.getZoom(), { animate: false });
+    }
+  };
+
+  // First paint after the modal lays out — Leaflet needs a real container size
+  // before fitBounds works, otherwise it computes against a 0x0 box.
+  requestAnimationFrame(apply);
+
+  return {
+    refresh: () => requestAnimationFrame(apply),
+    dispose: () => map.remove(),
+  };
 }
 
 /* ---------- Modal Field Renderers ---------- */

@@ -2963,8 +2963,18 @@ export class TourEditor {
       contentLabel.textContent = 'Content Blocks';
       contentLabel.style.cssText = 'font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
       journeyFields.appendChild(contentLabel);
+      // Map-block live preview needs the segment context: from this waypoint
+      // to the next (or to the destination stop if this is the last waypoint),
+      // plus the leg's pre-computed route polyline for context.
+      const next = waypoints[wpIdx + 1];
+      const mapPreviewContext = {
+        from: wp.coords,
+        to: next ? next.coords : stop.coords,
+        route: stop.getting_here?.route,
+      };
       journeyFields.appendChild(renderContentBlockEditor(
         wp.content!, () => this.changed(), '', () => pushUndo(this.tour, this.dirtyLegs),
+        mapPreviewContext,
       ));
     };
 
