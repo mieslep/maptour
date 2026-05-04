@@ -16,8 +16,8 @@ tour:
 
         Along the way, you’ll find pieces that surprise, provoke, and invite curiosity — whether you’re seeing them for the first time or passing them again with fresh eyes.
     - type: image
-      url: https://images.ennistidytowns.ie/sculpture/1997-sculpture-trail-marker.jpg
-      caption: Marker of the original Sculpture Train (1997)
+      url: https://images.ennistidytowns.ie/sculpture/ennis-sculpture-trail-hero.jpg
+      alt: Collage of some of the sculptures on the trail
     - type: text
       body: |
         Today the expanded trail weaves along the River Fergus, through medieval
@@ -44,7 +44,14 @@ tour:
         [visitennis.ie](https://visitennis.ie).
   getting_here:
     - type: text
-      body: The tour starts near "Club Bridge" in Ennis. The nearest carpark is "GAA Cloister Carpark" off Abbey Street; you may find on-street parking in Lifford (near Lifford Lighting or Peril's Furniture) or on College Road (particularly when school is not meeting).
+      body: |-
+        The tour starts near **Club Bridge** in Ennis, close to the River Fergus and a short walk from Abbey Street.
+
+        The nearest central parking is around **Abbey Street / the Cloister area**. For sat nav, you can use **Ennis Friary, Abbey Street, V95 AN28**, which is beside the area known locally as “The Abbey” and close to the start of the route.
+
+        You may also find on-street parking in **Lifford**, near **Lifford Lighting, 5–6 Newbridge Road, V95 E5CD**, or along **College Road**, particularly outside school times.
+
+        Please check local parking signs and restrictions when you arrive.
   require_scroll: true
 stops:
   - id: 1
@@ -106,9 +113,9 @@ stops:
           business, community and cultural perspective.
 
           Three steel benches surround the Iris, which rises from a flowerbed
-          filled with wildflowers and is illuminated at night.
+          filled with wildflowers.
       - type: image
-        url: https://images.ennistidytowns.ie/sculpture/stop3-sculpture.jpg
+        url: https://images.ennistidytowns.ie/sculpture/iris.jpg
         caption: "\"Bláth na hÍnse\" by Conor & Paddy Murray, Kilkee Forge"
     getting_here:
       mode: walk
@@ -151,28 +158,40 @@ stops:
           journey_card: true
           content:
             - type: text
-              body: |-
-                Look across the road towards the brown road sign; below it to the left you will spot a {dot} troll! You may come across more of this public artwork, created by local artist Rachel Macmanus as part of the Negative Space art collective.
-
-                Cross to the side of the road with the troll, turning right and then immediately left between two buildings.
+              body: Look across the road towards the brown road sign; below it to the left you will spot a troll! You may come across more of this public artwork, created by local artist Rachel Macmanus as part of the Negative Space art collective.
+            - type: map
             - type: image
               url: https://images.ennistidytowns.ie/sculpture/troll.jpg
               caption: Billy Goats Gruff by Rachel Macmanus
               alt: "Billy Goats Gruff, Club Bridge, Ennis. Painted in association with PRISM and Clare Co Co "
+            - type: text
+              body: ""
+        - coords:
+            - 52.84627545109453
+            - -8.983001777224844
+          text: Cross to the side of the road with the troll, turning right and then immediately left between two buildings.
+          photo: https://images.ennistidytowns.ie/sculpture/between-two-buildings-1.jpg
         - coords:
             - 52.84575730022048
             - -8.983170138912394
-          text: Cross over the bridge {dot} and turn right down the ramp.
+          text: Cross over the {dot} bridge and turn right down the ramp.
+          photo: https://images.ennistidytowns.ie/sculpture/start-of-bridge.jpg
         - coords:
-            - 52.84527942833186
-            - -8.983289824014308
+            - 52.84526682701052
+            - -8.983296097677995
           text: ""
           journey_card: true
           content:
             - type: text
-              body: Turn left at the Friendship Seating Area. This was developed in 2022 with a partnership between Ennis Municipal District and the Ennis Mental Health Association, in the hope that it will become a special place to for people to meet and connect with one another in the town centre.
+              body: Turn left at the {dot} Friendship Seating Area. This was developed in 2022 with a partnership between Ennis Municipal District and the Ennis Mental Health Association, in the hope that it will become a special place to for people to meet and connect with one another in the town centre.
             - type: map
-              height: 350
+              height: 210
+              zoom: 1
+              offset_x: 7
+              offset_y: -2
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/friendship-benches.jpg
+              caption: Friendship Benches
   - id: 3
     title: Contentment is Wealth
     coords:
@@ -216,7 +235,7 @@ stops:
         - coords:
             - 52.84486698417298
             - -8.98344722124387
-          text: Head up the small hill past the Costa Coffee. At the top of the hill you will see the next stop diagonally across the junction.
+          text: Head up the small hill past the {dot} Costa Coffee. At the top of the hill you will see the next stop diagonally across the junction (in front of O'Sullivan's Pharmacy).
   - id: 4
     title: Sleepy Head - Helping Hands
     coords:
@@ -254,13 +273,10 @@ stops:
           - -8.984257
       waypoints:
         - coords:
-            - 52.844590047523305
-            - -8.983633112019215
-          text: ""
-          journey_card: true
-          content:
-            - type: text
-              body: "To the next statue, you will turn down the hill, "
+            - 52.84456834289137
+            - -8.98371184485395
+          text: Go down the short hill to the left; footpaths are narrow on either side, with traffic flowing from the top to the bottom of the hill being generally quite respectful of pedestrians. The next sculpture is just at the bottom of the hill on your right.
+          photo: https://images.ennistidytowns.ie/sculpture/between-two-buildings-2.jpg
   - id: 5
     title: Clara
     coords:
@@ -300,18 +316,16 @@ stops:
           - -8.983785428861086
         - - 52.84460176064039
           - -8.983668707612342
-        - - 52.84464874054486
-          - -8.983628458905853
-        - - 52.844738650220364
-          - -8.983867267897574
-        - - 52.844738650220364
-          - -8.983867267897574
-        - - 52.8448884992658
-          - -8.984147667219316
-        - - 52.845146076416476
-          - -8.984775547040252
-        - - 52.845214115408716
-          - -8.984959349466472
+        - - 52.844666813606544
+          - -8.983821185639725
+        - - 52.84470244830243
+          - -8.983917570317985
+        - - 52.8448402611512
+          - -8.984189012404133
+        - - 52.84508319398805
+          - -8.9847787454867
+        - - 52.845173911888224
+          - -8.985057534814823
         - - 52.845235
           - -8.985009
         - - 52.845268
@@ -328,10 +342,18 @@ stops:
           journey_card: true
           content:
             - type: text
-              body: Look up at the building to the right on the wall and notice the tightrope walker!
+              body: To get to the next sculpture, head back up the hill (from the way you came). On the way down, you might have missed the tightrope walker on the wall of the building to the right!
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/tightrope.jpg
+              caption: Tightrope Walker by Tim Humphreys (2019, 2025)
+            - type: text
+              body: |-
+                For the 2010 Ennis Street Art Festival local artist Tim Humphreys created a piece of art depicting a tightrope walker walking across electrical cables on the gable end of a building two stories up. However, in 2019, the piece of art was removed as the material used had deteriorated.  Ennis Tidy Towns along with the Ennis Chamber supported Tim in recreating his piece with more durable material and we are delighted to say that the art piece was reinstated. 
+
+                This was a collaboration with O'Sullivan's Pharmacy, Clare Co Co/ Ennis MD staff, Ennis Chamber and of course Ennis Tidy Towns. 
         - coords:
-            - 52.84490273720613
-            - -8.984182374162076
+            - 52.84483974327093
+            - -8.984187992364994
           text: ""
           journey_card: true
           content:
@@ -340,6 +362,13 @@ stops:
             - type: image
               url: https://images.ennistidytowns.ie/sculpture/journey-5to6-georgian.jpg
               caption: Georgian terraced houses on Bank Place and Bindon Street
+        - coords:
+            - 52.8451720510956
+            - -8.9850518163279
+          text: |-
+            Just past the post office, you will {dot} cross over the road. There is not an official crosswalk here, but there is a step-free path across the road and drivers are generally mindful (it is a one-way road).
+
+            Turn left and continue.
   - id: 6
     title: Figurative Sculptures, Harmony Row
     coords:
@@ -386,6 +415,11 @@ stops:
           - -8.9845
         - - 52.846143
           - -8.984485
+      waypoints:
+        - coords:
+            - 52.84622018571306
+            - -8.98518613527068
+          text: Continue along this road (Bindon Street) and turn right at the end of the road. The next stop will be in a grassy area on the right.
   - id: 7
     title: A Fishy Tail
     coords:
@@ -394,9 +428,7 @@ stops:
     content:
       - type: text
         body: |
-          This limestone sculpture suggests a fish leaping out of the water.
-          Its position inside the fountain at the Maid of Erin roundabout
-          highlights the aquatic theme perfectly.
+          This limestone sculpture **A Fishy Tail** by Carmel Doherty is part of the original 1997 trail and suggests a fish leaping out of the water. Its position inside the fountain at the Maid of Erin roundabout highlights the aquatic theme perfectly.
       - type: image
         url: https://images.ennistidytowns.ie/sculpture/stop8-fishtail.jpg
         caption: "\"A Fishy Tail\" by Carmel Doherty"
@@ -447,6 +479,26 @@ stops:
           - -8.988565
         - - 52.846979
           - -8.988706
+      waypoints:
+        - coords:
+            - 52.84630145811219
+            - -8.985624430526757
+          text: "Double back and continue straight along the road (Harmony Row). "
+        - coords:
+            - 52.84665768471917
+            - -8.987203522705968
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: You may spot an unusual looking building across the road on the right. Completed in 2022, this is in fact a school!
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/enniscollege.jpg
+            - type: text
+              body: |-
+                Shared by Ennis Community College and Gaelcholáiste an Chláir, the walls are translucent and flood the classrooms with diffuse light from the south-facing aspect.
+
+                You will see the next sculpture about 100 meters further along, on the left.
   - id: 8
     title: Memory of Meaning
     coords:
@@ -455,10 +507,7 @@ stops:
     content:
       - type: text
         body: |
-          This piece is the start of the original 1997 trail and celebrates Clare's historic win in the All-Ireland Senior Hurling Championship final of 1995. 
-
-          Clare had not won an All-Ireland hurling title since its first in 
-          1914 - an 81-year wait. When Ger Loughnane's team defeated Offaly 
+          This stop celebrates Clare's historic win in the All-Ireland Senior Hurling Championship final of 1995. Clare had not won an All-Ireland hurling title since its first in 1914 - an 81-year wait. When Ger Loughnane's team defeated Offaly 
           in the final, the county erupted. This sculpture by the River 
           Fergus stands as a tribute to that victory and to the generations 
           of supporters who waited for it.
@@ -485,6 +534,10 @@ stops:
           - -8.989313
         - - 52.846541
           - -8.989327
+        - - 52.846544361217525
+          - -8.989391180931724
+        - - 52.846544361217525
+          - -8.989391180931724
         - - 52.846549
           - -8.989488
         - - 52.846525
@@ -493,6 +546,11 @@ stops:
           - -8.989678
         - - 52.846547
           - -8.989682
+      waypoints:
+        - coords:
+            - 52.8465448774812
+            - -8.989401956209203
+          text: Continue along the road (Mill Road) to the pedestrian crossing, and cross the road. The next sculpture will be in the small green space towards the river.
   - id: 9
     title: Four Minds
     coords:
@@ -533,6 +591,11 @@ stops:
           - -8.989154
         - - 52.84652
           - -8.989155
+      waypoints:
+        - coords:
+            - 52.84653931140521
+            - -8.989300358602355
+          text: Cross back across the road at the pedestrian crossing, continuing through the gate and down the ramp. The next sculpture is on the right.
   - id: 10
     title: Dreamboat
     coords:
@@ -575,6 +638,29 @@ stops:
           - -8.988569
         - - 52.846404
           - -8.988386
+      waypoints:
+        - coords:
+            - 52.84643716351279
+            - -8.988923733034685
+          text: Continue along, crossing the small bridge over the mill race. There has been a mill on this site since the 16th century; the current water wheel was restored in 2015.
+        - coords:
+            - 52.846419120232966
+            - -8.988517762030105
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: Further along on the right at ground level is the original marker of the Ennis Sculpture Trail.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/1997-sculpture-trail-marker.jpg
+              caption: 1997 Sculpture Trail Marker
+            - type: text
+              body: |-
+                It was here, in 1997, that the idea for a public sculpture trail in Ennis first took shape. What you see around you began as a shared experiment — a group of artists coming together to create something new for the town.
+
+                The works that formed the original trail were created by sculptor Carmel Doherty and fellow artists Diarmuid O'Twohig, Fiona O'Dwyer, Shane Gilmore, Barry Wrafter, and Colin Grehan.
+
+                Several were working in stone for the first time. They learned as they went — shaping not just the sculptures, but the trail itself.
   - id: 11
     title: Embrace Nature
     coords:
@@ -621,6 +707,23 @@ stops:
           - -8.987923
         - - 52.844301
           - -8.987508
+      waypoints:
+        - coords:
+            - 52.84542699358927
+            - -8.987998232696787
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: |-
+                As you continue to walk along the River Fergus, you are following the waterway that gave Ennis its name. "Inis" in Irish means island - the town grew up around a small island in the river where a Franciscan friary was founded in the 1240s.
+
+                The Fergus is the longest river in County Clare, flowing south from the Burren to the Shannon Estuary. It has shaped the town for nearly 800 years.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/journey-11to12-fergus.jpg
+              alt: view of the River Fergus
+            - type: text
+              body: Across the water you can see Post Office Field, an important part of the flood plain. In summer it becomes a nesting ground for many bird species.
   - id: 12
     title: Market Day
     coords:
@@ -657,16 +760,18 @@ stops:
           - -8.986819
         - - 52.84427
           - -8.986264
-        - - 52.844341
-          - -8.985835
+        - - 52.84434019914458
+          - -8.985851165509446
+        - - 52.84434019914458
+          - -8.985851165509446
         - - 52.844268
           - -8.985744
         - - 52.844237
           - -8.985736
         - - 52.844182
           - -8.985704
-        - - 52.844086
-          - -8.985676
+        - - 52.84409321318922
+          - -8.9856836277019
         - - 52.844016
           - -8.985677
         - - 52.843889
@@ -685,15 +790,17 @@ stops:
           - -8.984797
       waypoints:
         - coords:
-            - 52.84431583617331
-            - -8.98598704622042
+            - 52.84428148936322
+            - -8.985764022321453
+          text: Continue about 100m, and just past the bench is a {dot} pedestrian crossing over the taxi rank and over the road towards the shops. You will then head between two buildings.
+        - coords:
+            - 52.84392597480521
+            - -8.985656443065755
           text: ""
           journey_card: true
           content:
             - type: text
               body: |-
-                Continue along the river for about 75 metres, where you will cross over two roadways on your way between two buildings. 
-                 
                 You will pass through Enright's Bow, one of Ennis's 
                 characteristic "bow-ways" - arched passageways that connect
                 the town's main streets to the lanes and yards behind. 
@@ -714,6 +821,14 @@ stops:
             - type: image
               url: https://images.ennistidytowns.ie/sculpture/enright-bow-laura-brennan.jpg
               caption: Mural dedicated to Laura Brennan, Enright's Bow
+        - coords:
+            - 52.84341180983608
+            - -8.985343189054076
+          text: Cross the road (keeping on the left side) and continue past {dot} Jimmy's Discount Store and continue around the roundabout.
+        - coords:
+            - 52.84318994578687
+            - -8.984783354479683
+          text: Cross the {dot} pedestrian crossing near Zest; stop after you cross the pedestrian crossing, where you look back at the sculpture on the roundabout.
   - id: 13
     title: Weathered Woman
     coords:
@@ -755,6 +870,16 @@ stops:
           - -8.985087
         - - 52.842067
           - -8.984443
+      waypoints:
+        - coords:
+            - 52.84230753773595
+            - -8.985181297361603
+          text: Continue along the road (Market Place); you may spot the Ennis Market building across the road on the right, though you will take the next left onto Barrack Street.
+          photo: https://images.ennistidytowns.ie/sculpture/ennismarket.jpg
+        - coords:
+            - 52.84208419442857
+            - -8.984547464264153
+          text: The next sculpture is across the small outdoor seating area.
   - id: 14
     title: Hands
     coords:
@@ -798,6 +923,15 @@ stops:
           - -8.98338
         - - 52.842014
           - -8.983296
+      waypoints:
+        - coords:
+            - 52.842168887849056
+            - -8.983987235773576
+          text: Continue to the pedestrian laneway between Passatempo (on the right) and Fawl's Beer Garden (on the left).
+        - coords:
+            - 52.842133762976495
+            - -8.983554215132763
+          text: "Cross two streets; the next sculpture is in front of the Ennis Cathedral. "
   - id: 15
     title: Sisters of Mercy
     coords:
@@ -809,11 +943,23 @@ stops:
           This work was sponsored by Ennis Tidy Towns and commemorates the arrival of the Sisters of Mercy to Ennis in 1854. 
 
           Nowel Crowley, then-chairperson of Ennis Tidy Towns, said “[We] have sponsored this particular piece and really it is in commemoration of Mother Catherine McAuley and the inspiration she gave by giving up her fortune to help the poor. The Sisters came to Ennis in 1854 to work with the poor here."
-
-          This statue has become [somewhat controversial](https://www.independent.ie/irish-news/its-distortion-of-history-locals-call-for-statue-dedicated-to-sisters-of-mercy-to-be-removed/36039387.html) in the wake of the Ryan Report; whilst the Sisters of Mercy undoubtedly did good works in Ennis, the location of this monument is also on the site of the former Industrial School and Magdalene laundry. 
       - type: image
         url: https://images.ennistidytowns.ie/sculpture/sisters-of-mercy.jpg
         caption: Dedication to the Sisters of Mercy by Barry Wrafter (2011)
+      - type: text
+        body: |-
+          This statue has become [somewhat controversial](https://www.independent.ie/irish-news/its-distortion-of-history-locals-call-for-statue-dedicated-to-sisters-of-mercy-to-be-removed/36039387.html) in the wake of the Ryan Report; whilst the Sisters of Mercy undoubtedly did good works in Ennis, the location of this monument is also near the site of the former Industrial School and laundry, both run by the Sisters. 
+
+          Named St. Brigid's Laundry (and not a Magdalene laundry), it was initially established for private use by the convent and eventually became a public laundry servicing the town. It employed women and girls from the town (no doubt they were not paid much and it could be hard and unpleasant work) and was used to train the industrial school girls in laundry skills. 
+
+          More information on this can be found on Dr. Jane O'Brien's [blog post](https://enniswalkingtours.com/the-history-of-the-industrial-school-child-in-ennis); Jane also conducts a variety of walking tours of Ennis, the details of which you may find on the same website!
+      - type: text
+        body: "You might also spot, to the left, some interesting-looking artwork that incorporates some of the building structure. "
+      - type: image
+        url: https://images.ennistidytowns.ie/sculpture/wall-candy.jpg
+        caption: Warriors by Will Gilchrist (2010, 2021)
+      - type: text
+        body: "[Wallcandy](https://clarechampion.ie/town-becomes-a-canvass-for-wallcandy) was a street art project initiated in 2010 and managed by Ennis Street Arts Festival. Intended to last 6 months, many of the works remain and are treasured by the Ennis community."
     getting_here:
       mode: walk
       route:
@@ -867,6 +1013,7 @@ stops:
 
             The square at the top of the street is known locally as
             "The Height".
+          journey_card: true
           content:
             - type: text
               body: |-
@@ -899,7 +1046,11 @@ stops:
                 "The Height".
             - type: image
               url: https://images.ennistidytowns.ie/sculpture/journey-15to16-oconnell-column.jpg
-              caption: he O'Connell Monument at The Height
+              caption: The O'Connell Monument at The Height
+        - coords:
+            - 52.84420339002491
+            - -8.982524495465077
+          text: At the top of O'Connell Street, turn right onto Arthur's Row. The next sculpture will be recessed in the gable wall of a building to your left.
   - id: 16
     title: Celtic Rest
     coords:
@@ -908,7 +1059,7 @@ stops:
     content:
       - type: text
         body: |
-          The final stop on the trail is this striking chair constructed
+          The next stop on the trail is this striking chair constructed
           from oak and limestone. It brings together sculptural design and
           practical function - a work of art that also invites you to sit.
 
@@ -931,6 +1082,11 @@ stops:
           - -8.981864243943535
         - - 52.844034
           - -8.981866
+      waypoints:
+        - coords:
+            - 52.8440698265955
+            - -8.98201776605762
+          text: Continue along Arthur's Row into the courtyard; the next sculpture is on the left.
   - id: 17
     title: The Centurial Sphere & Easter Rising Memorial
     coords:
@@ -989,3 +1145,26 @@ stops:
           - -8.981841373414124
         - - 52.846129
           - -8.981962
+      waypoints:
+        - coords:
+            - 52.844469632239694
+            - -8.982765688497109
+          text: Return back to The Height (O'Connell Square), turning right down Abbey Street.
+        - coords:
+            - 52.84584501210068
+            - -8.981748008408708
+          text: ""
+          journey_card: true
+          content:
+            - type: text
+              body: On your way to the final stop of the tour stands a building known locally as “The Abbey” — the remains of a medieval Franciscan friary.
+            - type: image
+              url: https://images.ennistidytowns.ie/sculpture/abbey.jpg
+              caption: Ennis Franciscan Friary
+            - type: text
+              body: |-
+                Founded by the O’Briens of Thomond in the 13th century, it grew into a major centre of learning and religious life in north Munster, and was among the last Catholic schools of theology to survive the Reformation.
+
+                Inside, the friary holds an exceptional collection of 15th- and 16th-century limestone carvings, including St Francis bearing the stigmata and a striking image of Christ with his hands bound.
+
+                Today, the site is cared for by the Office of Public Works and is open to visitors — a rare opportunity to step inside and experience these carvings up close. More details can be found on the official site: [Visit Ennis Friary](https://heritageireland.ie/places-to-visit/ennis-friary)
