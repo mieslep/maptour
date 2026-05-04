@@ -452,10 +452,11 @@ export class MapView {
   }
 
   /** Fit map bounds to show the segment between two points. */
-  zoomToSegment(from: [number, number], to: [number, number], padding = 40): void {
+  zoomToSegment(from: [number, number], to: [number, number], padding = 40, opts: { animate?: boolean } = {}): void {
     const bounds = L.latLngBounds([from, to]);
     const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
+    const animate = opts.animate !== false && !prefersReduced;
+    if (!animate) {
       this.map.fitBounds(bounds, {
         paddingTopLeft: [padding, padding + this.paddingTop],
         paddingBottomRight: [padding, padding + this.paddingBottom],

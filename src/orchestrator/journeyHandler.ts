@@ -262,9 +262,15 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
               mapView.setInteractive(waypoint.map_interactive ?? false);
               requestAnimationFrame(() => {
                 mapView.invalidateSize();
-                // Re-fit bounds for the smaller embed container with extra padding
+                // Re-fit bounds for the smaller embed container with extra padding.
+                // animate:false is critical here — flyToBounds (the default) sets
+                // map._animatingZoom = true and Leaflet's SVG renderer skips its
+                // _update while that flag is set. Any waypoint marker added via
+                // setWaypoints below would then evaluate _empty() against stale
+                // renderer bounds and end up with d="M0 0" if its old projection
+                // was outside the panel's previous bounds.
                 const map = mapView.getMap();
-                mapView.zoomToSegment(bounds.from, bounds.to, 60);
+                mapView.zoomToSegment(bounds.from, bounds.to, 60, { animate: false });
 
                 // Apply optional relative zoom adjustment and centre nudge
                 const zoomDelta = parseFloat(mapEmbed.dataset.zoom ?? '');
@@ -280,10 +286,8 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
                   map.setView([center.lat + dLat, center.lng + dLng], map.getZoom(), { animate: false });
                 }
                 // setWaypoints LAST so circle markers project against the
-                // final embed dimensions + zoom. Calling it before the move
-                // (against the panel's full-screen size) leaves Leaflet's
-                // _empty() check stale, and any marker that started outside
-                // the new pane bounds gets stuck at d="M0 0".
+                // final embed dimensions + zoom (renderer bounds are now
+                // stable after the non-animated fit/zoom/setView above).
                 mapView.setWaypoints(waypoints, displayIndex);
               });
               // No FAB needed — map is inline
