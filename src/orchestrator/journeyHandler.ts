@@ -236,12 +236,10 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             // Use current - 1 as active: advance() already incremented past this waypoint.
             const progress = activeWaypointTracker!.getProgress();
             const displayIndex = Math.max(0, progress.current - 1);
-            mapView.setWaypoints(waypoints, displayIndex);
             // Banner is hidden in journey-card mode — drop the top padding
             // so the segment fits without an artificial gap at the top.
             mapView.setTopPadding(0);
             const bounds = activeWaypointTracker!.getSegmentBounds();
-            mapView.zoomToSegment(bounds.from, bounds.to);
             tourFooter.updateWaypointProgress(progress);
 
             // Show journey card — hide map, show card view
@@ -281,10 +279,21 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
                   const dLng = (isNaN(offsetX) ? 0 : offsetX) / (111320 * Math.cos(center.lat * Math.PI / 180));
                   map.setView([center.lat + dLat, center.lng + dLng], map.getZoom(), { animate: false });
                 }
+                // setWaypoints LAST so circle markers project against the
+                // final embed dimensions + zoom. Calling it before the move
+                // (against the panel's full-screen size) leaves Leaflet's
+                // _empty() check stale, and any marker that started outside
+                // the new pane bounds gets stuck at d="M0 0".
+                mapView.setWaypoints(waypoints, displayIndex);
               });
               // No FAB needed — map is inline
               if (mapPanel) mapPanel.setHeaderVisible(false);
             } else {
+              // No embed — set waypoints + zoom now against the panel's
+              // full-screen map (which will display when the user peeks
+              // via the FAB).
+              mapView.setWaypoints(waypoints, displayIndex);
+              mapView.zoomToSegment(bounds.from, bounds.to);
               if (mapPanel) {
                 mapPanel.hide();
                 // Show FAB so user can peek at map for orientation

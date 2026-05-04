@@ -1,6 +1,8 @@
 import { marked } from 'marked';
 import L from 'leaflet';
 import { registerMarkedExtensions } from '../../../src/util/markedExtensions';
+import { getLegStyle } from '../../../src/map/layers';
+import type { LegMode } from '../../../src/types';
 
 registerMarkedExtensions();
 import type { ContentBlock, GalleryImage } from '../types';
@@ -15,10 +17,12 @@ type BeforeMutate = () => void;
  * like at runtime — without requiring a publish/play loop.
  */
 export interface MapPreviewContext {
-  from: [number, number];          // segment start (prev waypoint, or source stop for first waypoint)
-  to: [number, number];            // segment end + active marker location (the waypoint being edited)
-  route?: [number, number][];      // pre-computed leg polyline, drawn for context
-  otherWaypoints?: [number, number][]; // all leg waypoints except the active one — drawn as inactive markers (player parity)
+  from: [number, number];           // segment start (prev waypoint, or source stop for first waypoint)
+  to: [number, number];             // segment end + active marker location (the waypoint being edited)
+  route?: [number, number][];       // pre-computed leg polyline, drawn for context
+  legWaypoints?: [number, number][]; // all leg waypoint coords in order — used to render passed/future markers (player parity)
+  activeIdx?: number;               // index of the active (being-edited) waypoint within legWaypoints
+  legMode?: LegMode;                // walk/drive/transit/cycle — drives polyline colour + dashArray (player parity via getLegStyle)
 }
 
 // Module-level ref so all internal functions can call it without threading it everywhere
@@ -666,29 +670,47 @@ function mountMapBlockPreview(
 
   const map = L.map(mount, { zoomControl: false, attributionControl: false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  // Polyline matches the player: getLegStyle drives colour/weight/dashArray
+  // by leg mode (walk = green dashed, drive = blue solid). Default to walk.
+  const legStyle = getLegStyle(ctx.legMode ?? 'walk');
   if (ctx.route && ctx.route.length > 1) {
-    L.polyline(ctx.route, { color: '#475569', weight: 4, opacity: 0.85 }).addTo(map);
+    L.polyline(ctx.route, {
+      color: legStyle.color,
+      weight: legStyle.weight,
+      opacity: legStyle.opacity,
+      dashArray: legStyle.dashArray,
+    }).addTo(map);
   }
-  // Match the player's setWaypoints styling: small grey dots for every
-  // inactive waypoint in the leg, plus a small grey "from" marker if the
-  // segment starts somewhere other than a waypoint (i.e. the source stop
-  // for the first waypoint). Pink filled circle at the active waypoint.
-  if (ctx.otherWaypoints) {
-    for (const c of ctx.otherWaypoints) {
-      L.circleMarker(c, {
-        radius: 4, color: '#94a3b8', weight: 1.5, fillColor: '#cbd5e1', fillOpacity: 1,
+  // Waypoint markers match MapView.setWaypoints — same colours, opacities,
+  // radii. KEEP IN SYNC with src/map/MapView.ts setWaypoints if that styling
+  // changes. Three tiers per the player:
+  //   passed (i < active):  filled #f9a8d4 muted
+  //   active (i = active):  filled #ec4899 prominent
+  //   future (i > active):  transparent fill, #ec4899 ring
+  const ACTIVE_COLOR = '#ec4899';
+  const PASSED_COLOR = '#f9a8d4';
+  if (ctx.legWaypoints && ctx.activeIdx != null) {
+    ctx.legWaypoints.forEach((coords, i) => {
+      const isActive = i === ctx.activeIdx;
+      const isPassed = i < ctx.activeIdx!;
+      L.circleMarker(coords, {
+        radius: 6,
+        fillColor: isActive ? ACTIVE_COLOR : (isPassed ? PASSED_COLOR : 'transparent'),
+        fillOpacity: isActive ? 0.9 : (isPassed ? 0.5 : 0),
+        color: isActive ? ACTIVE_COLOR : (isPassed ? PASSED_COLOR : ACTIVE_COLOR),
+        weight: 2,
+        opacity: isPassed ? 0.4 : 0.7,
       }).addTo(map);
-    }
-  }
-  const fromIsWaypoint = ctx.otherWaypoints?.some(c => c[0] === ctx.from[0] && c[1] === ctx.from[1]);
-  if (!fromIsWaypoint) {
+    });
+  } else {
+    // Fallback (no leg-waypoint context) — just mark from/to.
     L.circleMarker(ctx.from, {
       radius: 5, color: '#94a3b8', weight: 1.5, fillColor: '#cbd5e1', fillOpacity: 1,
     }).addTo(map);
+    L.circleMarker(ctx.to, {
+      radius: 6, color: ACTIVE_COLOR, weight: 2, fillColor: ACTIVE_COLOR, fillOpacity: 0.9,
+    }).addTo(map);
   }
-  L.circleMarker(ctx.to, {
-    radius: 7, color: '#ec4899', weight: 2, fillColor: '#ec4899', fillOpacity: 1,
-  }).addTo(map);
 
   // Baseline = the no-overrides view (fitBounds with current height). User
   // pan/zoom is captured as a delta against this baseline. `apply` re-derives
