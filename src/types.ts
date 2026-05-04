@@ -95,6 +95,7 @@ export interface Waypoint {
   journey_card?: boolean;
   content?: ContentBlock[];
   radius?: number;
+  map_interactive?: boolean;   // default false: lock map (no controls, no pan/zoom) for this waypoint
 }
 
 export interface Leg {

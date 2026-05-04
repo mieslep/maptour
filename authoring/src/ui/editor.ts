@@ -3000,6 +3000,21 @@ export class TourEditor {
     radiusInput.style.cssText = 'width:100%; margin-bottom:16px;';
     modal.appendChild(radiusInput);
 
+    // === Map interactivity toggle ===
+    // Default: locked (no controls, no pan/zoom). Author opts in for waypoints
+    // where the visitor benefits from being able to explore the map.
+    const interactiveRow = document.createElement('label');
+    interactiveRow.style.cssText = 'display:flex; gap:8px; align-items:flex-start; margin-bottom:16px; cursor:pointer; font-size:13px; color:#334155;';
+    const interactiveCheckbox = document.createElement('input');
+    interactiveCheckbox.type = 'checkbox';
+    interactiveCheckbox.checked = wp.map_interactive === true;
+    interactiveCheckbox.style.cssText = 'margin-top:3px; flex-shrink:0;';
+    const interactiveText = document.createElement('span');
+    interactiveText.innerHTML = 'Allow visitor to pan and zoom the map<br><span style="color:#64748b; font-size:12px;">Off by default — keeps the map locked on the current segment so accidental gestures don\'t pan away.</span>';
+    interactiveRow.appendChild(interactiveCheckbox);
+    interactiveRow.appendChild(interactiveText);
+    modal.appendChild(interactiveRow);
+
     // === Validation message ===
     const validationMsg = document.createElement('div');
     validationMsg.style.cssText = 'color:#dc2626; font-size:13px; margin-bottom:8px; display:none;';
@@ -3071,6 +3086,7 @@ export class TourEditor {
         }
         const radiusVal = parseFloat(radiusInput.value);
         wp.radius = isNaN(radiusVal) ? undefined : radiusVal;
+        wp.map_interactive = interactiveCheckbox.checked ? true : undefined;
       });
       overlay.remove();
       this.renderWaypointMarkers(stopIdx);

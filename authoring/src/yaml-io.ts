@@ -46,6 +46,7 @@ function cleanWaypoint(wp: Waypoint): Record<string, unknown> {
   if (wp.journey_card === true) result.journey_card = true;
   if (wp.content && wp.content.length > 0) result.content = wp.content.map(cleanBlock);
   if (wp.radius !== undefined) result.radius = wp.radius;
+  if (wp.map_interactive === true) result.map_interactive = true;
   return result;
 }
 

@@ -59,6 +59,7 @@ export interface Waypoint {
   journey_card?: boolean;
   content?: ContentBlock[];
   radius?: number;
+  map_interactive?: boolean;
 }
 
 export interface Leg {

@@ -323,6 +323,30 @@ describe('createJourneyHandler — in_transit (with waypoints)', () => {
     expect(m.cardHost.render).toHaveBeenCalled();
     expect(m.journeyCardRenderer.renderWaypoint).toHaveBeenCalled();
   });
+
+  it('locks the map by default for a basic waypoint (map_interactive omitted)', () => {
+    const wps: Waypoint[] = [
+      { coords: [52.505, -6.505], text: 'Default-locked' },
+    ];
+    const m = makeMockDeps(tourWithWaypoints(wps));
+    const handler = createJourneyHandler(m.deps);
+
+    handler('in_transit', 0);
+
+    expect(m.mapView.setInteractive).toHaveBeenCalledWith(false);
+  });
+
+  it('honors map_interactive: true on a basic waypoint', () => {
+    const wps: Waypoint[] = [
+      { coords: [52.505, -6.505], text: 'Author-unlocked', map_interactive: true },
+    ];
+    const m = makeMockDeps(tourWithWaypoints(wps));
+    const handler = createJourneyHandler(m.deps);
+
+    handler('in_transit', 0);
+
+    expect(m.mapView.setInteractive).toHaveBeenCalledWith(true);
+  });
 });
 
 describe('createJourneyHandler — tour_complete', () => {

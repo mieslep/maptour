@@ -381,6 +381,37 @@ stops:
     expect(leg?.waypoints?.[1].photo).toBe('https://example.com/mill.jpg');
   });
 
+  it('parses map_interactive flag on a waypoint', () => {
+    const yaml = `
+tour:
+  id: test
+  title: Test Tour
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+  - id: 2
+    title: Stop 2
+    coords: [52.5041, -6.5563]
+    content: []
+    getting_here:
+      mode: walk
+      route: [[52.5022, -6.5581], [52.5041, -6.5563]]
+      waypoints:
+        - coords: [52.503, -6.557]
+          text: "Locked map (default)"
+        - coords: [52.5035, -6.5565]
+          text: "Interactive map opt-in"
+          map_interactive: true
+`;
+    const result = parseTourFromString(yaml);
+    expect(result.error).toBeUndefined();
+    const wps = result.tour?.stops[1].getting_here?.waypoints;
+    expect(wps?.[0].map_interactive).toBeUndefined();
+    expect(wps?.[1].map_interactive).toBe(true);
+  });
+
   it('parses waypoint with content blocks (auto-promoted journey card)', () => {
     const yaml = `
 tour:

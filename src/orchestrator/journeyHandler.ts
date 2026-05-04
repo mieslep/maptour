@@ -200,10 +200,11 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           onAdvance: (nextWaypoint) => {
             // Update map markers and zoom to next segment
             const progress = activeWaypointTracker!.getProgress();
-            // If the previous step was a journey card, the map was locked
-            // (non-interactive) and embedded inline. Restore interactivity
-            // before showing the full-screen map again.
-            mapView.setInteractive(true);
+            // Apply this waypoint's interactivity preference. Default false
+            // keeps the map locked so accidental gestures don't pan away
+            // from the segment the user needs to walk; authors opt in via
+            // waypoint.map_interactive: true.
+            mapView.setInteractive(nextWaypoint.map_interactive ?? false);
             mapView.setWaypoints(waypoints, progress.current);
             const bounds = activeWaypointTracker!.getSegmentBounds();
             // Set the banner first so its measured height feeds into the
@@ -258,9 +259,9 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
               if (mapPanel) mapPanel.hide();
               // Embed into the card
               mapEmbed.appendChild(mapPane);
-              // Lock the inline map: no controls, no pan/zoom gestures —
-              // page scroll must not be hijacked by the embedded map.
-              mapView.setInteractive(false);
+              // Lock by default so page scroll isn't hijacked; the waypoint
+              // can opt in to interactive via map_interactive: true.
+              mapView.setInteractive(waypoint.map_interactive ?? false);
               requestAnimationFrame(() => {
                 mapView.invalidateSize();
                 // Re-fit bounds for the smaller embed container with extra padding
@@ -319,12 +320,14 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
 
         if (firstIsJourneyCard) {
           // No banner shown for journey cards — zoom without top padding.
+          // (onJourneyCard handles setInteractive when the embed mounts.)
           mapView.setTopPadding(0);
           mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords);
           activeWaypointTracker.advance();
         } else {
-          // Banner shown — set content first so its height feeds into padding
-          // before the initial zoom.
+          // Basic waypoint: lock the full-screen map by default so accidental
+          // gestures don't pan away from the segment; opt in via map_interactive.
+          mapView.setInteractive(firstWaypoint.map_interactive ?? false);
           guidanceBanner.setWaypoint(firstWaypoint);
           applyBannerTopPadding();
           requestAnimationFrame(() => mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords));

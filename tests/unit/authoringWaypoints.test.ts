@@ -86,6 +86,24 @@ describe('Authoring waypoint YAML round-trip', () => {
     expect(wp.content![1].type).toBe('image');
   });
 
+  it('exports map_interactive flag only when true (omits when undefined or false)', () => {
+    const waypoints: Waypoint[] = [
+      { coords: [52.503, -6.503], text: 'Default locked' },
+      { coords: [52.504, -6.504], text: 'Explicit interactive', map_interactive: true },
+    ];
+    const tour = createTestTour(waypoints);
+
+    const yaml = tourToYaml(tour);
+    const reimported = yamlToTour(yaml);
+
+    // First waypoint: omitted from YAML, undefined after reparse
+    expect(yaml).toContain('Explicit interactive');
+    expect(reimported.stops[1].getting_here!.waypoints![0].map_interactive).toBeUndefined();
+    expect(reimported.stops[1].getting_here!.waypoints![1].map_interactive).toBe(true);
+    // The flag appears exactly once in the YAML — only on the second waypoint.
+    expect((yaml.match(/map_interactive/g) || []).length).toBe(1);
+  });
+
   it('exports per-waypoint radius', () => {
     const waypoints: Waypoint[] = [
       { coords: [52.503, -6.503], text: 'Custom radius', radius: 25 },
