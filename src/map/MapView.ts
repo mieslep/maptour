@@ -23,6 +23,7 @@ export class MapView {
   private sequencePulseTimer: ReturnType<typeof setInterval> | null = null;
   private waypointLayer: L.LayerGroup | null = null;
   private waypointMarkers: L.CircleMarker[] = [];
+  private zoomControl: L.Control.Zoom | null = null;
 
   constructor(container: HTMLElement, tour: Tour) {
     this.tour = tour;
@@ -33,7 +34,8 @@ export class MapView {
       zoomControl: false,
       attributionControl: true,
     });
-    L.control.zoom({ position: 'bottomleft' }).addTo(this.map);
+    this.zoomControl = L.control.zoom({ position: 'bottomleft' });
+    this.zoomControl.addTo(this.map);
 
     container.setAttribute('role', 'application');
     container.setAttribute('aria-label', `Map for ${tour.tour.title}`);
@@ -133,6 +135,38 @@ export class MapView {
   /** Set top padding (px) so fitBounds/zoomToSegment keep markers below an overlay (e.g. the guidance banner). */
   setTopPadding(top: number): void {
     this.paddingTop = Math.max(0, top);
+  }
+
+  /**
+   * Toggle map interactivity. When false, gestures (pan, zoom, double-tap)
+   * pass through to the surrounding scroll container and the zoom control
+   * is removed. Used for the inline-map embed in journey cards so page
+   * scroll isn't captured by the map. Default: interactive.
+   */
+  setInteractive(interactive: boolean): void {
+    const handlers: Array<keyof L.Map> = [
+      'dragging', 'touchZoom', 'doubleClickZoom', 'scrollWheelZoom', 'boxZoom', 'keyboard',
+    ];
+    for (const name of handlers) {
+      const h = (this.map as unknown as Record<string, L.Handler | undefined>)[name as string];
+      if (h && typeof h.enable === 'function' && typeof h.disable === 'function') {
+        interactive ? h.enable() : h.disable();
+      }
+    }
+    // `tap` only exists on touch builds — guard the access.
+    const tap = (this.map as unknown as { tap?: L.Handler }).tap;
+    if (tap && typeof tap.enable === 'function' && typeof tap.disable === 'function') {
+      interactive ? tap.enable() : tap.disable();
+    }
+    if (interactive) {
+      if (!this.zoomControl) {
+        this.zoomControl = L.control.zoom({ position: 'bottomleft' });
+        this.zoomControl.addTo(this.map);
+      }
+    } else if (this.zoomControl) {
+      this.zoomControl.remove();
+      this.zoomControl = null;
+    }
   }
 
   setActiveStop(stop: Stop): void {

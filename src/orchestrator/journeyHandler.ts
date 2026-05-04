@@ -107,6 +107,9 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
       mapPaneOriginalParent.appendChild(mapPane);
       requestAnimationFrame(() => mapView.invalidateSize());
     }
+    // Restore interactivity (cleanup may run while the map is still locked
+    // from a journey-card embed).
+    mapView.setInteractive(true);
     if (mapPanel) {
       mapPanel.hide();
     }
@@ -197,6 +200,10 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           onAdvance: (nextWaypoint) => {
             // Update map markers and zoom to next segment
             const progress = activeWaypointTracker!.getProgress();
+            // If the previous step was a journey card, the map was locked
+            // (non-interactive) and embedded inline. Restore interactivity
+            // before showing the full-screen map again.
+            mapView.setInteractive(true);
             mapView.setWaypoints(waypoints, progress.current);
             const bounds = activeWaypointTracker!.getSegmentBounds();
             // Set the banner first so its measured height feeds into the
@@ -251,6 +258,9 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
               if (mapPanel) mapPanel.hide();
               // Embed into the card
               mapEmbed.appendChild(mapPane);
+              // Lock the inline map: no controls, no pan/zoom gestures —
+              // page scroll must not be hijacked by the embedded map.
+              mapView.setInteractive(false);
               requestAnimationFrame(() => {
                 mapView.invalidateSize();
                 // Re-fit bounds for the smaller embed container with extra padding

@@ -88,6 +88,7 @@ function makeMockDeps(tour: Tour, isMobile = true): MockDeps {
     setOverviewMode: vi.fn(),
     setMapPadding: vi.fn(),
     setTopPadding: vi.fn(),
+    setInteractive: vi.fn(),
     fitBounds: vi.fn(),
     setSelectedPin: vi.fn(),
     setEndPin: vi.fn(),
