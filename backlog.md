@@ -454,6 +454,24 @@ Implement the three-tier model in `vite.config.ts`. Add a `coverage:check` scrip
 
 ---
 
+### TOUR-052 — Authoring tool test coverage (large)
+
+Bring `authoring/` under the §VII tier policy. Remove the blanket `authoring/**` coverage exclusion. Tier-A unit coverage for `yaml-io.ts`, `store.ts`, `ors.ts`. Tier-B unit coverage for `content-blocks.ts` and `tour-list.ts`. Stand up a second Playwright web server for the built authoring app and land Tier-C E2E specs covering map-touching flows in `editor.ts` (waypoint add/edit/delete/drag, add-by-leg-click). The leg-click bug Phil hit on 2026-05-03 lands as a `test.fail()` regression net; the fix flows in a follow-up ticket. `editor.ts` itself takes a documented escape-hatch threshold pending the structural split tracked as TOUR-053.
+
+**Dependencies:** TOUR-051
+**Status:** Spec drafted — `specs/TOUR-052-spec.md`
+
+---
+
+### TOUR-053 — Split `authoring/src/ui/editor.ts` into per-tier modules (medium-large)
+
+`editor.ts` is 3167 lines mixing pure form-state logic, jsdom-renderable modal/panel rendering, and Leaflet-touching map handlers. §VII requires mixed-tier files to extract the hostile portion before tier classification can apply. Split the file into per-tier modules (e.g. `editor/state.ts` Tier A, `editor/modals.ts` Tier B, `editor/map-handlers.ts` Tier C) and bring each module to its tier floor. Replaces the TOUR-052 escape-hatch threshold for the file.
+
+**Dependencies:** TOUR-052
+**Status:** Tracked, not yet specced
+
+---
+
 ## Backlog (unsequenced)
 
 ### Architecture
