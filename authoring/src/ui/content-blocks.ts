@@ -537,10 +537,10 @@ function openEditModal(
   } else if (block.type === 'map') {
     const info = document.createElement('div');
     info.style.cssText = 'color:#64748b; font-size:13px; padding:8px 0;';
-    info.textContent = 'Shows an inline map centred on the current waypoint segment.';
+    info.textContent = 'Shows an inline map centred on the current waypoint segment. Pan and zoom the preview to set the framing.';
     body.appendChild(info);
 
-    // Forward declaration so input handlers can re-render the preview.
+    // Forward declaration so the height input can refresh the preview.
     let refreshPreview: () => void = () => {};
 
     const heightInput = makeModalInput('Height', String(block.height ?? '200'), v => {
@@ -551,44 +551,52 @@ function openEditModal(
     (heightInput.querySelector('input') as HTMLInputElement).placeholder = '200 (pixels)';
     body.appendChild(heightInput);
 
-    const zoomInput = makeModalInput('Zoom', String(block.zoom ?? ''), v => {
-      block.zoom = v ? Number(v) : undefined;
-      onChange();
-      refreshPreview();
-    });
-    (zoomInput.querySelector('input') as HTMLInputElement).placeholder = '0 (relative: +1 closer, −1 further)';
-    body.appendChild(zoomInput);
-
-    const oxInput = makeModalInput('Nudge east/west', String(block.offset_x ?? ''), v => {
-      block.offset_x = v ? Number(v) : undefined;
-      onChange();
-      refreshPreview();
-    });
-    (oxInput.querySelector('input') as HTMLInputElement).placeholder = '0 (metres, +east −west)';
-    body.appendChild(oxInput);
-
-    const oyInput = makeModalInput('Nudge north/south', String(block.offset_y ?? ''), v => {
-      block.offset_y = v ? Number(v) : undefined;
-      onChange();
-      refreshPreview();
-    });
-    (oyInput.querySelector('input') as HTMLInputElement).placeholder = '0 (metres, +north −south)';
-    body.appendChild(oyInput);
-
     if (_mapPreviewContext) {
       const previewLabel = document.createElement('div');
       previewLabel.style.cssText = 'font-size:12px; color:#64748b; margin:12px 0 4px;';
-      previewLabel.textContent = 'Live preview (matches the player layout)';
+      previewLabel.textContent = 'Live preview — pan/zoom to set framing (matches player layout)';
       body.appendChild(previewLabel);
 
       const previewMount = document.createElement('div');
       previewMount.style.cssText = 'border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;';
       body.appendChild(previewMount);
 
+      // Footer: live readout of the captured framing + reset.
+      const framingRow = document.createElement('div');
+      framingRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; color:#475569;';
+      const readout = document.createElement('span');
+      readout.style.cssText = 'flex:1;';
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'btn btn-sm';
+      resetBtn.type = 'button';
+      resetBtn.textContent = 'Reset framing';
+      framingRow.appendChild(readout);
+      framingRow.appendChild(resetBtn);
+      body.appendChild(framingRow);
+
+      const updateReadout = () => {
+        const z = block.zoom ?? 0;
+        const ox = block.offset_x ?? 0;
+        const oy = block.offset_y ?? 0;
+        const zStr = z === 0 ? 'default' : (z > 0 ? `+${z}` : `${z}`);
+        const ew = ox === 0 ? '' : `${Math.abs(ox)}m ${ox > 0 ? 'E' : 'W'}`;
+        const ns = oy === 0 ? '' : `${Math.abs(oy)}m ${oy > 0 ? 'N' : 'S'}`;
+        const nudge = [ew, ns].filter(Boolean).join(', ') || 'none';
+        readout.textContent = `Zoom: ${zStr} · Nudge: ${nudge}`;
+      };
+
       const ctx = _mapPreviewContext;
-      const teardown = mountMapBlockPreview(previewMount, block, ctx);
-      refreshPreview = teardown.refresh;
-      modalCleanups.push(teardown.dispose);
+      const handle = mountMapBlockPreview(previewMount, block, ctx, () => {
+        onChange();
+        updateReadout();
+      });
+      refreshPreview = handle.refresh;
+      modalCleanups.push(handle.dispose);
+      resetBtn.onclick = () => {
+        handle.reset();
+        updateReadout();
+      };
+      updateReadout();
     }
   }
 
@@ -639,7 +647,8 @@ function mountMapBlockPreview(
   mount: HTMLElement,
   block: { type: 'map'; height?: number; zoom?: number; offset_x?: number; offset_y?: number },
   ctx: MapPreviewContext,
-): { refresh: () => void; dispose: () => void } {
+  onUserChange: () => void,
+): { refresh: () => void; reset: () => void; dispose: () => void } {
   // Apply current configured height to the mount so the live preview matches
   // what the visitor will see in the journey card.
   const applyHeight = () => { mount.style.height = `${block.height ?? 200}px`; };
@@ -660,23 +669,55 @@ function mountMapBlockPreview(
     radius: 7, color: '#ec4899', weight: 2, fillColor: '#ec4899', fillOpacity: 1,
   }).addTo(map);
 
+  // Baseline = the no-overrides view (fitBounds with current height). User
+  // pan/zoom is captured as a delta against this baseline. `apply` re-derives
+  // the baseline each call (height changes shift the fitBounds zoom level),
+  // then layers on the persisted zoom/offset_x/offset_y so the rendered view
+  // matches what the visitor will see at runtime.
+  let baselineCenter: L.LatLng | null = null;
+  let baselineZoom = 0;
+  let suppressCapture = true;
+
   const apply = (): void => {
+    suppressCapture = true;
     applyHeight();
     map.invalidateSize();
     const bounds = L.latLngBounds([ctx.from, ctx.to]);
     map.fitBounds(bounds, { paddingTopLeft: [60, 60], paddingBottomRight: [60, 60], animate: false });
+    baselineZoom = map.getZoom();
+    baselineCenter = map.getCenter();
     if (block.zoom != null && block.zoom !== 0) {
-      map.setZoom(map.getZoom() + block.zoom, { animate: false });
+      map.setZoom(baselineZoom + block.zoom, { animate: false });
     }
     const ox = block.offset_x ?? 0;
     const oy = block.offset_y ?? 0;
-    if (ox !== 0 || oy !== 0) {
-      const center = map.getCenter();
+    if ((ox !== 0 || oy !== 0) && baselineCenter) {
       const dLat = oy / 111320;
-      const dLng = ox / (111320 * Math.cos(center.lat * Math.PI / 180));
-      map.setView([center.lat + dLat, center.lng + dLng], map.getZoom(), { animate: false });
+      const dLng = ox / (111320 * Math.cos(baselineCenter.lat * Math.PI / 180));
+      map.setView([baselineCenter.lat + dLat, baselineCenter.lng + dLng], map.getZoom(), { animate: false });
     }
+    // Re-enable capture once Leaflet has flushed the programmatic moveend/
+    // zoomend events triggered above. rAF is enough since those fire sync.
+    requestAnimationFrame(() => { suppressCapture = false; });
   };
+
+  // Capture: convert the map's current centre/zoom back into block fields.
+  // 1m east  ≈ 1 / (111320 · cos lat) degrees of longitude
+  // 1m north ≈ 1 / 111320 degrees of latitude
+  const capture = () => {
+    if (suppressCapture || !baselineCenter) return;
+    const center = map.getCenter();
+    const dZoom = map.getZoom() - baselineZoom;
+    const dLat = center.lat - baselineCenter.lat;
+    const dLng = center.lng - baselineCenter.lng;
+    const oy = Math.round(dLat * 111320);
+    const ox = Math.round(dLng * 111320 * Math.cos(baselineCenter.lat * Math.PI / 180));
+    block.zoom = dZoom !== 0 ? dZoom : undefined;
+    block.offset_x = ox !== 0 ? ox : undefined;
+    block.offset_y = oy !== 0 ? oy : undefined;
+    onUserChange();
+  };
+  map.on('moveend zoomend', capture);
 
   // First paint after the modal lays out — Leaflet needs a real container size
   // before fitBounds works, otherwise it computes against a 0x0 box.
@@ -684,6 +725,13 @@ function mountMapBlockPreview(
 
   return {
     refresh: () => requestAnimationFrame(apply),
+    reset: () => {
+      block.zoom = undefined;
+      block.offset_x = undefined;
+      block.offset_y = undefined;
+      onUserChange();
+      requestAnimationFrame(apply);
+    },
     dispose: () => map.remove(),
   };
 }
