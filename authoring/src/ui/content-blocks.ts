@@ -650,7 +650,13 @@ function mountMapBlockPreview(
   if (ctx.route && ctx.route.length > 1) {
     L.polyline(ctx.route, { color: '#475569', weight: 4, opacity: 0.85 }).addTo(map);
   }
+  // Match the player: a small grey marker at the segment start (where the
+  // visitor came from) and the pink active marker at the segment end (the
+  // waypoint being edited).
   L.circleMarker(ctx.from, {
+    radius: 5, color: '#94a3b8', weight: 1.5, fillColor: '#cbd5e1', fillOpacity: 1,
+  }).addTo(map);
+  L.circleMarker(ctx.to, {
     radius: 7, color: '#ec4899', weight: 2, fillColor: '#ec4899', fillOpacity: 1,
   }).addTo(map);
 

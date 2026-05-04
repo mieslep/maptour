@@ -2963,13 +2963,18 @@ export class TourEditor {
       contentLabel.textContent = 'Content Blocks';
       contentLabel.style.cssText = 'font-size:13px; font-weight:500; margin-bottom:4px; color:#334155;';
       journeyFields.appendChild(contentLabel);
-      // Map-block live preview needs the segment context: from this waypoint
-      // to the next (or to the destination stop if this is the last waypoint),
-      // plus the leg's pre-computed route polyline for context.
-      const next = waypoints[wpIdx + 1];
+      // Map-block live preview matches what the player frames at runtime:
+      // the segment from the *previous* waypoint to this one (per
+      // WaypointTracker.getSegmentBounds — when the journey card fires,
+      // currentIndex is at this waypoint and the bounds are prev→current).
+      // For the first waypoint, fall back to the source stop (the stop the
+      // visitor just left) so the preview shows the approach.
+      const prevWp = wpIdx > 0 ? waypoints[wpIdx - 1] : null;
+      const sourceStopIdx = stopIdx > 0 ? stopIdx - 1 : this.tour.stops.length - 1;
+      const sourceStop = this.tour.stops[sourceStopIdx];
       const mapPreviewContext = {
-        from: wp.coords,
-        to: next ? next.coords : stop.coords,
+        from: prevWp ? prevWp.coords : sourceStop.coords,
+        to: wp.coords,
         route: stop.getting_here?.route,
       };
       journeyFields.appendChild(renderContentBlockEditor(
