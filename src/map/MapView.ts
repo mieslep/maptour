@@ -13,6 +13,7 @@ export class MapView {
   private pulsingStopId: number | null = null;
   private visitedStopIds: Set<number> = new Set();
   private paddingBottom = 0;
+  private paddingTop = 0;
   private pinClickCallbacks: Array<(index: number) => void> = [];
   private pinNumberMap: Map<number, number> | null = null;
   private overviewMode = false;
@@ -114,7 +115,7 @@ export class MapView {
     if (this.tour.stops.length === 0) return;
     const bounds = L.latLngBounds(this.tour.stops.map((s) => s.coords));
     this.map.fitBounds(bounds, {
-      paddingTopLeft: [40, 40],
+      paddingTopLeft: [40, 40 + this.paddingTop],
       paddingBottomRight: [40, 40 + this.paddingBottom],
     });
   }
@@ -127,6 +128,11 @@ export class MapView {
   /** Set bottom padding (px) so panTo centres the stop in the visible map area above the sheet. */
   setMapPadding(bottom: number): void {
     this.paddingBottom = bottom;
+  }
+
+  /** Set top padding (px) so fitBounds/zoomToSegment keep markers below an overlay (e.g. the guidance banner). */
+  setTopPadding(top: number): void {
+    this.paddingTop = Math.max(0, top);
   }
 
   setActiveStop(stop: Stop): void {
@@ -417,13 +423,13 @@ export class MapView {
     const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
       this.map.fitBounds(bounds, {
-        paddingTopLeft: [padding, padding],
+        paddingTopLeft: [padding, padding + this.paddingTop],
         paddingBottomRight: [padding, padding + this.paddingBottom],
         animate: false,
       });
     } else {
       this.map.flyToBounds(bounds, {
-        paddingTopLeft: [padding, padding],
+        paddingTopLeft: [padding, padding + this.paddingTop],
         paddingBottomRight: [padding, padding + this.paddingBottom],
         duration: 0.6,
       });

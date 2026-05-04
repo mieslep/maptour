@@ -82,10 +82,22 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
     }
   });
 
+  // Banner sits at top:60px (CSS) with ~12px breathing room desired between
+  // its bottom edge and the active waypoint marker. Leaflet's default
+  // top padding is 40px, so the *extra* padding we need on top of that is
+  //   60 (banner offset) + bannerHeight + 12 (gap) - 40 (default) = 32 + bannerHeight
+  function applyBannerTopPadding(): void {
+    requestAnimationFrame(() => {
+      const h = guidanceBanner.getElement().offsetHeight;
+      mapView.setTopPadding(32 + h);
+    });
+  }
+
   function cleanupWaypointTransit(): void {
     activeWaypointTracker = null;
     pendingJourneyCardDismiss = null;
     guidanceBanner.hide();
+    mapView.setTopPadding(0);
     mapView.clearWaypoints();
     tourFooter.exitWaypointMode();
     // Move footer back to its original parent (inside the sheet)
@@ -187,9 +199,12 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             const progress = activeWaypointTracker!.getProgress();
             mapView.setWaypoints(waypoints, progress.current);
             const bounds = activeWaypointTracker!.getSegmentBounds();
-            mapView.zoomToSegment(bounds.from, bounds.to);
-            // Update guidance banner with next waypoint
+            // Set the banner first so its measured height feeds into the
+            // map's top padding before the zoom animation starts — this keeps
+            // the active marker out from under the banner.
             guidanceBanner.setWaypoint(nextWaypoint);
+            applyBannerTopPadding();
+            requestAnimationFrame(() => mapView.zoomToSegment(bounds.from, bounds.to));
             tourFooter.updateWaypointProgress(progress);
             // Move footer to container overlay for map view
             container.appendChild(tourFooter.getElement());
@@ -214,6 +229,9 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
             const progress = activeWaypointTracker!.getProgress();
             const displayIndex = Math.max(0, progress.current - 1);
             mapView.setWaypoints(waypoints, displayIndex);
+            // Banner is hidden in journey-card mode — drop the top padding
+            // so the segment fits without an artificial gap at the top.
+            mapView.setTopPadding(0);
             const bounds = activeWaypointTracker!.getSegmentBounds();
             mapView.zoomToSegment(bounds.from, bounds.to);
             tourFooter.updateWaypointProgress(progress);
@@ -277,7 +295,6 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
         // Initial state: zoom to first segment, show waypoint markers
         const firstWaypoint = waypoints[0];
         mapView.setWaypoints(waypoints, 0);
-        mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords);
 
         // Move footer to container so it sits above the map panel (sheet has
         // will-change:transform which breaks position:fixed inside it)
@@ -291,9 +308,16 @@ export function createJourneyHandler(deps: JourneyHandlerDeps): (state: JourneyS
           (firstWaypoint.content && firstWaypoint.content.length > 0);
 
         if (firstIsJourneyCard) {
+          // No banner shown for journey cards — zoom without top padding.
+          mapView.setTopPadding(0);
+          mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords);
           activeWaypointTracker.advance();
         } else {
+          // Banner shown — set content first so its height feeds into padding
+          // before the initial zoom.
           guidanceBanner.setWaypoint(firstWaypoint);
+          applyBannerTopPadding();
+          requestAnimationFrame(() => mapView.zoomToSegment(currentStop.coords, firstWaypoint.coords));
         }
 
       } else {

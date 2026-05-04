@@ -87,6 +87,7 @@ function makeMockDeps(tour: Tour, isMobile = true): MockDeps {
   const mapView = {
     setOverviewMode: vi.fn(),
     setMapPadding: vi.fn(),
+    setTopPadding: vi.fn(),
     fitBounds: vi.fn(),
     setSelectedPin: vi.fn(),
     setEndPin: vi.fn(),
@@ -121,9 +122,13 @@ function makeMockDeps(tour: Tour, isMobile = true): MockDeps {
     render: vi.fn((cb: (container: HTMLElement) => void) => cb(cardHostContainer)),
     getContainer: vi.fn(() => cardHostContainer),
   };
+  const guidanceBannerEl = document.createElement('div');
+  // Stub a non-zero offsetHeight so applyBannerTopPadding has something to read.
+  Object.defineProperty(guidanceBannerEl, 'offsetHeight', { value: 48, configurable: true });
   const guidanceBanner = {
     setWaypoint: vi.fn(),
     hide: vi.fn(),
+    getElement: vi.fn(() => guidanceBannerEl),
   };
   const arrivingBanner = { show: vi.fn(), hide: vi.fn() };
   const transitBar = { show: vi.fn(), hide: vi.fn() };
