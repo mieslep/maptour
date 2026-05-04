@@ -5,6 +5,156 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.5.0] — 2026-05-04
+
+**Authoring polish + waypoint UX refinements.** Per-waypoint interactivity opt-in, live map preview in the journey-card editor, several player and authoring bug fixes, and a major internal test-coverage push.
+
+### Added
+- **Per-waypoint `map_interactive` flag**: opt-in (default `false`) to allow pan/zoom on the embedded journey-card map for a specific waypoint. Authoring tool exposes a checkbox in the waypoint modal
+- **Live map preview in journey-card map block editor**: shows the segment with player-parity styling (passed/active/future markers, mode-based polyline). Capture framing via direct map gestures, with a Reset button to revert to defaults. Constrained to a 360px-wide mobile frame for accurate WYSIWYG
+- Inline `{dot}` waypoint shortcode helptext on Basic Waypoint guidance text in authoring tool
+
+### Changed
+- Embedded journey-card map is locked by default: no zoom controls, no panning, no scroll-hijack on page (interactivity gated by `map_interactive`)
+- Authoring tool `+ Add Block` picker no longer clipped by parent overflow
+- `.cb-menu` z-index raised above modal stacking contexts
+- §VII risk-tiered per-file coverage thresholds enforced in `vite.config.ts`; TESTING.md consolidated into the SpecKit constitution
+
+### Fixed
+- Waypoint marker no longer hidden behind the guidance banner (top padding now accounts for banner height)
+- Active waypoint marker `M0 0` rendering bug: zoom animation disabled on journey-card embed mount so the SVG renderer's bounds are valid when circle markers are added
+
+### Internal
+- TOUR-046: Playwright in CI + smoke E2E rewrite
+- TOUR-047: Unit tests for `journeyHandler.ts` (0% → Tier A)
+- TOUR-048: Tier A unit tests for `loader.ts` and `GpsTracker.ts`
+- TOUR-049: Tier B coverage for `NavButton`, `GuidanceBanner`, `buildMobileLayout`, `MapView`
+- TOUR-050: Tier B coverage for block renderers and `GoodbyeCard`
+- TOUR-051: Per-file tiered thresholds enforced in `vite.config.ts`
+
+---
+
+## [1.4.1] — 2026-04-06
+
+**Release workflow + coverage fixes.**
+
+### Fixed
+- Release workflow: pin `softprops/action-gh-release@v2` (v3 doesn't exist)
+- Coverage threshold realigned with actual codebase coverage; additional unit tests added to reach the 80% threshold for tested files
+
+---
+
+## [1.4.0] — 2026-04-06
+
+**Waypoints & native app prep (TOUR-043).** Multi-waypoint transit with in-flight guidance banner, waypoint markers on the map, journey-card-driven authoring, and groundwork for native-app embedding.
+
+### Added
+- **Waypoint type/schema** with `WaypointTracker` for multi-waypoint legs between stops
+- **Waypoint markers + `zoomToSegment`** on `MapView`; per-segment framing during transit
+- **`GuidanceBanner` + `ArrivingBanner`** components: in-transit cues at top of viewport
+- **Authoring waypoints**: type/schema + i18n, YAML round-trip, modal editor, map placement, drag and snap-to-polyline
+- **Inline map content block** for journey cards
+- **JourneyCardRenderer.renderWaypoint** wired into the browser flow
+- Phase A and Phase B integration tests for waypoint transit and authoring
+- Test coverage reporting (T0)
+
+### Changed
+- Stop title and "Getting Here" consolidated into a single editable card
+- Unified waypoint UX: footer Continue button, journey-card rendering, authoring modal
+- Guidance banner restyled below menu bar with theme-aware colours
+- "I'm here" button moved from FAB to guidance banner
+- Map FAB toggles between map and close icons; floating FAB replaces nav header
+
+### Removed
+- Legacy journey card editor in authoring tool (superseded by waypoint flow)
+- `journey` field on stops (replaced by waypoints)
+
+### Fixed
+- First-waypoint journey card handling and map panel transitions
+- Guidance banner visibility; photo modal added
+- Waypoint transit layout on mobile (banner at top, map shown)
+- Waypoint marker colour and journey-card text requirement
+
+---
+
+## [1.3.4] — 2026-04-05
+
+### Fixed
+- Scroll hint gradient positioned above tour footer
+- Map panel fills full viewport height in overview mode
+
+---
+
+## [1.3.3] — 2026-04-05
+
+### Changed
+- Mobile UX: auto-hide menu bar, compact header, welcome description removed
+- GitHub Actions bumped to v5 for Node.js 24 compatibility
+
+---
+
+## [1.3.2] — 2026-04-05
+
+### Fixed
+- "Getting Here" card back-button click handler
+
+---
+
+## [1.3.1] — 2026-04-05
+
+### Added
+- Basic "getting here" text rendering
+
+### Changed
+- GPS overhaul; "Getting Here" authoring; stop list colours; assorted UX fixes
+
+### Fixed
+- Field-test fixes: visited count, viewport, goodbye flow, GPS, stop list
+
+---
+
+## [1.3.0] — 2026-04-05
+
+**Mobile-first card layout, tour overview, architecture refactor.** TOUR-038 through TOUR-042.
+
+### Added
+- **TOUR-038 — Mobile layout rework**: full-page cards with map toggle; scroll hint added
+- **TOUR-039 — Menu bar, progress bar, system cards**: slim progress bar, system-card UX cleanup
+- **TOUR-040 — Tour overview map**: chevrons, stop picker, direction toggle; sequential-pulse pin animation indicating tour direction; green start pin, red end pin
+- **TOUR-041 — Stop list ordered by tour direction and starting stop**
+- **TOUR-042 — Architecture refactor**: `TourSession`, card renderers, simplified `NavController`
+- Scroll nudge added to tour
+- Sticky `TourFooter` with finish modal and scroll gate (replaces `ProgressBar`)
+
+### Changed
+- Welcome card simplified: stop picker removed; "get started" map prompt
+- Desktop overview controls; CTA hidden on desktop (overview controls provide "Begin Tour")
+- Map-centric route editing in authoring tool with dirty-leg tracking
+
+### Fixed
+- Route endpoint stitching on YAML import; export-button visibility
+- Welcome page progress-bar override; stop list hidden on all layouts during welcome
+- Pulse triggered on map open (not overview init); 600ms intervals
+- Persistent red end-pin during active tour navigation
+
+---
+
+## [1.2.2] — 2026-04-02
+
+### Fixed
+- Authoring app on GitHub Pages: correct base path
+- `npm run dev` regression
+- Broken image links and copy edits
+
+---
+
+## [1.2.1] — 2026-04-01
+
+### Fixed
+- Force Node 24 for GitHub Actions to fix deprecation warning
+
+---
+
 ## [1.2.0] — 2026-03-30
 
 **Tour experience enhancements.** Welcome/goodbye cards, flexible start point, journey cards, GPS nearest-stop pre-selection, i18n framework.
@@ -100,6 +250,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+[1.5.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.5.0
+[1.4.1]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.4.1
+[1.4.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.4.0
+[1.3.4]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.3.4
+[1.3.3]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.3.3
+[1.3.2]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.3.2
+[1.3.1]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.3.1
+[1.3.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.3.0
+[1.2.2]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.2.2
+[1.2.1]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.2.1
 [1.2.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.2.0
 [1.1.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.1.0
 [1.0.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.0.0
