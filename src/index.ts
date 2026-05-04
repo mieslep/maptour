@@ -59,7 +59,7 @@ async function init(options: MapTourInitOptions): Promise<void> {
 
   // === Menu bar + progress bar ===
   const hasGettingHere = !!(tour.tour.getting_here && tour.tour.getting_here.length > 0);
-  const menuBar = new MenuBar(container, tour.tour.header_html);
+  const menuBar = new MenuBar(container, tour.tour.header_html, tour.tour.header_url);
   menuBar.setGettingHereVisible(hasGettingHere);
   const tourFooter = new TourFooter();
 

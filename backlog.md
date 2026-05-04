@@ -472,6 +472,49 @@ Bring `authoring/` under the §VII tier policy. Remove the blanket `authoring/**
 
 ---
 
+## Milestone: v1.6 — First-class embedding
+
+Triaged from an embedder's enhancement request (2026-05-04). The header layout fix and `header_url` shipped as v1.5.1; these tickets cover the rest.
+
+### TOUR-054 — `tour.menu_items` for custom hamburger entries (small)
+
+Add an optional `tour.menu_items: [{label, icon?, url}]` schema field. Items render at the top of the dropdown, separated from the four built-in items (`getting_here`, `start_tour`, `tour_stops`, `about`) by an `<hr>` divider. URL items open in a new tab (same semantics as `header_url`). Optional `icon` is a Font Awesome class string (e.g. `fa-solid fa-house`); validate against the bundled FA set or accept verbatim and trust the embedder. Authoring-tool UI is a follow-up — for v1.6 the field is YAML-only.
+
+**Why:** when the host site has its own navigation, embedders need somewhere inside the player chrome to expose "Back to website", "More tours", or similar links. Today the only escape hatch is `close_url` (one destination, attached to the goodbye/close action).
+
+**Status:** Not yet specced.
+
+---
+
+### TOUR-055 — `EMBEDDING.md` + theming reference (medium)
+
+Stand up an `EMBEDDING.md` that walks an embedder end-to-end: minimal copy-paste HTML with annotation, SRI hashes (what they are, why they're shipped per release, point to `EMBED.md` / `sri.json` as canonical), pinning to a release vs latest, container sizing patterns (`100vh` full-page vs fixed-height panel), CORS requirements for tour YAML and media on cross-origin hosts, media-hosting guidance (MapTour does not host; co-locate or CDN). Include a complete CSS-variables reference table — every `--maptour-*` token, default value, what it controls — with a worked override example. Cross-link from the README's existing Theming + Embed sections.
+
+**Why:** today the README assumes embedders can read `EMBED.md`, hop to GitHub Pages, and infer the rest from `src/styles/maptour.css`. That's a steep ramp for non-developers wiring the player into a CMS or static site.
+
+**Status:** Not yet specced.
+
+---
+
+### TOUR-056 — YAML schema reference + `strings` localisation reference (small-medium)
+
+Add a `YAML_REFERENCE.md` (or README section) listing every top-level `tour:` field — name, type, required/optional, default, one-line description. Currently `src/schema.ts` is the only authoritative source, which is a TS-literacy barrier for tour authors. Cover at minimum the currently-undocumented fields: `header_html`, `header_url`, `close_url`, `require_scroll`, `scroll_hint`, `nudge_return`, `tour_url`, `waypoint_radius`, `gps`, `strings`, `menu_items` (once TOUR-054 lands). Document every key in the `tour.strings` override map — UI text it controls and supported placeholder tokens (`{stop}`, `{n}`, `{total}`, etc.) — drawing from `src/i18n.ts`.
+
+**Why:** anyone publishing in a non-English language or using anything beyond the basic fields has to read source code today.
+
+**Status:** Not yet specced.
+
+---
+
+### TOUR-057 — `demo/index.html` canonical embedding example (small)
+
+Add a `demo/index.html` alongside `demo/tour.yaml` that demonstrates best-practice embedding: pinned release URL with SRI hash, custom CSS-variable overrides, `header_html` + `header_url` + `close_url`, and `menu_items` once TOUR-054 lands. Include a comment block at the top explaining each decision so the file is a usable copy-paste starting point.
+
+**Dependencies:** TOUR-054
+**Status:** Not yet specced.
+
+---
+
 ## Backlog (unsequenced)
 
 ### Architecture

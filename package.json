@@ -1,6 +1,6 @@
 {
   "name": "maptour",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Embeddable map tour player for static websites",
   "license": "MIT",
   "type": "module",

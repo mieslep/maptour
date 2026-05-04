@@ -85,6 +85,41 @@ describe('MenuBar', () => {
     expect(header!.textContent).toContain('safe');
   });
 
+  it('wraps header in anchor when header_url is set', () => {
+    new MenuBar(container, '<div>Brand</div>', 'https://example.com');
+    const anchor = container.querySelector('.maptour-menu-bar__header a') as HTMLAnchorElement;
+    expect(anchor).toBeTruthy();
+    expect(anchor.getAttribute('href')).toBe('https://example.com');
+    expect(anchor.getAttribute('target')).toBe('_blank');
+    expect(anchor.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(anchor.textContent).toContain('Brand');
+  });
+
+  it('does not wrap header when header_url is omitted', () => {
+    new MenuBar(container, '<div>Brand</div>');
+    const header = container.querySelector('.maptour-menu-bar__header');
+    expect(header).toBeTruthy();
+    expect(header!.querySelector('a')).toBeNull();
+  });
+
+  it('rejects unsafe URL schemes in header_url (no anchor rendered)', () => {
+    new MenuBar(container, '<div>Brand</div>', 'javascript:alert(1)');
+    const header = container.querySelector('.maptour-menu-bar__header');
+    expect(header!.querySelector('a')).toBeNull();
+    expect(header!.textContent).toContain('Brand');
+  });
+
+  it('rejects malformed header_url (no anchor rendered)', () => {
+    new MenuBar(container, '<div>Brand</div>', 'not a url');
+    const header = container.querySelector('.maptour-menu-bar__header');
+    expect(header!.querySelector('a')).toBeNull();
+  });
+
+  it('header_url has no effect when header_html is absent', () => {
+    new MenuBar(container, undefined, 'https://example.com');
+    expect(container.querySelector('.maptour-menu-bar__header')).toBeNull();
+  });
+
   it('closes on Escape key', () => {
     new MenuBar(container);
     const hamburger = container.querySelector('.maptour-menu-bar__hamburger') as HTMLElement;

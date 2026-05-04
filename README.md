@@ -70,6 +70,23 @@ Copy the full snippet from [EMBED.md](https://mieslep.github.io/maptour/EMBED.md
 | `tourUrl` | string | yes | URL to the tour YAML file |
 | `startStop` | number | no | Stop ID to jump to directly (skips welcome screen) |
 
+### Linking back to your site
+
+When MapTour runs inside a host site, give the visitor two ways back:
+
+- **`tour.header_html`** — a small piece of HTML (logo, brand name) shown in the menu bar, sat next to the hamburger.
+- **`tour.header_url`** — when set, the header content above is wrapped in a link that **opens your site in a new tab**. The tour itself stays open and keeps its state, so visitors can peek at the host site without losing their place.
+- **`tour.close_url`** — appears as the destination for the close button, and is the link the goodbye card uses for "back to site". This is the natural "I'm done with the tour" exit, in the same tab.
+
+```yaml
+tour:
+  header_html: '<img src="https://example.com/logo.svg" alt="My Org" style="height:24px">'
+  header_url: https://example.com           # logo opens example.com in a new tab
+  close_url:  https://example.com/tours      # goodbye + close-button destination, same tab
+```
+
+A more complete embedding guide (theming reference, SRI pinning, CORS notes, custom hamburger entries) is on the roadmap — see backlog tickets TOUR-054..057.
+
 ---
 
 ## Theming

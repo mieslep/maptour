@@ -694,6 +694,38 @@ stops:
     const result = parseTourFromString(yaml);
     expect(result.error).toBeDefined();
   });
+
+  describe('header_url', () => {
+    const baseYaml = (extra: string) => `
+tour:
+  id: test
+  title: Test
+${extra}
+stops:
+  - id: 1
+    title: Stop 1
+    coords: [52.5022, -6.5581]
+    content: []
+`;
+
+    it('accepts a valid https header_url', () => {
+      const result = parseTourFromString(baseYaml('  header_url: https://example.com'));
+      expect(result.error).toBeUndefined();
+      expect(result.tour?.tour.header_url).toBe('https://example.com');
+    });
+
+    it('accepts tour with header_url absent', () => {
+      const result = parseTourFromString(baseYaml(''));
+      expect(result.error).toBeUndefined();
+      expect(result.tour?.tour.header_url).toBeUndefined();
+    });
+
+    it('rejects malformed header_url', () => {
+      const result = parseTourFromString(baseYaml('  header_url: "not a url"'));
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('header_url');
+    });
+  });
 });
 
 const VALID_YAML = `

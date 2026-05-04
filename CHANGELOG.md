@@ -5,6 +5,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.5.1] — 2026-05-04
+
+**Embedding polish.** Fix header layout when used with a logo, and add a back-to-host link.
+
+### Added
+- **`tour.header_url`**: when set, the menu-bar `header_html` is wrapped in an `<a target="_blank" rel="noopener noreferrer">` so visitors can reach the host site without losing tour state. URL must be `http(s)`.
+
+### Changed
+- Menu-bar header content is now left-aligned next to the hamburger (was right-aligned). Right padding reserves space for the floating map button so right-edge content no longer collides with it.
+- README: short Embedding subsection covering `header_html` / `header_url` (new tab) / `close_url` (goodbye exit) and how they fit together. Full embedding guide is tracked as TOUR-055.
+
+### Internal
+- Backlog: TOUR-054 (`menu_items`), TOUR-055 (EMBEDDING.md), TOUR-056 (YAML + strings reference), TOUR-057 (`demo/index.html`).
+
+---
+
 ## [1.5.0] — 2026-05-04
 
 **Authoring polish + waypoint UX refinements.** Per-waypoint interactivity opt-in, live map preview in the journey-card editor, several player and authoring bug fixes, and a major internal test-coverage push.
@@ -250,6 +266,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+[1.5.1]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.5.1
 [1.5.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.5.0
 [1.4.1]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.4.1
 [1.4.0]: https://github.com/YOUR-ORG/maptour/releases/tag/v1.4.0

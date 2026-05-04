@@ -3,6 +3,16 @@ import { sanitiseHtml } from '../util/sanitiseHtml';
 
 export type MenuAction = 'getting_here' | 'start_tour' | 'tour_stops' | 'about';
 
+function isSafeHttpUrl(url: string | undefined): url is string {
+  if (!url) return false;
+  try {
+    const proto = new URL(url).protocol;
+    return proto === 'http:' || proto === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export class MenuBar {
   private readonly el: HTMLElement;
   private readonly dropdown: HTMLElement;
@@ -11,7 +21,7 @@ export class MenuBar {
   private actionCallbacks: Array<(action: MenuAction) => void> = [];
   private open = false;
 
-  constructor(container: HTMLElement, headerHtml?: string) {
+  constructor(container: HTMLElement, headerHtml?: string, headerUrl?: string) {
     this.el = document.createElement('div');
     this.el.className = 'maptour-menu-bar';
 
@@ -28,11 +38,24 @@ export class MenuBar {
     });
     this.el.appendChild(this.hamburger);
 
-    // Custom header area
+    // Custom header area. If headerUrl is set, the inner content is wrapped in
+    // an <a target="_blank"> so users can reach the host site without leaving
+    // the tour (preserves player state).
     if (headerHtml) {
       const headerArea = document.createElement('div');
       headerArea.className = 'maptour-menu-bar__header';
-      headerArea.innerHTML = sanitiseHtml(headerHtml);
+      const safeHtml = sanitiseHtml(headerHtml);
+      const safeUrl = isSafeHttpUrl(headerUrl) ? headerUrl : undefined;
+      if (safeUrl) {
+        const anchor = document.createElement('a');
+        anchor.href = safeUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        anchor.innerHTML = safeHtml;
+        headerArea.appendChild(anchor);
+      } else {
+        headerArea.innerHTML = safeHtml;
+      }
       this.el.appendChild(headerArea);
     }
 
